@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <!-- https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; font-src 'self' data:;">
+    <link href="src/3rd-party-libs/Semantic-UI-CSS-master/semantic.min.css" rel="stylesheet" type="text/css">
+    <!-- download with goofoffline https://fonts.googleapis.com/css?family=Lato:400,700,400italic,700italic&subset=latin -->
+    <link href="src/3rd-party-libs/semantic-ui-google-fonts/fonts.css" rel="stylesheet">
+    <link href="src/3rd-party-libs/Aitthi-semanticUiAlert-47d2224/Semantic-UI-Alert.css" rel="stylesheet" type="text/css" >
+    <link href="src/3rd-party-libs/flex-splitter-directive/styles.min.css" rel="stylesheet">
+    <link href="src/3rd-party-libs/fancytree-2.38.1/dist/skin-win8/ui.fancytree.min.css" rel="stylesheet">
+    <link href="src/3rd-party-libs/pretty-checkbox-3.0/pretty-checkbox.min.css" rel="stylesheet">
+    <link href="src/now-note/now-note.css" rel="stylesheet">
+
+
+    <title>NOW-Note</title>
+  </head>
+  <body data-owner="node" data-app class="n3 n3-main n3-no-nodes">
+
+    <div class="n3-root">
+      <div class="n3-wrapper" data-flex-splitter-horizontal>
+        <div class="n3-sidebar" style="min-width: 50px;">
+  
+          <div class="n3-search">
+            <div class="ui icon input" data-search>
+              <input type="text" placeholder="Search...">
+              <i class="search link icon"></i>
+            </div>
+          </div>
+          <div class="n3-filter">
+            <div class="ui multiple dropdown" data-filter style="width: 100%; ">
+              <input type="hidden" name="filters">
+              <i class="filter icon"></i>
+              <span class="text">Filter</span>
+              <div class="menu">
+              <div class="ui icon search input">
+                <i class="search icon"></i>
+                <input type="text" placeholder="Search...">
+              </div>
+              <div class="scrolling menu" data-menu>
+                <div class="header">
+                  <i class="tags icon"></i>
+                  Filter by type
+                </div>
+                <div class="item" data-value="tasks">
+                <div class="ui red empty circular label"></div>
+                Tasks
+                </div>
+                <div class="item" data-value="notes">
+                <div class="ui blue empty circular label"></div>
+                Notes
+                </div>
+                <div class="divider"></div>
+                <div class="header">
+                  <i class="tags icon"></i>
+                  Filter by Done
+                </div>
+                
+                <div class="item" data-value="done">
+                <div class="ui black empty circular label"></div>
+                Done
+                </div>
+                <div class="item" data-value="not-done">
+                <div class="ui purple empty circular label"></div>
+                Not Done
+                </div>
+                <div class="divider"></div>
+                <div class="header">
+                  <i class="tags icon"></i>
+                  Filter by Priority
+                </div>
+                <div class="item" data-value="priority-3">
+                <div class="ui orange empty circular label"></div>
+                Urgent &amp; Important
+                </div>
+                <div class="item" data-value="priority-2">
+                <div class="ui yellow empty circular label"></div>
+                Urgent
+                </div>
+                <div class="item" data-value="priority-1">
+                <div class="ui pink empty circular label"></div>
+                Important
+                </div>
+                <div class="item" data-value="priority-0">
+                <div class="ui green empty circular label"></div>
+                No priority
+                </div>
+                <div class="divider"></div>
+                <div class="header">
+                  <i class="tags icon"></i>
+                  Filter by Tags
+                </div>
+              </div>
+              </div>
+            </div>
+          </div>
+          
+          <div data-tree class="n3-tree"></div>
+  
+          
+        </div>
+        <div role="separator"></div>
+        <div class="n3-content">
+          <div data-tab="note" data-noteeditor style="padding: 0;">
+  
+            <div class="n3-note-title-row" style="padding: 10px; ">
+              <div data-breadcrumbs style="font-size: 0.9rem; text-align: left; width: 100%; "></div>
+              <button class="ui transparent compact mini icon button" data-action="open-modal" data-target="n3-delete-note-modal">
+                <i class="trash icon"></i>
+              </button>
+            </div>
+  
+            <div class="n3-note-title-row" style="padding: 0 10px;">
+              <div>
+                <div class="pretty p-round p-fill p-icon" style="font-size: 30px; " data-done data-position="right center">
+                  <input type="checkbox" name="done" />
+                  <div class="state p-success-o">
+                    <i class="icon check"></i>
+                    <label></label>
+                  </div>
+                </div>
+              </div>
+              <div class="n3-note-title-input">
+                <div class="ui input">
+                  <input name="title" type="text">
+                </div>
+              </div>
+            </div>
+            <div class="ui segments" style="margin: 0 10px 10px 10px; ">
+              <div class="ui secondary segment">
+                <div class="ui search" data-sarch-tag style="display: inline-block; ">
+                  <div class="ui transparent left icon input">
+                  <input class="prompt" type="text" placeholder="Add a tag">
+                  <i class="tags icon"></i>
+                  </div>
+                  <div class="results"></div>
+                </div>
+              </div>
+  
+              <div class="ui horizontal segments">
+                <div class="ui segment" style="min-width: 350px; max-width: 350px;">
+  
+                  <div class="ui buttons mini" style="margin-right: 15px; ">
+                    <button class="ui button" data-type="note">Note</button>
+                    <button class="ui button" data-type="task">Task</button>
+                  </div>
+                  
+                  <div class="ui dropdown inline" data-priority style="margin-right: 10px;" style="margin-right: 15px; ">
+                    <input type="hidden" name="priority">
+                    <span class="text">Priority</span>
+                    <i class="dropdown icon"></i>
+                    <div class="menu">
+                    </div>
+                  </div>
+  
+                </div>
+                <div class="ui segment">
+                  <div class="ui accordion">
+                    <div class="title" data-backlinks-title>
+                    <i class="dropdown icon"></i>
+                    <span>Backlinks <a class="ui mini label" data-backlinks-count></a></span>
+                    </div>
+                    <div class="content" data-backlinks-content>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div style="padding: 0 10px;">
+              <div class="n3-node-desciption" name="description" contenteditable="true"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+  
+      <div id="n3-table-choose-local-folder-modal" data-preventclosemodal class="ui modal">
+        <div class="content">
+          <p>All data will be stored only in local folder. Please choose a new empty folder or one already used by
+            this app.</p>
+          <button class="ui button small primary" data-action="choose-folder">Choose local folder</button>
+        </div>
+      </div>
+  
+      <div id="n3-table-verify-local-folder-modal" data-preventclosemodal class="ui modal">
+        <div class="content">
+          <p>
+            Please confirm access to previously chosen local folder: <strong
+              id="n3-folder-verify-foldername"></strong>
+          </p>
+          <button class="ui button small primary" data-action="verify-folder">Verify local folder</button>
+          <button class="ui button small primary" data-action="choose-folder">Choose other folder</button>
+        </div>
+      </div>
+  
+      <div id="n3-table-noAccessError-local-folder-modal" data-preventclosemodal class="ui modal">
+        <div class="ui negative message">
+          <div class="header">Error: No access to local folder granted!</div>
+          <p>There is required access to local folder to store data. Maybe your browser doesn't support it yet.
+            Try it with Chrom or Edge.</p>
+          <p>Reload page to try again.</p>
+          <p>
+            Error message: <strong data-folderaccesserror></strong>
+          </p>
+        </div>
+  
+      </div>
+  
+      <div id="n3-delete-note-modal" data-owner="node" class="ui modal">
+        <div class="header">Are you sure?</div>
+        <div class="content">Delete note and all subnotes!
+        </div>
+        <div class="actions">
+          <button data-action="close-dialog" class="ui positive cancel button">Cancel</button>
+          <button data-action="delete-node-confirm" class="ui approve button">Delete</button>
+        </div>
+      </div>
+
+        <script src="src/3rd-party-libs/flex-splitter-directive/index.min.js"></script>
+        <script src="src/3rd-party-libs/jQuery-3.6.0/jquery-3.6.0.min.js"></script>
+        <script src="src/3rd-party-libs/Semantic-UI-CSS-master/semantic.min.js"></script>
+        <script src="src/3rd-party-libs/fontawesome-free-6.1.2-web/all.min.js"></script>
+        <script src="src/3rd-party-libs/Aitthi-semanticUiAlert-47d2224/Semantic-UI-Alert.js"></script>
+        <script src="src/3rd-party-libs/js-joda--js-joda-locale-3.2.0-36.0.0/packages/core/dist/js-joda.min.js"></script>
+        <script src="src/3rd-party-libs/fancytree-2.38.1/dist/jquery.fancytree-all-deps.min.js"></script>
+        <script src="src/3rd-party-libs/tinymce-6.0.1/js/tinymce/tinymce.min.js" referrerpolicy="origin"></script>
+        <script src="src/now-note/now-note.js"></script>
+
+  </body>
+</html>

@@ -1,0 +1,283 @@
+html {
+	height: 100%;
+}
+
+body {
+	height: 100%;
+	width: 100%;
+}
+
+.n3-main {
+	width: 100%;
+	display: flex;
+	flex-direction: column;
+}
+
+.n3-root {
+	display: block;
+}
+
+.n3-wrapper {
+	display: flex;
+	min-height: 100vh;
+}
+
+.n3-sidebar {
+	flex-shrink: 0;
+	width: 25%;
+	height: 100vh;
+	overflow: hidden;
+	position: sticky;
+	top: 0;
+	display: flex;
+    flex-direction: column;
+}
+
+.n3-content {
+	display: block;
+	width: 50%;
+	flex-grow: 1;
+	z-index: 4;
+}
+
+.n3-note-title-row {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 10px;
+}
+
+.n3-note-title-input, .n3-note-title-input .input, .n3-note-title-input .input input {
+	width: 100%;
+}
+
+.n3-note-title-input .input input {
+	border: 0;
+	font-size: 3rem;
+    line-height: 3rem;
+	padding: 0;
+}
+
+.n3 .ui.menu .ui.button {
+    margin-right: 0.5em;
+}
+
+
+.n3-node-header {
+	display: flex;
+	align-items: center;
+}
+
+.n3-breadcrumb {
+	display: inline;
+	margin-left: 5px;
+}
+
+.tabulator-cell .breadcrumb {
+	font-size: 10px;	
+	font-weight: 400;
+}
+
+
+.ui-fancytree {
+	height: 100%;
+}
+
+.modal {
+    z-index: 120; /* splitter has 100*/
+}
+
+.n3-node-desciption {
+	height: 400px;
+	padding: 10px;
+	overflow: auto;
+}
+
+.n3-task-details-modal > .modal-content {
+    width: 900px;
+}
+
+.n3-task-details-modal > .modal-content > .box {
+	width: 880px;
+}
+
+
+.n3-task-details-modal .n3-attributes input, .n3-task-details-modal .n3-attributes select {
+	width: 100px;
+	max-width: 100px;
+}
+
+.tabulator [data-internstatus="DONE"] .n3title {
+	color: #ccc;
+	text-decoration: line-through !important;
+}
+
+.tabulator [data-internstatus="TOBEDONE"] .n3title {
+	color: #333;
+}
+
+.tabulator [data-priority="1"] .n3priority, [data-priority="1"] .n3title {
+	font-weight: 100;
+}
+.tabulator [data-priority="2"] .n3priority, [data-priority="2"] .n3title {
+	font-weight: 400;
+}
+.tabulator [data-priority="3"] .n3priority, [data-priority="3"] .n3title  {
+	font-weight: 1000;
+}
+/* fix for tagify and bulma*/
+.input.is-static:hover {
+    border-color: transparent;
+}
+
+.n3-notification {
+	background-color: transparent;	
+}
+
+.n3-title-info {
+	color: blue;
+	font-size: 11px;
+}
+
+
+.n3-tabInfo {
+	font-weight: 700;
+	font-size: 10px;
+}
+
+[data-flex-splitter-horizontal]>[role=separator]::before {
+    width: 0;
+    margin: 0;
+    height: 0;
+    border: 0;
+}
+
+.task-list .task {
+	background-color: #f8f8f8;
+	padding: 9px !important;
+	margin: 3px 0 3px 0;
+}
+
+.tox .n3backlinks-sidebar {
+	width: 300px;
+	border-left: 5px solid #eee;
+}
+.tox .n3backlinks-sidebar ul {
+	margin-left: 20px;
+}
+
+.tox .n3backlinks-sidebar a {
+	color: #4183c4;
+	cursor: pointer;
+}
+
+
+
+.n3-search .input {
+	width: 100%;
+}
+
+.n3-filter {
+    width: 100%;
+	border-bottom: 2px solid #aFaFaF;
+}
+
+.n3-tree {
+	overflow: scroll;
+	height: 100%;
+}
+
+.n3-tree ul.fancytree-container {
+    border: none;
+}
+
+.n3-sidebar, .n3-tree ul.fancytree-container, .n3-filter, .n3-search .input {
+	background-color: #efefef;
+}
+
+.n3-tree .n3-node-add {
+	display: none;
+	position: absolute; 
+	right: 19px;
+	background: #efefef;
+}
+
+.n3-tree .n3-childcounter {
+	position: absolute;
+    right: 4px;
+    display: inline-block;
+    background-color: #efefef;
+    padding: 0;
+    height: 22px;
+	color: #efefef;
+	text-align: center;
+    width: 23px;
+}
+
+.n3-tree .n3-childcounter.n3-active {
+	color: #0E6EB8;
+}
+
+.n3-tree .n3-mouseover .n3-node-add {
+	display: inline-block;
+}
+
+.n3-tree .ui.compact.icon.button,
+.n3-tree .fancytree-checkbox,
+.n3-tree .fancytree-node {
+	z-index: 20;
+}
+
+.n3-node-background {
+	display: none;
+	position: absolute;
+	left: 0;
+	right: 0;
+	background: rgba(104, 104, 104, 0.1);
+	margin-left: 0;
+	margin-right: 0;
+	height: 21px;
+	z-index: 1;
+}
+.n3-tree .n3-mouseover .n3-node-background, .n3-tree .fancytree-active .n3-node-background {
+	display: inline;
+}
+/*
+.n3-tree .fancytree-plain span.fancytree-active span.fancytree-title, 
+.n3-tree .fancytree-plain span.fancytree-selected span.fancytree-title,
+.n3-tree .fancytree-plain.fancytree-container.fancytree-treefocus span.fancytree-active span.fancytree-title,
+.n3-tree .fancytree-plain.fancytree-container.fancytree-treefocus span.fancytree-selected span.fancytree-title {
+    background-color: transparent;
+    border-color: transparent;
+}
+*/
+.ui.transparent {
+	background: transparent;
+}
+
+.n3-tree .n3-task-priority {
+	position: absolute;
+    right: 0;
+    border-right-width: 4px;
+	border-right-style: solid;
+    z-index: 20;
+    display: inline-block;
+    width: 4px;
+    height: 20px;
+}
+
+.n3-tree .n3-task-priority-0 {
+	border-right-color: #efefef;
+}
+
+.n3-tree .n3-task-priority-1 {
+	border-right-color: mediumblue;
+}
+
+.n3-tree .n3-task-priority-2 {
+	border-right-color: coral;
+}
+
+.n3-tree .n3-task-priority-3 {
+	border-right-color: red;
+}
