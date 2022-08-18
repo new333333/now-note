@@ -59,7 +59,7 @@ class N3StoreServiceFileSystem extends N3StoreServiceAbstract {
 		return await this.searchService.saveIndex();
 	}
 
-	async getStoreConfig(appVersion) {
+	async getRepository(appVersion) {
 		
 		let config = await this.#readStoreConfig();
 		config.storeVersion = config.storeVersion || 0;
@@ -449,35 +449,23 @@ class N3StoreServiceFileSystem extends N3StoreServiceAbstract {
 		let noteFolder = path.join(this.storageDirectory, this.#notesFolderName, note.key);
 		
 		let noteClass = this.#getNoteClassInstance(note.key);
-		log.debug("1******** addNoteStore", note);
-
 		await fs.mkdir(noteFolder, { recursive: true });
-		log.debug("2******** addNoteStore", note);
 
 		if (parentNoteKey.startsWith("root_")) {
 			note.parent = "root";//TODO: static
 		} else {
 			note.parent = parentNoteKey;
 		}
-		log.debug("3******** addNoteStore", note);
 		await this.#writeNoteData(noteFolder, note);
-		log.debug("4******** addNoteStore", note);
 		await this.#writeNoteTitle(noteFolder, note);
-		log.debug("5******** addNoteStore", note);
 		await this.#writeNoteDescription(noteFolder, note);
-		log.debug("6******** addNoteStore", note);
 
 		let parentNoteClass = this.#getNoteClassInstance(parentNoteKey);
-		log.debug("7******** addNoteStore", parentNoteClass);
 		await parentNoteClass.addChild(note.key, hitMode, relativeToKey);
-		log.debug("8******** addNoteStore", note);
 
 		note = await this.#readNote(noteFolder)
-		log.debug("9******** addNoteStore", note);
 		let parentsObj = await this.getParentsStore(note.key);
-		log.debug("10******** addNoteStore", note);
 		this.searchService.addNoteToIndex(note, parentsObj.parents);
-		log.debug("11******** addNoteStore", note);
 		return note;
 	}
 

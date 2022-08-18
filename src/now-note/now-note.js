@@ -2,7 +2,14 @@
 
 TODO
 
--user settings - initialisation - choose folder, save userSettings
+- TODO LAYOUT: cool: https://www.inkdrop.app
+- idee: 3 panels: tree, list, editor (https://www.inkdrop.app/)
+	- list shows full list of all stuff in current tree node mit filter sorting
+			nur next level oder alles
+- task option - "Move To Top" - maybe ein ranking bei tasks? ein integer - task bekommen ein wert nach prio und manuelle einfluss
+- task queue - was als nächstes todo, Button: do als mächstes - dann kommt liste von task und kann be plaziert dazwoischen
+- button "What to do?" such ein task zu machen
+- select repository - initialisation - choose folder, save userSettings
 - migration store!
 - react
 - view: list, tree, list+tree-gointo
@@ -101,6 +108,8 @@ TODO
 
 */
 
+window.nn = window.nn || {};
+// TODO: old remove
 window.n3 = window.n3 || {};
 
 window.n3.priorities = [
@@ -172,12 +181,8 @@ $(function() {
 
 			if (!currentNode.data.tags.includes(newTag)) {
 				window.n3.tagInput.before(window.n3.getTagHTML(newTag));
-				currentNode.data.tags.push(newTag);
-				window.electronAPI.modifyNote({
-					key: currentNode.key,
-					tags: currentNode.data.tags
-				}).then(function(note) { 
-					console.log("write back tags?", note);
+				window.electronAPI.addTag(currentNode.key, newTag).then(function(tags) { 
+					currentNode.data.tags = tags;
 				});
 			}
 			return false;
@@ -218,24 +223,18 @@ $(function() {
 				}
 
 				let currentNode = window.n3.getNoteByKey(noteKey);
-				currentNode.data.tags = currentNode.data.tags || [];
 				if (!currentNode.data.tags.includes(newTag)) {
 					window.n3.tagInput.before(window.n3.getTagHTML(newTag));
 				
 					currentNode.data.tags = currentNode.data.tags || [];
-					currentNode.data.tags.push(newTag);
-
-					window.electronAPI.modifyNote({
-						key: currentNode.key,
-						tags: currentNode.data.tags
-					}).then(function(note) { 
-						console.log("write back tags?", note);
-						
+					window.electronAPI.addTag(currentNode.key, newTag).then(function(tags) { 
+						currentNode.data.tags = tags;
+						window.n3.tags = window.n3.tags || [];
 						window.n3.tags.push({
 							title: newTag
 						});
-
 					});
+
 				}
 			}
 		}
@@ -251,22 +250,8 @@ $(function() {
 		}
 
 		let currentNode = window.n3.getNoteByKey(noteKey);
-		currentNode.data.tags = currentNode.data.tags || [];
-		let tagIndex = currentNode.data.tags.findIndex(function(tag) {
-			return tag === deleteTag
-		});
-		currentNode.data.tags.splice(tagIndex, 1);
-		
-		window.electronAPI.modifyNote({
-			key: currentNode.key,
-			tags: currentNode.data.tags
-		}).then(function(note) { 
-			console.log("write back tags?", note);
-			// reomve last one from 
-			//window.n3.tags.push({
-			//	title: newTag
-			//});
-
+		window.electronAPI.removeTag(currentNode.key, deleteTag).then(function(tags) { 
+			currentNode.data.tags = tags;
 		});
 
 
@@ -470,13 +455,14 @@ $(function() {
 
 
 	window.addEventListener("beforeunload", function(event) {
+
 		// save current note before closing app
 		// this will *prevent* the closing electron.js no matter what value is passed
 		event.returnValue = false;
 
 		try {
 
-			console.log("beforeunload");
+			console.trace("beforeunload");
 			let $nodeDataOwner = $("[data-owner='node']");
 			let noteKey = $nodeDataOwner[0].dataset.notekey;
 		
@@ -501,16 +487,16 @@ $(function() {
 				console.log("beforeunload noteToUpdate", noteToUpdate);
 				return window.electronAPI.modifyNote(noteToUpdate).then(function(note) { 
 					console.log("note saved, now close electron", note);
-					window.electronAPI.close();
+					window.electronAPI.shutdown();
 				});
 			}).catch(function(error) {
 				console.log(error);
-				window.electronAPI.close();
+				window.electronAPI.shutdown();
 			});
 
 		} catch (error) {
 			console.log(error);
-			window.electronAPI.close();
+			window.electronAPI.shutdown();
 		}
 	});
 
@@ -639,7 +625,7 @@ window.n3.action.activateNode = function(noteKey) {
 	if (!node) {
 
 		window.electronAPI.getNote(noteKey).then(function(noteFromStore) {
-			window.electronAPI.inTrash({key: noteKey}).then(function(inTrash) {
+			window.electronAPI.inTrash(key).then(function(inTrash) {
 
 				if (inTrash) {
 						
@@ -811,14 +797,16 @@ window.n3.init = function() {
 
 	window.electronAPI.getUserSettings().then(function(userSettings) {
 		console.log("userSettings", userSettings);
-		window.n3.userSettings = userSettings;
+		window.nn.userSettings = userSettings;
 		
-		window.electronAPI.getStoreConfig().then(function(storeConfig) {
-			console.log("storeConfig", storeConfig);
+		window.electronAPI.getRepository().then(function(repository) {
+			console.log("repository", repository);
 			
-			window.n3.storeConfig = storeConfig;
+			window.nn.repository = repository;
 									
 			window.n3.loadNotes().then(function(tree) {
+
+				console.log("loadNotes", tree);
 			
 				let form = $("[data-noteeditor]");
 				window.n3.node.getNodeHTMLEditor(form).then(function(data) {
@@ -869,47 +857,52 @@ window.n3.modal.closeAll = function(force) {
 
 window.n3.node.getNewNodeData = function() {
 	return {
-		"key": crypto.randomUUID(),
-		"checkbox": false,
-		"title": JSJoda.LocalDateTime.now().format(JSJoda.DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")),
-		"data": {
-			"type": "note",
-			"priority": 0,
-			"done": false
-		}
+		//"key": crypto.randomUUID(),
+		checkbox: false,
+		title: JSJoda.LocalDateTime.now().format(JSJoda.DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")),
+		type: "note",
+		priority: 0,
+		done: false,
+		expanded: false
 	};
 }
 
 window.n3.node.add = function() {
-	let hasFocus = $.ui.fancytree.getTree("[data-tree]").hasFocus();
-	let node = $.ui.fancytree.getTree("[data-tree]").getActiveNode();
-	if (!node) {
-		node = $.ui.fancytree.getTree("[data-tree]").getRootNode();
-	}
+	var that = this;
+	return new Promise(function(resolve, reject) {
+			
+		let hasFocus = $.ui.fancytree.getTree("[data-tree]").hasFocus();
+		let node = $.ui.fancytree.getTree("[data-tree]").getActiveNode();
+		if (!node) {
+			node = $.ui.fancytree.getTree("[data-tree]").getRootNode();
+		}
 
-	let newNodeData = window.n3.node.getNewNodeData();
-	let newNode = node.addNode(newNodeData, "firstChild");
+		let newNodeData = window.n3.node.getNewNodeData();
 
-	newNode.setActive();
+		let hitMode = "over";
+		let relativeToKey = node.key;
 
-	let hitMode = "over";
-	let relativeToKey = node.key;
+		// TODO: add root?
+		//if (newNode.parent && newNode.parent.children && newNode.parent.children.length > 1) {
+		//	hitMode = "before";
+		//	relativeToKey = newNode.parent.children[0].key;
+		//}
 
-	if (newNode.parent && newNode.parent.children && newNode.parent.children.length > 1) {
-		hitMode = "before";
-		relativeToKey = newNode.parent.children[0].key;
-	}
-	
-	window.electronAPI.addNote(node.key, {
-		key: newNode.key, 
-		title: newNode.title,
-		type: newNode.data.type,
-		priority: newNode.data.priority,
-		done: newNode.data.done
-	}, hitMode, relativeToKey).then(function(note) {
-		console.log("write back added", note);
+		console.trace(">>>> window.nn.userSettings", window.nn.userSettings.settings.userName);
+		window.electronAPI.addNote(node.key, {
+			title: newNodeData.title,
+			type: newNodeData.type,
+			priority: newNodeData.priority,
+			done: newNodeData.done,
+			expanded: false,
+			createdBy: window.nn.userSettings.settings.userName
+		}, "firstChild", relativeToKey).then(function(newNodeData) {
+			console.log("write back added", newNodeData);
+			let newNode = node.addNode(newNodeData, "firstChild");
+			newNode.setActive();
+			resolve();
+		});
 	});
-
 
 }
 
@@ -1045,6 +1038,8 @@ window.n3.node.activateNode = function(node) {
 
 		$("[data-tag]").remove();
 		node.data.tags = node.data.tags || [];
+
+		console.log("<<<<<<<<<<<<<<<<< node.data.tags", node.data.tags);
 		node.data.tags.forEach(function(tag) {
 			
 			let indexExistingTag = window.n3.tags.findIndex(function(existingTag) {
@@ -1241,7 +1236,8 @@ window.n3.node.getNodeHTMLEditor = function(form) {
 
 window.n3.loadNotes = function(key) {
 	return new Promise(function(resolve) {
-		return window.electronAPI.loadNotes(key).then(function(tree) {
+		return window.electronAPI.getChildren(key).then(function(tree) {
+			console.log("getChildren", tree);
 			resolve(transformNotesToNodes(tree));
 
 			function transformNotesToNodes(tree) {
@@ -1283,21 +1279,9 @@ window.n3.loadNotes = function(key) {
 
 						tree[i].lazy = true;
 						
-						console.log("1", tree[i]);
-						// for lazy loading...
-						if (tree[i].hasOwnProperty("children")) {
-							if (tree[i].children.length == 0) {
-								// for fancytree: it has no children
-								tree[i].children = [];
-							} else {
-								// for fancytree: it has children
-								delete tree[i].children;
-							}
-						} else {
-							// for fancytree: it has no children
+						if (!tree[i].hasChildren) {
 							tree[i].children = [];
 						}
-						console.log("2", tree[i]);
 
 						// without lazy loading do this
 						// if (tree[i].children) {
@@ -1664,24 +1648,24 @@ window.n3.initFancyTree = function(rootNodes) {
 								let newNodeData = window.n3.node.getNewNodeData();
 								newNodeData.title = file.name;
 								newNodeData.data.description = "<a href='" + asset.src + "' data-n3asset-id='" + asset.id + "' download>" + file.name + "</a>";
-								
-
-								let newNode = node.addNode(newNodeData, data.hitMode);
 
 								window.electronAPI.addNote(data.hitMode === "over" ? node.key : node.parent.key, {
-									key: newNode.key, 
-									title: newNode.title,
-									type: newNode.data.type,
-									priority: newNode.data.priority,
-									done: newNode.data.done,
-									description: newNodeData.data.description
-								}, data.hitMode, data.hitMode === "over" ? node.key : node.parent.key).then(function(note) {
-									console.log("write back added", note);
+									key: newNodeData.key, 
+									title: newNodeData.title,
+									type: newNodeData.type,
+									priority: newNodeData.priority,
+									done: newNodeData.done,
+									description: newNodeData.description
+								}, data.hitMode, data.hitMode === "over" ? node.key : node.parent.key).then(function(newNodeData) {
+									console.log("write back added", newNodeData);
+
+									let newNode = node.addNode(newNodeData, data.hitMode);
 								});
 							});
 							
 						}
 					} else {
+						// TODO: it's not ready yet
 						// Drop a non-node
 						let newNodeData = window.n3.node.getNewNodeData();
 						console.log("transfer", transfer);
@@ -1691,18 +1675,20 @@ window.n3.initFancyTree = function(rootNodes) {
 						console.log("transfer text", text);
 						var firstLine = text.split('\n')[0] || "";
 						newNodeData.title = firstLine.trim();
-						let newNode = node.addNode(newNodeData, data.hitMode);
+						
 
 	
 						window.electronAPI.addNote(data.hitMode === "over" ? node.key : node.parent.key, {
-							key: newNode.key, 
-							title: newNode.title,
-							type: newNode.data.type,
-							priority: newNode.data.priority,
-							done: newNode.data.done,
-							description: newNode.data.description
-						}, data.hitMode, data.hitMode === "over" ? node.key : node.parent.key).then(function(note) {
+							title: newNodeData.title,
+							type: newNodeData.type,
+							priority: newNodeData.priority,
+							done: newNodeData.done,
+							description: newNodeData.description
+						}, data.hitMode, data.hitMode === "over" ? node.key : node.parent.key).then(function(newNodeData) {
 							console.log("write back added", note);
+
+							let newNode = node.addNode(newNodeData, data.hitMode);
+
 						});
 
 					}
@@ -1712,10 +1698,14 @@ window.n3.initFancyTree = function(rootNodes) {
 		});
 
 		if (!rootNodes || rootNodes.length == 0) {
-			window.n3.node.add();
+			window.n3.node.add().then(function() {
+				resolve();
+			});
+		} else {
+			resolve();
 		}
 
-		resolve();
+		
 	});
 
 }

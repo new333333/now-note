@@ -5,6 +5,10 @@ const path = require('path');
 const { title } = require('process');
 const fs = require('fs').promises;
 const N3StoreServiceFileSystem = require('./src/js/store/N3StoreServiceFileSystem');
+const nnUserSettings = require('./now-note/user-settings');
+const nnRepositoryFactory = require('./now-note/repository-factory');
+const os = require ('os');
+
 
 try {
   require('electron-reloader')(module)
@@ -32,123 +36,155 @@ const createWindow = () => {
   let n3 = {};
 
   app.whenReady().then(() => {
-    let mainWindow = createWindow()
-  
-    app.on('activate', () => {
-      if (BrowserWindow.getAllWindows().length === 0) createWindow()
-    });
 
     let userDataPath = app.getPath("userData");
 
+    initNowNoteApplication(userDataPath, n3).then(function() {
 
+      log.debug("Start with default repository: " + n3.repository);
 
-    fs.readFile(userDataPath + "/settings.json", "utf-8").then(function(data) {
-      n3.userSettings = JSON.parse(data);
-      n3.store = new N3StoreServiceFileSystem(n3.userSettings);
-    });
-
-
-   
-    ipcMain.handle("app:getUserSettings", function() {
-      return n3.settings;
-    });
-
-    ipcMain.handle("app:getStoreConfig", function() {
-      return n3.store.getStoreConfig(app.getVersion());
-    });
-
-    ipcMain.handle("app:close", function() {
-      log.info("Want to shutdown NOW-Note app - close storage first");
-      return n3.store.close().then(function() {
-        log.info("Shutdown NOW-Note app...");
-        mainWindow.destroy();
-        return Promise.resolve();
-      });
-    });
-    
-    ipcMain.handle("store:loadNotes", function(event, key) {
-      return n3.store.loadNotes(key);
-    });
-
-    ipcMain.handle("store:addNote", function(event, parentNoteKey, note, hitMode, relativeToKey) {
-      return n3.store.addNote(parentNoteKey, note, hitMode, relativeToKey);
-    });
-
-    ipcMain.handle("store:modifyNote", function(event, note) {
-      return n3.store.modifyNote(note);
-    });
-
-    ipcMain.handle("store:addFile", function(event, fileType, fileName, filePathOrBase64, fileTransferType) {
-      return n3.store.addFile(fileType, fileName, filePathOrBase64, fileTransferType);
-    });
-
-    ipcMain.handle("store:moveNote", function(event, key, from, to, hitMode, relativTo) {
-      log.debug("store:moveNote", key, from, to, hitMode, relativTo);
-      return n3.store.moveNote(key, from, to, hitMode, relativTo);
-    });
-
-    ipcMain.handle("store:moveNoteToTrash", function(event, key, parent) {
-      return n3.store.moveNoteToTrash(key, parent);
-    });
-
-    ipcMain.handle("store:inTrash", function(event, note) {
-      return n3.store.inTrash(note);
-    });
-
-    ipcMain.handle("store:getNote", function(event, key) {
-      return n3.store.getNote(key);
-    });
-
-    ipcMain.handle("store:getParents", function(event, key) {
-      return n3.store.getParents(key);
-    });
-
-    ipcMain.handle("search:search", function(event, searchText, limit, trash) {
-      return n3.store.search(searchText, limit, trash);
-    });
-
-    ipcMain.handle("search:getIndexedDocuments", function(event, limit) {
-      return n3.store.getIndexedDocuments(limit);
-    });
-
-
-    ipcMain.handle('download-attachment',  function(event, url) {
-      log.debug('download-attachment', url);  
-
-      // file:////e:\...
-      let filePath = url.substring(8);
-      let fileName = path.basename(filePath);
-      log.debug('download-attachment fileName', fileName);  
-
-      log.debug('download-attachment filePath', filePath);  
-
-      let options = {
-        //Placeholder 1
-        title: "Save file",
-
-        //Placeholder 2
-        defaultPath : fileName,
-
-
-        //Placeholder 4
-        buttonLabel : "Save File",
-      }
+      let mainWindow = createWindow();
   
-      dialog.showSaveDialog(mainWindow, options).then(function(saveObj) {
-        log.debug("showSaveDialog", saveObj);
-
-        if (!saveObj.canceled && saveObj.filePath) {
-          fs.copyFile(filePath, saveObj.filePath).then(function() {
-            log.debug("showSaveDialog ready");
-          });
-        }
+      app.on('activate', () => {
+        if (BrowserWindow.getAllWindows().length === 0) createWindow()
       });
-   });
+   
+      ipcMain.handle("app:getUserSettings", function() {
+        return n3.userSettings;
+      });
 
+      ipcMain.handle("app:getRepository", function() {
+        return n3.repository.getRepository(app.getVersion());
+      });
+
+      ipcMain.handle("app:shutdown", function() {
+        log.info("Want to shutdown NOW-Note app - close storage first");
+        return n3.repository.closeRepository().then(function() {
+          log.info("Shutdown NOW-Note app...");
+          mainWindow.destroy();
+          return Promise.resolve();
+        });
+      });
+      
+      ipcMain.handle("store:getChildren", function(event, key) {
+        return n3.repository.getChildren(key);
+      });
+
+      ipcMain.handle("store:addNote", function(event, parentNoteKey, note, hitMode, relativeToKey) {
+        return n3.repository.addNote(parentNoteKey, note, hitMode, relativeToKey);
+      });
+
+      ipcMain.handle("store:modifyNote", function(event, note) {
+        return n3.repository.modifyNote(note);
+      });
+
+      ipcMain.handle("store:addTag", function(event, key, tag) {
+        return n3.repository.addTag(key, tag);
+      });
+
+      ipcMain.handle("store:removeTag", function(event, key, tag) {
+        return n3.repository.removeTag(key, tag);
+      });
+
+      ipcMain.handle("store:addFile", function(event, fileType, fileName, filePathOrBase64, fileTransferType) {
+        return n3.repository.addFile(fileType, fileName, filePathOrBase64, fileTransferType);
+      });
+
+      ipcMain.handle("store:moveNote", function(event, key, from, to, hitMode, relativTo) {
+        log.debug("store:moveNote", key, from, to, hitMode, relativTo);
+        return n3.repository.moveNote(key, from, to, hitMode, relativTo);
+      });
+
+      ipcMain.handle("store:moveNoteToTrash", function(event, key, parent) {
+        return n3.repository.moveNoteToTrash(key, parent);
+      });
+
+      ipcMain.handle("store:inTrash", function(event, key) {
+        return n3.repository.inTrash(key);
+      });
+
+      ipcMain.handle("store:getNote", function(event, key) {
+        return n3.repository.getNote(key);
+      });
+
+      ipcMain.handle("store:getParents", function(event, key) {
+        return n3.repository.getParents(key);
+      });
+
+      ipcMain.handle("search:search", function(event, searchText, limit, trash) {
+        return n3.repository.search(searchText, limit, trash);
+      });
+
+      ipcMain.handle("search:getIndexedDocuments", function(event, limit) {
+        return n3.repository.getIndexedDocuments(limit);
+      });
+
+
+      ipcMain.handle('download-attachment',  function(event, url) {
+        log.debug('download-attachment', url);  
+
+        // file:////e:\...
+        let filePath = url.substring(8);
+        let fileName = path.basename(filePath);
+        log.debug('download-attachment fileName', fileName);  
+
+        log.debug('download-attachment filePath', filePath);  
+
+        let options = {
+          //Placeholder 1
+          title: "Save file",
+
+          //Placeholder 2
+          defaultPath : fileName,
+
+
+          //Placeholder 4
+          buttonLabel : "Save File",
+        }
+    
+        dialog.showSaveDialog(mainWindow, options).then(function(saveObj) {
+          log.debug("showSaveDialog", saveObj);
+
+          if (!saveObj.canceled && saveObj.filePath) {
+            fs.copyFile(filePath, saveObj.filePath).then(function() {
+              log.debug("showSaveDialog ready");
+            });
+          }
+        });
+      });
+    });
   })
 
   app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') app.quit()
-  })
+  });
+
+  function initNowNoteApplication(userDataPath, n3) {
+    return new Promise(function(resolve, reject) {
+      n3.userSettings = new nnUserSettings.UserSettings(userDataPath);
+      n3.userSettings.connectDefaultRepository().then(function(repository) {
+        n3.repository = repository;
+        resolve();
+      }).catch(function(error) {
+        if (error instanceof nnUserSettings.UserSettingsNoFoundError) {
+          const username = os.userInfo().username;
+          n3.userSettings.setUserName(os.userInfo().username);
+          // TODO
+          n3.userSettings.addRepository("Repo 1", "./repo-1.sqlite3", nnRepositoryFactory.SQLITE3_TYPE, true);
+          n3.userSettings.save().then(function() {
+            log.debug("Default user settings saved.");
+            n3.userSettings.connectDefaultRepository().then(function(repository) {
+              n3.repository = repository;
+              resolve();
+            });
+          }).catch(function(error) {
+            reject(error);
+          });
+        } else {
+          reject(error);
+        }
+      });
+    });  
+  }
 
 

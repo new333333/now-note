@@ -20,8 +20,8 @@ class N3StoreServiceAbstract {
 		return await this.closeStore();
 	}
 
-	async getStoreConfig() {
-		return await this.getStoreConfig();
+	async getRepository() {
+		return await this.getRepository();
 	}
 
 	async getParents(key) {
