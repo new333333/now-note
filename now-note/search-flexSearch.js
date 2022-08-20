@@ -9,15 +9,8 @@ class SearchServiceFlexSearch {
 
 	#flexSearchDocument
 
-	#searchIndexStoreFolderName
-
-	constructor(userSettings, storeService) {
-		super();
-
-		this.storageDirectory = userSettings.store;
-		this.storeService = storeService;
-
-		this.#searchIndexStoreFolderName = "index";
+	constructor(directory) {
+		this.directory = path.join(directory, "index");
 
 		this.#flexSearchDocument = new Document({
 			tokenize: "forward",
@@ -28,94 +21,53 @@ class SearchServiceFlexSearch {
 				store: ["type", "title", "path"]
 			}
 		});
-
-		this.#init();
 	}
 
-	#init() {
-		let that = this;
-
-		let indexPath = path.join(that.storageDirectory, that.#searchIndexStoreFolderName);
-		// log.info("Initialize search in ", indexPath);
+	async exists() {
 		
-		return fs.access(indexPath).then(function() {
+		try {
+			await fs.access(this.directory); //.then(function() {
 			// log.info("Search index already exists.");
-			return that.#readIndex();
-		}).catch(function (err){
+			// return that.#readIndex();
+			return true;
+		} catch(error) {
 			// log.info("Search index doesn't exists. Reindex all notes and assets.");
-			return that.reindexAll();
-		});
+			//return that.reindexAll();
+			return false;
+		};
 		
 	}
 
-	reindexAll() {
-		// log.info("Reindex all.");
-		let that = this;
-		let indexPath = path.join(that.storageDirectory, that.#searchIndexStoreFolderName);
-
-		return fs.mkdir(indexPath, { recursive: true }).then(function() {
-			let trash = false;
-			return that.storeService.iterateNotes(function(note, parents) {
-				that.addNoteToIndex(note, parents, trash);
-			}, trash).then(function() {
-				let trash = true;
-				return that.storeService.iterateNotes(function(note, parents) {
-					that.addNoteToIndex(note, parents, trash);
-				}, trash).then(function() {
-					return that.saveIndex();
-				});
-			});
-		});
+	async init() {
+		return fs.mkdir(this.directory, { recursive: true });
 	}
 
-	#readIndex() {
-		// log.info("Read index");
+	async #readIndex() {
+		log.info("Read index");
 
-		let that = this;
-		let indexPath = path.join(that.storageDirectory, that.#searchIndexStoreFolderName);
+		let dirents = await fs.readdir(this.directory, { withFileTypes: true });
+		for (let i = 0; i < dirents.length; i++) {
+			let dirent = dirents[i];
 
+			if (dirent.isFile()) {
+				let fileContent = await fs.readFile(path.join(this.directory, dirent.name), "utf-8");
+				this.#flexSearchDocument.import(dirent.name, fileContent);
+			}	
+		}
 
-		return new Promise(function(resolveReadIndex, rejectReadIndex) {
-			fs.readdir(indexPath, { withFileTypes: true }).then(function(dirents) {
-
-				(function loopFiles(i) {
-		
-					if (i >= dirents.length) {
-						resolveReadIndex();
-					} else {
-						let dirent = dirents[i];
-
-						if (dirent.isFile()) {
-							fs.readFile(path.join(indexPath, dirent.name), "utf-8").then(function(fileContent) {
-								// log.info("Read index load file", dirent.name);
-								that.#flexSearchDocument.import(dirent.name, fileContent);
-								loopFiles(i + 1);
-								
-							});
-						} else {
-							loopFiles(i + 1);
-						}				
-						
-					}
-				})(0);
-
-				
-			});
-		});	
 	}
 
 	async saveIndex() {
 		// log.info("Save index");
 
 		let that = this;
-		let indexPath = path.join(that.storageDirectory, that.#searchIndexStoreFolderName);
 
 		let countExportFiles = 0;
 		return new Promise(function(resolveSaveIndex, rejectSaveIndex) {
 
 			that.#flexSearchDocument.export(function(key, data) { 
 				// log.info("Save index key", key);
-				fs.writeFile(path.join(indexPath, key), data);
+				fs.writeFile(path.join(that.directory, key), data);
 				countExportFiles++;
 
 				if (countExportFiles == 12) {
@@ -134,31 +86,32 @@ class SearchServiceFlexSearch {
 		return this.#flexSearchDocument;
 	}
 
-	// TODO: (modifyNote too) history title, description are not indexed
-	addNoteToIndex(note, parents, trash = false) {
-		//log.debug("addNoteToIndex, note, parents, trash", note, parents, trash);
+	// TODO: (at modifyNote the same): history title, description are not indexed
+	addNoteToIndex(noteModel, parents, trash = false) {
+		log.debug("addNoteToIndex, noteModel, parents, trash", noteModel, parents, trash);
 
 		let that = this;
 
 		let path = "";
 		if (parents) {
+			log.debug("addNoteToIndex, parents", parents);
 			parents.forEach(function(parentNote) {
 				path = path + " / " + parentNote.title;
 			});
 		}
-		path = path + " / " + note.title;
+		path = path + " / " + noteModel.title;
 
-		let descriptionClean = that.#cleanDescription(note.description);	
+		let descriptionClean = that.#cleanDescription(noteModel.description);	
 		
 		let doc = {
-			id: note.key,
-			type: "note",
-			title: note.title,
+			id: noteModel.key,
+			type: noteModel.type,
+			title: noteModel.title,
 			path: path,
-			content: note.title + " " + descriptionClean,
+			content: noteModel.title + " " + descriptionClean,
 			trash: trash
 		};
-
+		log.debug("addNoteToIndex, flexSearchDocument", doc);
 		this.#flexSearchDocument.add(doc);
 	}
 

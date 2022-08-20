@@ -8,6 +8,7 @@ const nnDescription = require('./Description');
 const nnTag = require('./Tag');
 const nnLink = require('./Link');
 const nnAsset = require('./Asset');
+const search = require('./search-flexSearch');
 
 class RepositorySQLite  {
 
@@ -15,7 +16,8 @@ class RepositorySQLite  {
 		this.name = name;
 		this.directory = directory;
 		this.isDefault = isDefault;
-		this.searchService = searchService;
+		// TODO: from factory this.searchService = searchService;
+		this.searchService = new search.SearchServiceFlexSearch(directory);
 	};
 
 	async open() {
@@ -154,6 +156,81 @@ class RepositorySQLite  {
 		}, { sequelize });
 
 		// await this.sequelize.sync({ alter: true });
+
+
+		let exists = await this.searchService.exists();
+		if (!exists) {
+			this.reindexAll();
+		}
+	}
+
+	search(searchText, limit, trash) {
+		let searchOptions = {
+			index: "content", 
+			enrich: true
+		};
+		if (limit !== undefined) {
+			searchOptions.limit = limit;
+		}
+		return this.searchService.getIndex().search(searchText, searchOptions);
+	}
+
+	async reindexAll() {
+		log.info("Reindex all. TODO");
+
+		await this.searchService.init();
+
+		/*
+		let allNotes = await nnNote.Note.findAll();
+		for (let i = 0; i < allNotes.length; i++) {
+			let parents = await this.getParents(allNotes[i].key);
+			this.searchService.addNoteToIndex(allNotes[i], parents);
+		}
+*/
+
+		let that = this;
+
+		let trash = false;
+		await this.iterateNotes(function(noteModel, parents, trash) {
+			that.searchService.addNoteToIndex(noteModel, parents, trash);
+		}, trash);
+		
+		trash = true;
+		await this.iterateNotes(function(noteModel, parents, trash) {
+			that.searchService.addNoteToIndex(noteModel, parents, trash);
+		}, trash);
+
+		return await this.searchService.saveIndex();
+	}
+
+	async iterateNotes(callback, trash, noteModel, parents) {
+		// log.debug("iterateNotesStore(trash, key)", trash, key);
+
+		parents = parents || [];
+
+		// log.debug("iterateNotesStore noteModel for key", noteModel, key);
+		// log.debug("iterateNotesStore callback noteModel", callback);
+		if (noteModel) {
+			callback(noteModel, parents, trash);
+		}
+
+		let children = await nnNote.Note.findAll({
+			where: {
+				parent: noteModel ? noteModel.key : null,
+				trash: trash
+			}
+		});
+
+		for (let i = 0; i < children.length; i++) {
+			let childParents = JSON.parse(JSON.stringify(parents));
+			if (noteModel) {
+				childParents.push(noteModel);
+			}
+			callback(children[i], childParents, trash);
+
+			await this.iterateNotes(callback, trash, children[i], childParents);
+		}
+
 	}
 
 	async closeRepository() {
@@ -184,10 +261,9 @@ class RepositorySQLite  {
 
 
 	async addNote(parentNoteKey, note, hitMode, relativeToKey) {
-		// const [results, metadata] = await this.sequelize.query("CREATE VIRTUAL TABLE email USING fts5(sender, title, body)");
 		
 		
-		log.debug("RepositorySQLite.addNote parentNoteKey, note, hitMode, relativeToKey", parentNoteKey, note, hitMode, relativeToKey);
+		// log.debug("RepositorySQLite.addNote parentNoteKey, note, hitMode, relativeToKey", parentNoteKey, note, hitMode, relativeToKey);
 
 		// set parent
 		note.parent = parentNoteKey;
@@ -216,12 +292,13 @@ class RepositorySQLite  {
 
 
 		/*
-
-		newNoteData.hasOwnProperty("links") ||
-		newNoteData.hasOwnProperty("backlinks") 
-
-		this.searchService.addNoteToIndex(note, parentsObj.parents);
+		TODO
+			newNoteData.hasOwnProperty("links") ||
+			newNoteData.hasOwnProperty("backlinks") 
 		*/
+
+		let parents = await this.getParents(newNote.key);
+		this.searchService.addNoteToIndex(newNote, parents);
 
 		return resultNote;
 	}
@@ -324,19 +401,18 @@ class RepositorySQLite  {
 
 	// load root nodes, if key undefined
 	// load children notes if key defined
-	async getChildren(key) {
+	async getChildren(key, trash = false) {
 		let notes = await nnNote.Note.findAll({
 			where: {
 				parent: !key ? null : key,
-				trash: false
+				trash: trash
 			}
 		});
 
-		let that = this;
 		let resultNotes = [];
 
 		for (let i = 0; i < notes.length; i++) {
-			let resultNote = await that.toData(notes[i], false, true);
+			let resultNote = await this.toData(notes[i], false, true);
 			resultNotes.push(resultNote);
 		};
 
@@ -346,7 +422,7 @@ class RepositorySQLite  {
 
 	// hitMode == "over" | "before" | "after"
 	async moveNote(key, from, to, hitMode, relativTo) {
-		log.debug("moveNote(key, from, to, hitMode, relativTo)", key, from, to, hitMode, relativTo);
+		// log.debug("moveNote(key, from, to, hitMode, relativTo)", key, from, to, hitMode, relativTo);
 
 		if (!to) {
 			to = null;
@@ -555,7 +631,7 @@ class RepositorySQLite  {
 			if (noteModel === null) {
 				throw new nnNote.NoteNotFoundByKey(key);
 			}
-			return toData(noteModel, false, false);
+			return await this.toData(noteModel, false, false);
 		}
 	}
 
@@ -578,7 +654,7 @@ class RepositorySQLite  {
 	}
 
 	async getParents(key, parents) {
-		// log.debug("getParentsStore key, parentsObj", key, parentsObj);
+		// log.debug("getParentsStore key, parentsObj", key, parents);
 
 		parents = parents || [];
 
@@ -588,10 +664,12 @@ class RepositorySQLite  {
 		}
 		if (noteModel.parent == null) {
 			parents.unshift(noteModel);
+			// log.debug(">>>>>>>>>>>>>>>>> getParents, return 1 ", parents);
 			return parents;
 		} else {
 			parents.unshift(noteModel);
-			return await getParents(noteModel.parent, parents);
+			// log.debug(">>>>>>>>>>>>>>>>> getParents, return 2 ", parents);
+			return await this.getParents(noteModel.parent, parents);
 		}
 
 	}
@@ -632,7 +710,7 @@ class RepositorySQLite  {
 				return currentTag.tag;
 			});
 		}
-		log.debug("**************** result", result);
+		// log.debug("**************** result", result);
 
 		return result;
 	}
