@@ -483,6 +483,7 @@ $(function() {
 				let editorContent = htmlEditor.getContent();
 				if (currentNode.data.description !== editorContent) {
 					noteToUpdate.description = editorContent;
+					noteToUpdate.descriptionAsText = htmlEditor.getContent({ format: 'text' });
 				}
 				console.log("beforeunload noteToUpdate", noteToUpdate);
 				return window.electronAPI.modifyNote(noteToUpdate).then(function(note) { 
@@ -796,22 +797,22 @@ window.n3.node.delete = function(noteKey, $trigger) {
 window.n3.init = function() {
 
 	window.electronAPI.getUserSettings().then(function(userSettings) {
-		console.log("userSettings", userSettings);
+		// console.log("userSettings", userSettings);
 		window.nn.userSettings = userSettings;
 		
 		window.electronAPI.getRepository().then(function(repository) {
-			console.log("repository", repository);
+			// console.log("repository", repository);
 			
 			window.nn.repository = repository;
 									
 			window.n3.loadNotes().then(function(tree) {
 
-				console.log("loadNotes", tree);
+				// console.log("loadNotes", tree);
 			
 				let form = $("[data-noteeditor]");
 				window.n3.node.getNodeHTMLEditor(form).then(function(data) {
 					window.n3.initFancyTree(tree).then(function() {
-						console.log("App initialized...");
+						// console.log("App initialized...");
 					});
 				});
 			});
@@ -898,7 +899,8 @@ window.n3.node.add = function() {
 			createdBy: window.nn.userSettings.settings.userName
 		}, "firstChild", relativeToKey).then(function(newNodeData) {
 			console.log("write back added", newNodeData);
-			let newNode = node.addNode(newNodeData, "firstChild");
+			let treeData = window.n3.dataToTreeData([newNodeData]);
+			let newNode = node.addNode(treeData[0], "firstChild");
 			newNode.setActive();
 			resolve();
 		});
@@ -1039,7 +1041,6 @@ window.n3.node.activateNode = function(node) {
 		$("[data-tag]").remove();
 		node.data.tags = node.data.tags || [];
 
-		console.log("<<<<<<<<<<<<<<<<< node.data.tags", node.data.tags);
 		node.data.tags.forEach(function(tag) {
 			
 			let indexExistingTag = window.n3.tags.findIndex(function(existingTag) {
@@ -1108,7 +1109,8 @@ window.n3.node.getNodeHTMLEditor = function(form) {
 
 						window.electronAPI.modifyNote({
 							key: currentNode.key, 
-							description: editorContent	
+							description: editorContent,
+							descriptionAsText: 	editor.getContent({ format: 'text' })
 						}).then(function(note) {
 							console.log("write back description", note);
 							currentNode.data.description = note.description;
@@ -1154,16 +1156,16 @@ window.n3.node.getNodeHTMLEditor = function(form) {
 						window.electronAPI.getNote(key).then(function(linkToNote) {
 
 							console.log("getNote", key, linkToNote);
-							window.electronAPI.getParents(key).then(function(parentsObj) {
+							window.electronAPI.getParents(key).then(function(parents) {
 								let path = "";
 								let sep = "";
-								if (parentsObj.parents) {
-									parentsObj.parents.forEach(function(parentNote) {
+								if (parents) {
+									parents.forEach(function(parentNote) {
 										path = `${path}${sep}<a href='#${parentNote.key}' data-goto-note='${parentNote.key}'>${parentNote.title}</a>`;
 										sep = " / ";
 									});
 								}
-								path = `${path}${sep}<a href='#${linkToNote.key}' data-goto-note='${linkToNote.key}'>${linkToNote.title}</a>`;
+								// path = `${path}${sep}<a href='#${linkToNote.key}' data-goto-note='${linkToNote.key}'>${linkToNote.title}</a>`;
 			
 								editor.insertContent("<span data-link-node='" + key +"' contenteditable='false'>[ " + path + " ]</span>");
 								autocompleteApi.hide();
@@ -1176,19 +1178,9 @@ window.n3.node.getNodeHTMLEditor = function(form) {
 						return new Promise(function(resolve) {
 							let searchResults = [];
 
-							if (pattern.trim() === "") {	
-								window.electronAPI.getIndexedDocuments(20).then(function(searchResults) {
-									showAutocomplete(searchResults, resolve);
-								});			
-								
-							} else {
-
-								window.electronAPI.search(pattern, 20).then(function(searchResults) {
-									searchResults = searchResults[0].result;
-									showAutocomplete(searchResults, resolve);
-								});
-								
-							}
+							window.electronAPI.search(pattern, 20).then(function(searchResults) {
+								showAutocomplete(searchResults, resolve);
+							});
 
 							function showAutocomplete(searchResults, resolve) {
 								console.log("addAutocompleter searchResults", searchResults);
@@ -1197,8 +1189,8 @@ window.n3.node.getNodeHTMLEditor = function(form) {
 									let results = searchResults.map(function(searchResult) {
 										return {
 											type: 'cardmenuitem',
-											value: searchResult.id,
-											label: searchResult.doc.path,
+											value: searchResult.key,
+											label: searchResult.path ? searchResult.path + " / " + searchResult.title : searchResult.title,
 											items: [
 												{
 													type: 'cardcontainer',
@@ -1206,7 +1198,7 @@ window.n3.node.getNodeHTMLEditor = function(form) {
 													items: [
 														{
 															type: 'cardtext',
-															text: searchResult.doc.path,
+															text: searchResult.path ? searchResult.path + " / " + searchResult.title : searchResult.title,
 															name: 'char_name'
 														}
 													]
@@ -1237,122 +1229,120 @@ window.n3.node.getNodeHTMLEditor = function(form) {
 window.n3.loadNotes = function(key) {
 	return new Promise(function(resolve) {
 		return window.electronAPI.getChildren(key).then(function(tree) {
-			console.log("getChildren", tree);
-			resolve(transformNotesToNodes(tree));
-
-			function transformNotesToNodes(tree) {
-				tree = convertNotesToTreeNodes(tree);
-				tree = setCheckBoxFromTyp(tree);
-				// TODO: refactor: nodes are lazy read!
-				tree = setGlobalTags(tree);
-				return tree;
-
-
-				function convertNotesToTreeNodes(tree) {
-					if (!tree) {
-						return tree;
-					}
-
-					for (let i = 0; i < tree.length; i++) {
-
-						tree[i].data = tree[i].data || {};
-						tree[i].data.description = tree[i].description;
-						tree[i].data.modifiedBy = tree[i].modifiedBy;
-						tree[i].data.modifiedOn = tree[i].modifiedOn;
-						tree[i].data.createdBy = tree[i].createdBy;
-						tree[i].data.createdOn = tree[i].createdOn;
-						tree[i].data.done = tree[i].done;
-						tree[i].data.priority = tree[i].priority;
-						tree[i].data.type = tree[i].type;
-						tree[i].data.tags = tree[i].tags;
-
-						delete tree[i].parent;
-						delete tree[i].modifiedOn;
-						delete tree[i].modifiedBy;
-						delete tree[i].description;
-						delete tree[i].createdOn;
-						delete tree[i].createdBy;
-						delete tree[i].done;
-						delete tree[i].priority;
-						delete tree[i].type;
-						delete tree[i].tags;
-
-						tree[i].lazy = true;
-						
-						if (!tree[i].hasChildren) {
-							tree[i].children = [];
-						}
-
-						// without lazy loading do this
-						// if (tree[i].children) {
-						// 	tree[i].children = convertNotesToTreeNodes(tree[i].children);
-						// }
-						
-					}
-
-					return tree;
-				}
-
-				function setCheckBoxFromTyp(tree) {
-					if (!tree) {
-						return tree;
-					}
-
-					for (let i = 0; i < tree.length; i++) {
-						tree[i].data = tree[i].data || {};
-						tree[i].checkbox = tree[i].data.type !== undefined && tree[i].data.type === "task";
-						tree[i].selected = tree[i].data.done !== undefined && tree[i].data.done;
-						if (tree[i].children) {
-							tree[i].children = setCheckBoxFromTyp(tree[i].children);
-						}
-						tree[i].data.tags = tree[i].data.tags || [];
-						tree[i].data.tags.forEach(function(tag) {
-							let indexExistingTag = window.n3.tags.findIndex(function(existingTag) {
-								return existingTag.title === tag;
-							});
-				
-							if (indexExistingTag == -1) {
-								window.n3.tags.push({
-									title: tag
-								});
-							}
-						});
-					}
-
-					return tree;
-				}
-
-				// TODO: it MUST be changed! nodes are laze read!
-				function setGlobalTags(tree) {
-					if (!tree) {
-						return tree;
-					}
-
-					for (let i = 0; i < tree.length; i++) {
-						if (tree[i].children) {
-							tree[i].children = setCheckBoxFromTyp(tree[i].children);
-						}
-						tree[i].data.tags = tree[i].data.tags || [];
-						tree[i].data.tags.forEach(function(tag) {
-							let indexExistingTag = window.n3.tags.findIndex(function(existingTag) {
-								return existingTag.title === tag;
-							});
-				
-							if (indexExistingTag == -1) {
-								window.n3.tags.push({
-									title: tag
-								});
-							}
-						});
-					}
-
-					return tree;
-				}
-			}
+			resolve(window.n3.dataToTreeData(tree));
 		});
 	});
 }
 
+window.n3.dataToTreeData = function(tree) {
+	tree = convertNotesToTreeNodes(tree);
+	tree = setCheckBoxFromTyp(tree);
+	// TODO: refactor: nodes are lazy read!
+	tree = setGlobalTags(tree);
+	return tree;
+
+
+	function convertNotesToTreeNodes(tree) {
+		if (!tree) {
+			return tree;
+		}
+
+		for (let i = 0; i < tree.length; i++) {
+
+			tree[i].data = tree[i].data || {};
+			tree[i].data.description = tree[i].description;
+			tree[i].data.modifiedBy = tree[i].modifiedBy;
+			tree[i].data.modifiedOn = tree[i].modifiedOn;
+			tree[i].data.createdBy = tree[i].createdBy;
+			tree[i].data.createdOn = tree[i].createdOn;
+			tree[i].data.done = tree[i].done;
+			tree[i].data.priority = tree[i].priority;
+			tree[i].data.type = tree[i].type;
+			tree[i].data.tags = tree[i].tags;
+
+			delete tree[i].parent;
+			delete tree[i].modifiedOn;
+			delete tree[i].modifiedBy;
+			delete tree[i].description;
+			delete tree[i].createdOn;
+			delete tree[i].createdBy;
+			delete tree[i].done;
+			delete tree[i].priority;
+			delete tree[i].type;
+			delete tree[i].tags;
+
+			tree[i].lazy = true;
+			
+			if (!tree[i].hasChildren) {
+				tree[i].children = [];
+			}
+
+			// without lazy loading do this
+			// if (tree[i].children) {
+			// 	tree[i].children = convertNotesToTreeNodes(tree[i].children);
+			// }
+			
+		}
+
+		return tree;
+	}
+
+	function setCheckBoxFromTyp(tree) {
+		if (!tree) {
+			return tree;
+		}
+
+		for (let i = 0; i < tree.length; i++) {
+			tree[i].data = tree[i].data || {};
+			tree[i].checkbox = tree[i].data.type !== undefined && tree[i].data.type === "task";
+			tree[i].selected = tree[i].data.done !== undefined && tree[i].data.done;
+			if (tree[i].children) {
+				tree[i].children = setCheckBoxFromTyp(tree[i].children);
+			}
+			tree[i].data.tags = tree[i].data.tags || [];
+			tree[i].data.tags.forEach(function(tag) {
+				let indexExistingTag = window.n3.tags.findIndex(function(existingTag) {
+					return existingTag.title === tag;
+				});
+	
+				if (indexExistingTag == -1) {
+					window.n3.tags.push({
+						title: tag
+					});
+				}
+			});
+		}
+
+		return tree;
+	}
+
+	// TODO: it MUST be changed! nodes are laze read!
+	function setGlobalTags(tree) {
+		if (!tree) {
+			return tree;
+		}
+
+		for (let i = 0; i < tree.length; i++) {
+			if (tree[i].children) {
+				tree[i].children = setCheckBoxFromTyp(tree[i].children);
+			}
+			tree[i].data.tags = tree[i].data.tags || [];
+			tree[i].data.tags.forEach(function(tag) {
+				let indexExistingTag = window.n3.tags.findIndex(function(existingTag) {
+					return existingTag.title === tag;
+				});
+	
+				if (indexExistingTag == -1) {
+					window.n3.tags.push({
+						title: tag
+					});
+				}
+			});
+		}
+
+		return tree;
+	}
+}
 
 
 window.n3.initFancyTree = function(rootNodes) {
@@ -1655,7 +1645,8 @@ window.n3.initFancyTree = function(rootNodes) {
 									type: newNodeData.type,
 									priority: newNodeData.priority,
 									done: newNodeData.done,
-									description: newNodeData.description
+									description: newNodeData.description,
+									descriptionAsText: file.name,
 								}, data.hitMode, data.hitMode === "over" ? node.key : node.parent.key).then(function(newNodeData) {
 									console.log("write back added", newNodeData);
 

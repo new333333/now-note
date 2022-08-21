@@ -1,5 +1,5 @@
 const log = require('electron-log');
-const {app, BrowserWindow, ipcMain, dialog} = require('electron')
+const {app, BrowserWindow, ipcMain, dialog, Menu, MenuItem} = require('electron')
 // include the Node.js 'path' module at the top of your file
 const path = require('path');
 const { title } = require('process');
@@ -31,8 +31,100 @@ const createWindow = () => {
     return mainWindow;
   }
 
-
-
+  const template = [
+    {
+      label: "TODO: Repository"
+    },
+    {
+      label: "Search",
+      submenu: [
+        {
+          label: 'Reindex All',
+          click: () => {
+            n3.repository.reindexAll().then(function() {
+                log.debug("Reindexing done.");
+            });
+          }
+        }
+      ]
+    },
+    {
+       label: 'Edit',
+       submenu: [
+          {
+             role: 'undo'
+          },
+          {
+             role: 'redo'
+          },
+          {
+             type: 'separator'
+          },
+          {
+             role: 'cut'
+          },
+          {
+             role: 'copy'
+          },
+          {
+             role: 'paste'
+          }
+       ]
+    },
+    
+    {
+       label: 'View',
+       submenu: [
+          {
+             role: 'reload'
+          },
+          {
+             role: 'toggledevtools'
+          },
+          {
+             type: 'separator'
+          },
+          {
+             role: 'resetzoom'
+          },
+          {
+             role: 'zoomin'
+          },
+          {
+             role: 'zoomout'
+          },
+          {
+             type: 'separator'
+          },
+          {
+             role: 'togglefullscreen'
+          }
+       ]
+    },
+    {
+       role: 'window',
+       submenu: [
+          {
+             role: 'minimize'
+          },
+          {
+             role: 'close'
+          }
+       ]
+    },
+    {
+       role: 'help',
+       submenu: [
+          {
+             label: 'Learn More'
+          }
+       ]
+    }
+ ]
+  
+  const menu = Menu.buildFromTemplate(template)
+  Menu.setApplicationMenu(menu)
+ 
   let n3 = {};
 
   app.whenReady().then(() => {

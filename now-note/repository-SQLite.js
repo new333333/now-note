@@ -9,15 +9,19 @@ const nnTag = require('./Tag');
 const nnLink = require('./Link');
 const nnAsset = require('./Asset');
 const search = require('./search-flexSearch');
+const cheerio = require('cheerio');
+const fs = require('fs').promises;
 
 class RepositorySQLite  {
 
-	constructor(name, directory, isDefault, searchService) {
+	#assetsFolderName
+
+	constructor(name, directory, isDefault, userName) {
 		this.name = name;
 		this.directory = directory;
 		this.isDefault = isDefault;
-		// TODO: from factory this.searchService = searchService;
-		this.searchService = new search.SearchServiceFlexSearch(directory);
+		this.#assetsFolderName = "assets";
+		this.userName = userName;
 	};
 
 	async open() {
@@ -46,6 +50,10 @@ class RepositorySQLite  {
 				allowNull: true
 			},
 			description: {
+				type: DataTypes.TEXT,
+				allowNull: true
+			},
+			descriptionAsText: {
 				type: DataTypes.TEXT,
 				allowNull: true
 			},
@@ -106,7 +114,11 @@ class RepositorySQLite  {
 			description: {
 				type: DataTypes.TEXT,
 				allowNull: true
-			}
+			},
+			descriptionAsText: {
+				type: DataTypes.TEXT,
+				allowNull: true
+			},
 		}, { sequelize });
 
 		nnTag.Tag.init({
@@ -155,38 +167,53 @@ class RepositorySQLite  {
 			}
 		}, { sequelize });
 
-		// await this.sequelize.sync({ alter: true });
 
-
-		let exists = await this.searchService.exists();
-		if (!exists) {
-			this.reindexAll();
-		}
+		// await this.#setupSQLite();
 	}
 
-	search(searchText, limit, trash) {
-		let searchOptions = {
-			index: "content", 
-			enrich: true
-		};
-		if (limit !== undefined) {
-			searchOptions.limit = limit;
-		}
-		return this.searchService.getIndex().search(searchText, searchOptions);
+
+	async #setupSQLite() {
+		await this.sequelize.sync({ alter: true });
+		let [results, metadata] = await this.sequelize.query(`CREATE VIRTUAL TABLE Notes_index USING FTS5(key UNINDEXED, path, title, descriptionAsText, tags, type, done, priority, trash, prefix='1 2 3')`);
+	}
+
+	async search(searchText, limit, trash) {
+
+		trash = trash || false;
+		trash = trash ? 1 : 0;
+
+		let results = await this.sequelize.query(
+			`SELECT * FROM Notes_index 
+			WHERE ${searchText ? "title MATCH :searchText or descriptionAsText MATCH :searchText and" : ""} Notes_index MATCH '"trash" : ${trash}' ORDER BY rank LIMIT :limit`, {
+				replacements: {
+					searchText: searchText || "*",
+					limit: limit
+				},
+				raw: true,
+				type: QueryTypes.SELECT
+			}
+		);
+
+		// log.debug("search - searchText, limit, trash", searchText, limit, trash, results);
+
+
+		return results;
 	}
 
 	async reindexAll() {
+		let reindexTree = true;
+		let path = "";
+		let trash = false;
+		await this.#modifyNoteIndex(null, reindexTree, path, trash);
+
+		// TODO trash = true;
+
+
+/*
 		log.info("Reindex all. TODO");
 
 		await this.searchService.init();
 
-		/*
-		let allNotes = await nnNote.Note.findAll();
-		for (let i = 0; i < allNotes.length; i++) {
-			let parents = await this.getParents(allNotes[i].key);
-			this.searchService.addNoteToIndex(allNotes[i], parents);
-		}
-*/
 
 		let that = this;
 
@@ -201,6 +228,7 @@ class RepositorySQLite  {
 		}, trash);
 
 		return await this.searchService.saveIndex();
+		*/
 	}
 
 	async iterateNotes(callback, trash, noteModel, parents) {
@@ -234,9 +262,6 @@ class RepositorySQLite  {
 	}
 
 	async closeRepository() {
-		if (this.searchService) {
-			await this.searchService.saveIndex();
-		}
 		await this.sequelize.close();
 	}
 
@@ -278,8 +303,7 @@ class RepositorySQLite  {
 				replacements: {
 					parent: note.parent,
 					trash: false
-				},
-				type: QueryTypes.SELECT
+				}
 			});
 
 			note.position = 0;
@@ -297,10 +321,168 @@ class RepositorySQLite  {
 			newNoteData.hasOwnProperty("backlinks") 
 		*/
 
-		let parents = await this.getParents(newNote.key);
-		this.searchService.addNoteToIndex(newNote, parents);
-
+		this.#addNoteIndex(newNote);
+		
 		return resultNote;
+	}
+
+
+	async #addNoteIndex(newNote) {
+		let parents = await this.getParents(newNote.key);
+
+		parents.pop();
+		
+		let path = this.#notesArrayToPath(parents);
+		const [results, metadata] = await this.sequelize.query("INSERT INTO Notes_index (key, path, title, descriptionAsText, type, done, priority, trash) VALUES (:key, :path, :title, :descriptionAsText, :type, :done, :priority, :trash)", {
+			replacements: {
+				key: newNote.key, 
+				path: path || "", 
+				title: newNote.title || "", 
+				descriptionAsText: newNote.descriptionAsText || "",
+				type: newNote.type,  
+				done: newNote.done,  
+				priority: newNote.priority,   
+				trash: newNote.trash 
+			}
+		});
+
+	}
+
+	async #modifyNoteIndex(note, reindexTree, path, trash) {
+		// TODO: update only required fields!!! not all at ones! 
+		if (note) {
+			let tags = await nnTag.Tag.findAll({
+				where: {
+					key: note.key
+				}
+			});
+
+			var tagsAsString = tags.map(function(tag){
+				return tag.tag;
+			}).join(" ");
+			
+			let replacements = {
+				key: note.key, 
+				title: note.title || "", 
+				tags: tagsAsString,
+				descriptionAsText: note.descriptionAsText || "",
+				type: note.type,  
+				done: note.done,  
+				priority: note.priority,   
+				trash: trash 
+			};
+
+			if (reindexTree) {
+				replacements.path = path;
+			}
+
+			const [results, metadata] = await this.sequelize.query("UPDATE Notes_index set " + (reindexTree ? "path = :path, " : "") + " title = :title, descriptionAsText = :descriptionAsText, type = :type, done = :done, priority = :priority, trash = :trash, tags = :tags where key = :key", {
+				replacements: replacements
+			});
+		}
+
+		if (reindexTree) {
+			path = path || "";
+
+			if (note) {
+				if (path.length > 0) {
+					path += " / ";
+				}
+				path += note.title;
+			}
+
+			let children = await nnNote.Note.findAll({
+				where: {
+					parent: note ? note.key : null,
+					trash: trash
+				}
+			});
+
+			for (let i = 0; i < children.length; i++) {
+				await this.#modifyNoteIndex(children[i], reindexTree, path, trash)
+			}
+
+		}
+
+	}
+
+
+	async #extractInlineImagesBeforeWrite(htmltext) {
+		// log.debug("extractInlineImagesBeforeWrite htmltext", htmltext);
+
+		if (!htmltext) {
+			return htmltext;
+		}
+			
+		let $description = cheerio.load(htmltext, null, false);
+		let imgs = $description("img");
+
+		for (let i = 0; i < imgs.length; i++) {
+			let nextImg = imgs.eq(i);
+
+			if (!nextImg.attr("src") || nextImg.attr("src").indexOf("data:image/") == -1) {
+				if (nextImg.attr("data-n3asset-id")) {
+					nextImg.attr("src", "");
+				}
+			} else {
+
+				// save as asset data:image/png;base64,...
+				let fileType = nextImg.attr("src").substring(5, 14); // image/png
+				let fileName = "img.png";
+				let filePathOrBase64 = nextImg.attr("src").substring(22);
+				let fileTransferType = nextImg.attr("src").substring(15, 21); // base64
+				let asset = await this.addAsset(fileType, fileName, filePathOrBase64, fileTransferType);
+				// log.debug("write back img?", asset);
+				nextImg.attr("src", "");
+				nextImg.attr("data-n3asset-id", asset.id);
+			}
+		}
+
+		return $description.html();
+	}
+
+	// return {src: fileSource, id: assetId}
+	async addAsset(fileType, fileName, filePathOrBase64, fileTransferType) {
+		// log.debug("addAsset ", fileType, fileName, fileTransferType);
+
+		let assetModel = await nnAsset.Asset.create({
+			type: fileType,
+			name: fileName,
+			createdBy: this.userName
+		});
+
+		let assetFile = path.join(this.directory, this.#assetsFolderName, assetModel.key);
+		await fs.mkdir(assetFile, { recursive: true });
+		assetFile = path.join(assetFile, fileName);
+		if (fileTransferType === "base64") {
+			// log.debug("addAsset blob writeFile ", assetFile);
+			await fs.writeFile(assetFile, Buffer.from(filePathOrBase64,"base64"));
+			// log.debug("addAsset resolve1 ", assetFile, assetId);
+		} else {
+			// log.debug("addAsset copyFile ", filePathOrBase64, assetFile);
+			await fs.copyFile(filePathOrBase64, assetFile);
+			// log.debug("addAsset resolve2 ");
+		}
+		return {
+			src: assetFile, 
+			id: assetModel.key
+		};
+	}
+
+
+	#notesArrayToPath(notesArray) {
+
+		// log.debug("#notesArrayToPath(notesArray)", notesArray);
+
+		let path = "";
+		let sep = "";
+		if (notesArray) {
+			notesArray.forEach(function(parentNote) {
+				path = path + sep + parentNote.title;
+				sep = " / ";
+			});
+		}
+		return path;
 	}
 
 	async modifyNote(note) {
@@ -309,28 +491,48 @@ class RepositorySQLite  {
 			throw new nnNote.NoteNotFoundByKey(note.key);
 		}
 
+
+		let reindex = false;
+		let reindexTree = false;
 		if (note.hasOwnProperty("title")) {
 			let oldTitle = await nnTitle.Title.create({
-				key: note.key, 
-				title: note.title
+				key: modifyNote.key, 
+				title: modifyNote.title
 			});
+			if (modifyNote.title != note.title) {
+				reindexTree = true;
+			}
 			modifyNote.title = note.title;
+			reindex = true;
 		}
 		if (note.hasOwnProperty("description")) {
+
+			let html = note.description;
+			// html = await this.#updateLinksBeforeWrite(note.key, note.description);
+			// html = await this.#fixAttachmentsBeforeWrite(html);
+			html = await this.#extractInlineImagesBeforeWrite(html);
+
+
 			let oldDescription = await nnDescription.Description.create({
-				key: note.key, 
-				description: note.description
+				key: modifyNote.key, 
+				description: modifyNote.description,
+				descriptionAsText: modifyNote.descriptionAsText,
 			});
-			modifyNote.description = note.description;
+			modifyNote.description = html;
+			modifyNote.descriptionAsText = note.descriptionAsText;
+			reindex = true;
 		}
 		if (note.hasOwnProperty("type")) {
 			modifyNote.type = note.type;
+			reindex = true;
 		}
 		if (note.hasOwnProperty("done")) {
 			modifyNote.done = note.done;
+			reindex = true;
 		}
 		if (note.hasOwnProperty("priority")) {
 			modifyNote.priority = note.priority;
+			reindex = true;
 		}
 		if (note.hasOwnProperty("expanded")) {
 			modifyNote.expanded = note.expanded;
@@ -338,6 +540,13 @@ class RepositorySQLite  {
 		
 
 		modifyNote.save();
+
+		if (reindex) {
+			let trash = false;
+			let parents = await this.getParents(modifyNote.key);
+			parents.pop();
+			this.#modifyNoteIndex(modifyNote, reindexTree, reindexTree ? this.#notesArrayToPath( parents ) : false, trash);
+		}
 
 		/*
 
@@ -658,7 +867,10 @@ class RepositorySQLite  {
 
 		parents = parents || [];
 
-		let noteModel = await nnNote.Note.findByPk(key);
+		let noteModel = await nnNote.Note.findByPk(key, {
+			raw: true,
+		});
+
 		if (noteModel === null) {
 			throw new nnNote.NoteNotFoundByKey(key);
 		}

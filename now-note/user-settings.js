@@ -20,7 +20,7 @@ class UserSettings {
             await this.#load();
         }
 
-        let repositoryFactory = new nnRepositoryFactory.RepositoryFactory(this.settings.repositories);
+        let repositoryFactory = new nnRepositoryFactory.RepositoryFactory(this.settings.repositories, this.settings.userName);
         return await repositoryFactory.connectDefaultRepository();
     }
 

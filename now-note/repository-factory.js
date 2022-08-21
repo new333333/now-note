@@ -19,8 +19,9 @@ class RepositoryFactory {
 
     #allowedTypes;
 
-    constructor(repositories) {
+    constructor(repositories, userName) {
 		this.repositories = repositories;
+        this.userName = userName;
 
         this.#allowedTypes = [SQLITE3_TYPE];
     }
@@ -40,7 +41,7 @@ class RepositoryFactory {
 
     async connectRepository(repository) {
         if (this.isSqlite3Type(repository)) {
-            let sqlRepository = new nnRepositorySQLite.RepositorySQLite(repository.name, repository.path, repository.default);
+            let sqlRepository = new nnRepositorySQLite.RepositorySQLite(repository.name, repository.path, repository.default, this.userName);
             await sqlRepository.open();
             return sqlRepository;
         } else {
