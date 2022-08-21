@@ -483,7 +483,6 @@ $(function() {
 				let editorContent = htmlEditor.getContent();
 				if (currentNode.data.description !== editorContent) {
 					noteToUpdate.description = editorContent;
-					noteToUpdate.descriptionAsText = htmlEditor.getContent({ format: 'text' });
 				}
 				console.log("beforeunload noteToUpdate", noteToUpdate);
 				return window.electronAPI.modifyNote(noteToUpdate).then(function(note) { 
@@ -626,7 +625,7 @@ window.n3.action.activateNode = function(noteKey) {
 	if (!node) {
 
 		window.electronAPI.getNote(noteKey).then(function(noteFromStore) {
-			window.electronAPI.inTrash(key).then(function(inTrash) {
+			window.electronAPI.inTrash(noteKey).then(function(inTrash) {
 
 				if (inTrash) {
 						
@@ -858,7 +857,6 @@ window.n3.modal.closeAll = function(force) {
 
 window.n3.node.getNewNodeData = function() {
 	return {
-		//"key": crypto.randomUUID(),
 		checkbox: false,
 		title: JSJoda.LocalDateTime.now().format(JSJoda.DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")),
 		type: "note",
@@ -1110,7 +1108,6 @@ window.n3.node.getNodeHTMLEditor = function(form) {
 						window.electronAPI.modifyNote({
 							key: currentNode.key, 
 							description: editorContent,
-							descriptionAsText: 	editor.getContent({ format: 'text' })
 						}).then(function(note) {
 							console.log("write back description", note);
 							currentNode.data.description = note.description;
@@ -1140,7 +1137,7 @@ window.n3.node.getNodeHTMLEditor = function(form) {
 						window.n3.action.activateNode(e.srcElement.dataset.gotoNote);
 					}
 					
-					if (e.srcElement &&  e.srcElement.dataset && e.srcElement.dataset.n3assetId) {
+					if (e.srcElement &&  e.srcElement.dataset && e.srcElement.dataset.n3assetKey) {
 						console.log("open attachment in ew tab", e.srcElement.href);
 						window.electronAPI.downloadAttachment(e.srcElement.href);
 					}
@@ -1632,12 +1629,12 @@ window.n3.initFancyTree = function(rootNodes) {
 
 							console.log("file", file);
 
-							window.electronAPI.addFile(file.type, file.name, file.path, "path").then(function(asset) {
+							window.electronAPI.addAsset(file.type, file.name, file.path, "path").then(function(asset) {
 								console.log("file added", asset);
 
 								let newNodeData = window.n3.node.getNewNodeData();
 								newNodeData.title = file.name;
-								newNodeData.data.description = "<a href='" + asset.src + "' data-n3asset-id='" + asset.id + "' download>" + file.name + "</a>";
+								newNodeData.description = "<a href='" + asset.src + "' data-n3asset-key='" + asset.key + "' download>" + file.name + "</a>";
 
 								window.electronAPI.addNote(data.hitMode === "over" ? node.key : node.parent.key, {
 									key: newNodeData.key, 
@@ -1646,11 +1643,11 @@ window.n3.initFancyTree = function(rootNodes) {
 									priority: newNodeData.priority,
 									done: newNodeData.done,
 									description: newNodeData.description,
-									descriptionAsText: file.name,
 								}, data.hitMode, data.hitMode === "over" ? node.key : node.parent.key).then(function(newNodeData) {
 									console.log("write back added", newNodeData);
 
-									let newNode = node.addNode(newNodeData, data.hitMode);
+									let treeData = window.n3.dataToTreeData([newNodeData]);
+									let newNode = node.addNode(treeData[0], data.hitMode);
 								});
 							});
 							

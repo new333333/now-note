@@ -11,19 +11,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   removeTag: (key, tag) => ipcRenderer.invoke("store:removeTag", key, tag),
   moveNote: (key, from, to, hitMode, relativTo) => ipcRenderer.invoke("store:moveNote", key, from, to, hitMode, relativTo),
   moveNoteToTrash: (key, parent) => ipcRenderer.invoke("store:moveNoteToTrash", key, parent),
-
-
   search: (searchText, limit, trash) => ipcRenderer.invoke("search:search", searchText, limit, trash),
-
-  
-  // test when links are there
   getNote: (key) => ipcRenderer.invoke("store:getNote", key),
-  inTrash: (key) => ipcRenderer.invoke("store:inTrash", key),
-  // test by search link
+  isTrash: (key) => ipcRenderer.invoke("store:isTrash", key),
   getParents: (key) => ipcRenderer.invoke("store:getParents", key),
-
-  addFile: (fileType, fileName, filePathOrBase64, fileTransferType) => ipcRenderer.invoke("store:addFile", fileType, fileName, filePathOrBase64, fileTransferType),
+  addAsset: (fileType, fileName, filePathOrBase64, fileTransferType) => ipcRenderer.invoke("store:addAsset", fileType, fileName, filePathOrBase64, fileTransferType),
   downloadAttachment: (url) => ipcRenderer.invoke("download-attachment", url),
-  getIndexedDocuments: (limit) => ipcRenderer.invoke("search:getIndexedDocuments", limit),
-
 });

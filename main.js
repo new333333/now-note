@@ -178,8 +178,8 @@ const createWindow = () => {
         return n3.repository.removeTag(key, tag);
       });
 
-      ipcMain.handle("store:addFile", function(event, fileType, fileName, filePathOrBase64, fileTransferType) {
-        return n3.repository.addFile(fileType, fileName, filePathOrBase64, fileTransferType);
+      ipcMain.handle("store:addAsset", function(event, fileType, fileName, filePathOrBase64, fileTransferType) {
+        return n3.repository.addAsset(fileType, fileName, filePathOrBase64, fileTransferType);
       });
 
       ipcMain.handle("store:moveNote", function(event, key, from, to, hitMode, relativTo) {
@@ -191,8 +191,8 @@ const createWindow = () => {
         return n3.repository.moveNoteToTrash(key, parent);
       });
 
-      ipcMain.handle("store:inTrash", function(event, key) {
-        return n3.repository.inTrash(key);
+      ipcMain.handle("store:isTrash", function(event, key) {
+        return n3.repository.isTrash(key);
       });
 
       ipcMain.handle("store:getNote", function(event, key) {
@@ -206,11 +206,6 @@ const createWindow = () => {
       ipcMain.handle("search:search", function(event, searchText, limit, trash) {
         return n3.repository.search(searchText, limit, trash);
       });
-
-      ipcMain.handle("search:getIndexedDocuments", function(event, limit) {
-        return n3.repository.getIndexedDocuments(limit);
-      });
-
 
       ipcMain.handle('download-attachment',  function(event, url) {
         log.debug('download-attachment', url);  

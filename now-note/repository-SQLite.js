@@ -205,60 +205,8 @@ class RepositorySQLite  {
 		let path = "";
 		let trash = false;
 		await this.#modifyNoteIndex(null, reindexTree, path, trash);
-
-		// TODO trash = true;
-
-
-/*
-		log.info("Reindex all. TODO");
-
-		await this.searchService.init();
-
-
-		let that = this;
-
-		let trash = false;
-		await this.iterateNotes(function(noteModel, parents, trash) {
-			that.searchService.addNoteToIndex(noteModel, parents, trash);
-		}, trash);
-		
 		trash = true;
-		await this.iterateNotes(function(noteModel, parents, trash) {
-			that.searchService.addNoteToIndex(noteModel, parents, trash);
-		}, trash);
-
-		return await this.searchService.saveIndex();
-		*/
-	}
-
-	async iterateNotes(callback, trash, noteModel, parents) {
-		// log.debug("iterateNotesStore(trash, key)", trash, key);
-
-		parents = parents || [];
-
-		// log.debug("iterateNotesStore noteModel for key", noteModel, key);
-		// log.debug("iterateNotesStore callback noteModel", callback);
-		if (noteModel) {
-			callback(noteModel, parents, trash);
-		}
-
-		let children = await nnNote.Note.findAll({
-			where: {
-				parent: noteModel ? noteModel.key : null,
-				trash: trash
-			}
-		});
-
-		for (let i = 0; i < children.length; i++) {
-			let childParents = JSON.parse(JSON.stringify(parents));
-			if (noteModel) {
-				childParents.push(noteModel);
-			}
-			callback(children[i], childParents, trash);
-
-			await this.iterateNotes(callback, trash, children[i], childParents);
-		}
-
+		await this.#modifyNoteIndex(null, reindexTree, path, trash);
 	}
 
 	async closeRepository() {
@@ -272,18 +220,6 @@ class RepositorySQLite  {
 			isDefault: this.isDefault
 		};
 	}
-
-/*
-  title: '14.08.2022 22:47',
-  type: 'note',
-  priority: 0,
-  done: false,
-  expanded: false,
-  createdBy: 'pnowi'
-  */
-
-
-
 
 	async addNote(parentNoteKey, note, hitMode, relativeToKey) {
 		
@@ -309,6 +245,8 @@ class RepositorySQLite  {
 			note.position = 0;
 		}
 
+		note.createdBy = note.createdBy || this.userName;
+		note.expanded = note.expanded || false;
 		let newNote = await nnNote.Note.create(note);
 
 		let resultNote = await this.toData(newNote, false, false);
@@ -331,6 +269,8 @@ class RepositorySQLite  {
 		let parents = await this.getParents(newNote.key);
 
 		parents.pop();
+
+		let $description = cheerio.load(newNote.description || "", null, false);
 		
 		let path = this.#notesArrayToPath(parents);
 		const [results, metadata] = await this.sequelize.query("INSERT INTO Notes_index (key, path, title, descriptionAsText, type, done, priority, trash) VALUES (:key, :path, :title, :descriptionAsText, :type, :done, :priority, :trash)", {
@@ -338,7 +278,7 @@ class RepositorySQLite  {
 				key: newNote.key, 
 				path: path || "", 
 				title: newNote.title || "", 
-				descriptionAsText: newNote.descriptionAsText || "",
+				descriptionAsText: $description.text(),
 				type: newNote.type,  
 				done: newNote.done,  
 				priority: newNote.priority,   
@@ -360,12 +300,14 @@ class RepositorySQLite  {
 			var tagsAsString = tags.map(function(tag){
 				return tag.tag;
 			}).join(" ");
+
+			let $description = cheerio.load(note.description || "", null, false);
 			
 			let replacements = {
 				key: note.key, 
 				title: note.title || "", 
 				tags: tagsAsString,
-				descriptionAsText: note.descriptionAsText || "",
+				descriptionAsText: $description.text(),
 				type: note.type,  
 				done: note.done,  
 				priority: note.priority,   
@@ -421,7 +363,7 @@ class RepositorySQLite  {
 			let nextImg = imgs.eq(i);
 
 			if (!nextImg.attr("src") || nextImg.attr("src").indexOf("data:image/") == -1) {
-				if (nextImg.attr("data-n3asset-id")) {
+				if (nextImg.attr("data-n3asset-key")) {
 					nextImg.attr("src", "");
 				}
 			} else {
@@ -434,14 +376,14 @@ class RepositorySQLite  {
 				let asset = await this.addAsset(fileType, fileName, filePathOrBase64, fileTransferType);
 				// log.debug("write back img?", asset);
 				nextImg.attr("src", "");
-				nextImg.attr("data-n3asset-id", asset.id);
+				nextImg.attr("data-n3asset-key", asset.key);
 			}
 		}
 
 		return $description.html();
 	}
 
-	// return {src: fileSource, id: assetId}
+	// return {src: fileSource, key: assetKey}
 	async addAsset(fileType, fileName, filePathOrBase64, fileTransferType) {
 		// log.debug("addAsset ", fileType, fileName, fileTransferType);
 
@@ -457,7 +399,7 @@ class RepositorySQLite  {
 		if (fileTransferType === "base64") {
 			// log.debug("addAsset blob writeFile ", assetFile);
 			await fs.writeFile(assetFile, Buffer.from(filePathOrBase64,"base64"));
-			// log.debug("addAsset resolve1 ", assetFile, assetId);
+			// log.debug("addAsset resolve1 ", assetFile, assetKey);
 		} else {
 			// log.debug("addAsset copyFile ", filePathOrBase64, assetFile);
 			await fs.copyFile(filePathOrBase64, assetFile);
@@ -465,7 +407,7 @@ class RepositorySQLite  {
 		}
 		return {
 			src: assetFile, 
-			id: assetModel.key
+			key: assetModel.key
 		};
 	}
 
@@ -483,6 +425,79 @@ class RepositorySQLite  {
 			});
 		}
 		return path;
+	}
+
+	async #setLinksBeforeWrite(key, description) {
+		if (!description) {
+			return description;
+		}
+			
+		let $htmlCntainer = cheerio.load(description, null, false);
+		let internalLinks = $htmlCntainer("[data-link-node]");
+	
+		// log.debug("#setLinksBeforeWrite internalLinks.length", internalLinks.length);
+
+		let newLinks = [];
+
+		for (let i = 0; i < internalLinks.length; i++) {
+			let $linkToNote = internalLinks.eq(i);
+			if ($linkToNote.attr("data-link-node")) {
+				let linkToNoteKey = $linkToNote.attr("data-link-node");
+				const linkToNote = await nnNote.Note.findByPk(linkToNoteKey);
+				if (linkToNote) {
+
+					if (!newLinks.includes(linkToNoteKey)) {
+						newLinks.push(linkToNoteKey);
+					}
+
+					await nnLink.Link.findOrCreate({
+						where: {
+							from: key,
+							to: linkToNoteKey,
+							type: "link"
+						}
+					});
+
+					await nnLink.Link.findOrCreate({
+						where: {
+							from: linkToNoteKey,
+							to: key,
+							type: "backlink"
+						}
+					});
+				}
+
+				// clean goto-links before write
+				$linkToNote.html("");
+			}
+		};
+
+		let allLinks = await nnLink.Link.findAll({
+			where: {
+				from: key,
+				type: "link"
+			}
+		});
+
+		for await (const link of allLinks) {
+			const linkToNote = await nnNote.Note.findByPk(link.to);
+			if (linkToNote) {
+				if (!newLinks.includes(link.to)) {
+					await link.destroy();
+					await nnNote.Note.destroy({
+						where: {
+							from: link.to,
+							to: key,
+							type: "backlink"
+						}
+					});
+				}
+			} else {
+				await link.destroy();
+			}
+		}
+
+		return $htmlCntainer.html();
 	}
 
 	async modifyNote(note) {
@@ -508,8 +523,8 @@ class RepositorySQLite  {
 		if (note.hasOwnProperty("description")) {
 
 			let html = note.description;
-			// html = await this.#updateLinksBeforeWrite(note.key, note.description);
-			// html = await this.#fixAttachmentsBeforeWrite(html);
+			html = await this.#setLinksBeforeWrite(note.key, html);
+			html = await this.#setAttachmentsBeforeWrite(html);
 			html = await this.#extractInlineImagesBeforeWrite(html);
 
 
@@ -519,7 +534,10 @@ class RepositorySQLite  {
 				descriptionAsText: modifyNote.descriptionAsText,
 			});
 			modifyNote.description = html;
-			modifyNote.descriptionAsText = note.descriptionAsText;
+
+			let $description = cheerio.load(html || "", null, false);
+
+			modifyNote.descriptionAsText = $description.text();
 			reindex = true;
 		}
 		if (note.hasOwnProperty("type")) {
@@ -562,6 +580,26 @@ class RepositorySQLite  {
 		*/		
 		let resultNote = await this.toData(modifyNote, false, false);
 		return resultNote;
+	}
+
+	async #setAttachmentsBeforeWrite(htmltext) {
+		// log.debug("setAttachmentsBeforeWrite htmltext", htmltext);
+		
+		if (!htmltext) {
+			return;
+		}
+		
+		let $description = cheerio.load(htmltext, null, false);
+		let links = $description("a[data-n3asset-id]");
+
+		for (let i = 0; i < links.length; i++) {
+			let nextLink = links.eq(i);
+			if (nextLink.attr("data-n3asset-id")) {
+				nextLink.attr("href", "#");
+			}
+		}
+
+		return  $description.html();		
 	}
 
 	async addTag(key, tag) {
@@ -789,6 +827,8 @@ class RepositorySQLite  {
 	}
 
 	async moveNoteToTrash(key, parent) {
+
+		// TODO: find first link to note in tree - warnung geben
 		
 		if (!key) {
 			return;
@@ -820,14 +860,40 @@ class RepositorySQLite  {
 		modifyNote.trash = true;
 		modifyNote.save();
 
-		
-		/* TODO
-		let note = await this.#readNote(noteFolder);
+		let trash = true;
+		await this.#modifyTrashFlag(key, trash);
+				
+
+		let reindexTree = true;
 		trash = true;
-		let deep = true; // must update paths of children
-		await this.#reindexNote(note, deep, trash);
-		*/
+		let parents = await this.getParents(modifyNote.key);
+		parents.pop();
+		this.#modifyNoteIndex(modifyNote, reindexTree, this.#notesArrayToPath( parents ), trash);
 	}
+
+	async #modifyTrashFlag(key, trash) {
+		await nnNote.Note.update(
+			{
+				trash: trash
+			},
+			{
+				where: { 
+					parent: key 
+				} 
+			}
+		);
+
+		let children = await nnNote.Note.findAll({
+			where: {
+				parent: key
+			}
+		});
+
+		for (let i = 0; i < children.length; i++) {
+			await this.#modifyTrashFlag(children[i].key, trash);
+		}
+	}
+
 
 	async getNote(key) {
 	//async getNoteStore(key, simple) {
@@ -844,22 +910,13 @@ class RepositorySQLite  {
 		}
 	}
 
-	async inTrashStore(key) {
+	async isTrash(key) {
 		const noteModel = await nnNote.Note.findByPk(key);
 		if (noteModel === null) {
 			throw new nnNote.NoteNotFoundByKey(key);
 		}
 
-		if (noteModel.parent == null && noteModel.trash) {
-			return true;
-		}
-
-		let parents = await this.getParents(note.key);
-		if (!parents || parents.length == 0) {
-			return false;
-		}
-
-		return parents[0].trash;
+		return noteModel.trash;
 	}
 
 	async getParents(key, parents) {
@@ -886,10 +943,87 @@ class RepositorySQLite  {
 
 	}
 
+	async #setImagesPathAfterRead(html) {
+		let $html = cheerio.load(html || "", null, false);
+		let imgs = $html("img");
+
+		for (let i = 0; i < imgs.length; i++) {
+			let nextImg = imgs.eq(i);
+			// log.debug("#setImagesPathAfterRead nextImg", nextImg.attr("data-n3asset-key"));
+			if (nextImg.attr("data-n3asset-key")) {
+
+				let assetKey = nextImg.attr("data-n3asset-key");
+				let assetModel = await nnAsset.Asset.findByPk(assetKey);
+
+				nextImg.attr("src", path.join(this.directory, this.#assetsFolderName, assetKey, assetModel.name));
+			}
+		}
+
+		return $html.html();
+	}
+
+	
+	async #setLinksAfterRead(htmlText) {
+
+		let $htmlCntainer = cheerio.load(htmlText, null, false);
+		let internalLinks = $htmlCntainer("[data-link-node]");
+
+		for (let i = 0; i < internalLinks.length; i++) {
+			let $linkToNote = internalLinks.eq(i);
+			if ($linkToNote.attr("data-link-node")) {
+				let linkToNoteKey = $linkToNote.attr("data-link-node");
+				const note = await nnNote.Note.findByPk(linkToNoteKey);
+				if (note) {
+					let parents = await this.getParents(note.key);
+					
+					let path = "";
+					let sep = "";
+					if (parents) {
+						parents.forEach(function(parentNote) {
+							path = `${path}${sep}${parentNote.trash ? " in Trash: " : ""}<a href='#${parentNote.key}' data-goto-note='${parentNote.key}'>${parentNote.title}</a>`;
+							sep = " / ";
+						});
+					}
+
+					$linkToNote.html("[" + path + " ]");
+				} else {
+					$linkToNote.html("[ NODE " + linkToNoteKey + " NOT FOUND ]");
+				}
+			}
+		}
+
+		return $htmlCntainer.html();
+	}
+
+	
+	async #setAttachmentsPathAfterRead(htmltext) {
+		let $linksHiddenContainer = cheerio.load(htmltext || "", null, false);
+		let links = $linksHiddenContainer("a[data-n3asset-key]");
+
+		for (let i = 0; i < links.length; i++) {
+			let nextLinks = links.eq(i);
+			// log.debug("#setAttachmentsPathAfterRead nextLinks", nextLinks.attr("data-n3asset-key"));
+			if (nextLinks.attr("data-n3asset-key")) {
+
+				let assetKey = nextLinks.attr("data-n3asset-key");	
+
+				let assetModel = await nnAsset.Asset.findByPk(assetKey);
+				nextLinks.attr("href", path.join(this.directory, this.#assetsFolderName, assetKey, assetModel.name));
+			}
+		}
+
+		return $linksHiddenContainer.html();
+	}
+
 	async toData(note, withtags, withchildren) {
 		if (!note) {
 			return;
 		}
+
+		let description = note.description;
+		description = await this.#setImagesPathAfterRead(description);
+		description = await this.#setAttachmentsPathAfterRead(description);
+		description = await this.#setLinksAfterRead(description);
 
 		let result =  {
 			key: note.key,
@@ -899,7 +1033,7 @@ class RepositorySQLite  {
 			done: note.done,
 			priority: note.priority,
 			expanded: note.expanded,
-			description: note.description
+			description: description
 		};
 
 		if (withchildren) {
