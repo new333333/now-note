@@ -203,7 +203,8 @@ class RepositorySQLite  {
 	async reindexAll() {
 		let reindexTree = true;
 		let path = "";
-		await this.#modifyNoteIndex(null, reindexTree, path);
+		let onlyPath = false;
+		await this.#modifyNoteIndex(null, reindexTree, path, onlyPath);
 	}
 
 	async closeRepository() {
@@ -230,7 +231,6 @@ class RepositorySQLite  {
 		}
 
 		// set position
-		// TODO: other hitModes?
 		if (hitMode == "firstChild") {
 			const [results, metadata] = await this.sequelize.query("UPDATE Notes SET position = position + 1 where " + (note.parent == null ? "parent is NULL " : "parent = :parent") + " and trash = :trash", {
 				replacements: {
@@ -341,40 +341,56 @@ class RepositorySQLite  {
 
 	}
 
-	// TODO: add Option: update only 'path', das ändert sich meinstens
-	async #modifyNoteIndex(note, reindexTree, path) {
-		// TODO: update only required fields!!! not all at ones! 
+	async #modifyNoteIndex(note, reindexTree, path, onlyPath) {
 		if (note) {
-			let tags = await nnTag.Tag.findAll({
-				where: {
-					key: note.key
+			if (!onlyPath) {
+				let tags = await nnTag.Tag.findAll({
+					where: {
+						key: note.key
+					}
+				});
+
+				var tagsAsString = tags.map(function(tag){
+					return tag.tag;
+				}).join(" ");
+
+				let $description = cheerio.load(note.description || "", null, false);
+				
+				let replacements = {
+					key: note.key, 
+					title: note.title || "", 
+					tags: tagsAsString,
+					descriptionAsText: $description.text(),
+					type: note.type,  
+					done: note.done,  
+					priority: note.priority,   
+					trash: note.trash 
+				};
+
+				if (reindexTree) {
+					replacements.path = path;
 				}
-			});
 
-			var tagsAsString = tags.map(function(tag){
-				return tag.tag;
-			}).join(" ");
+				const [results, metadata] = await this.sequelize.query("UPDATE Notes_index set " + (reindexTree ? "path = :path, " : "") + " title = :title, descriptionAsText = :descriptionAsText, type = :type, done = :done, priority = :priority, trash = :trash, tags = :tags where key = :key", {
+					replacements: replacements
+				});
 
-			let $description = cheerio.load(note.description || "", null, false);
-			
-			let replacements = {
-				key: note.key, 
-				title: note.title || "", 
-				tags: tagsAsString,
-				descriptionAsText: $description.text(),
-				type: note.type,  
-				done: note.done,  
-				priority: note.priority,   
-				trash: note.trash 
-			};
+			} else {
+				
+				let replacements = {
+					key: note.key, 
+					title: note.title || "", 
+				};
 
-			if (reindexTree) {
-				replacements.path = path;
+				if (reindexTree) {
+					replacements.path = path;
+				}
+
+				const [results, metadata] = await this.sequelize.query("UPDATE Notes_index set " + (reindexTree ? "path = :path, " : "") + " title = :title where key = :key", {
+					replacements: replacements
+				});
+
 			}
-
-			const [results, metadata] = await this.sequelize.query("UPDATE Notes_index set " + (reindexTree ? "path = :path, " : "") + " title = :title, descriptionAsText = :descriptionAsText, type = :type, done = :done, priority = :priority, trash = :trash, tags = :tags where key = :key", {
-				replacements: replacements
-			});
 		}
 
 		if (reindexTree) {
@@ -394,7 +410,7 @@ class RepositorySQLite  {
 			});
 
 			for (let i = 0; i < children.length; i++) {
-				await this.#modifyNoteIndex(children[i], reindexTree, path)
+				await this.#modifyNoteIndex(children[i], reindexTree, path, onlyPath)
 			}
 
 		}
@@ -486,7 +502,7 @@ class RepositorySQLite  {
 		}
 			
 		let $htmlCntainer = cheerio.load(description, null, false);
-		let internalLinks = $htmlCntainer("[data-link-node]");
+		let internalLinks = $htmlCntainer("[data-n3link-node]");
 	
 		// log.debug("#setLinksBeforeWrite internalLinks.length", internalLinks.length);
 
@@ -494,8 +510,8 @@ class RepositorySQLite  {
 
 		for (let i = 0; i < internalLinks.length; i++) {
 			let $linkToNote = internalLinks.eq(i);
-			if ($linkToNote.attr("data-link-node")) {
-				let linkToNoteKey = $linkToNote.attr("data-link-node");
+			if ($linkToNote.attr("data-n3link-node")) {
+				let linkToNoteKey = $linkToNote.attr("data-n3link-node");
 				const linkToNote = await nnNote.Note.findByPk(linkToNoteKey);
 				if (linkToNote) {
 
@@ -571,7 +587,6 @@ class RepositorySQLite  {
 				reindexTree = true;
 			}
 			modifyNote.title = note.title;
-			reindex = true;
 		}
 		if (note.hasOwnProperty("description")) {
 
@@ -612,10 +627,11 @@ class RepositorySQLite  {
 
 		modifyNote.save();
 
-		if (reindex) {
+		if (reindex || reindexTree) {
 			let parents = await this.getParents(modifyNote.key);
 			parents.pop();
-			this.#modifyNoteIndex(modifyNote, reindexTree, reindexTree ? this.#notesArrayToPath( parents ) : false);
+			let onlyPath = reindexTree && !reindex;
+			this.#modifyNoteIndex(modifyNote, reindexTree, reindexTree ? this.#notesArrayToPath( parents ) : false, onlyPath);
 		}
 
 		let resultNote = await this.toData(modifyNote, false, false);
@@ -862,18 +878,15 @@ class RepositorySQLite  {
 
 		modifyNote.save();
 
-/* TODO TREST it
-		*/
-
 		let reindexTree = true;
+		let onlyPath = true;
 		let parents = await this.getParents(modifyNote.key);
 		parents.pop();
-		this.#modifyNoteIndex(modifyNote, reindexTree, this.#notesArrayToPath( parents ));
+		this.#modifyNoteIndex(modifyNote, reindexTree, this.#notesArrayToPath( parents ), onlyPath);
 	}
 
+	// links/backlinks are not checked
 	async moveNoteToTrash(key, parent) {
-
-		// TODO: find first link to note in tree - warnung geben
 		
 		if (!key) {
 			return;
@@ -910,9 +923,10 @@ class RepositorySQLite  {
 				
 
 		let reindexTree = true;
+		let onlyPath = true;
 		let parents = await this.getParents(modifyNote.key);
 		parents.pop();
-		this.#modifyNoteIndex(modifyNote, reindexTree, this.#notesArrayToPath( parents ));
+		this.#modifyNoteIndex(modifyNote, reindexTree, this.#notesArrayToPath( parents ), onlyPath);
 	}
 
 	async #modifyTrashFlag(key, trash) {
@@ -1010,12 +1024,12 @@ class RepositorySQLite  {
 	async #setLinksAfterRead(htmlText) {
 
 		let $htmlCntainer = cheerio.load(htmlText, null, false);
-		let internalLinks = $htmlCntainer("[data-link-node]");
+		let internalLinks = $htmlCntainer("[data-n3link-node]");
 
 		for (let i = 0; i < internalLinks.length; i++) {
 			let $linkToNote = internalLinks.eq(i);
-			if ($linkToNote.attr("data-link-node")) {
-				let linkToNoteKey = $linkToNote.attr("data-link-node");
+			if ($linkToNote.attr("data-n3link-node")) {
+				let linkToNoteKey = $linkToNote.attr("data-n3link-node");
 				const note = await nnNote.Note.findByPk(linkToNoteKey);
 				if (note) {
 					let parents = await this.getParents(note.key);

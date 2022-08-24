@@ -1135,7 +1135,7 @@ window.n3.node.getNodeHTMLEditor = function(form) {
 						window.n3.action.activateNode(e.srcElement.dataset.gotoNote);
 					}
 					
-					if (e.srcElement &&  e.srcElement.dataset && e.srcElement.dataset.n3assetKey) {
+					if (e.srcElement &&  e.srcElement.dataset && e.srcElement.dataset.n3asset) {
 						console.log("open attachment in ew tab", e.srcElement.href);
 						window.electronAPI.downloadAttachment(e.srcElement.href);
 					}
@@ -1160,9 +1160,7 @@ window.n3.node.getNodeHTMLEditor = function(form) {
 										sep = " / ";
 									});
 								}
-								// path = `${path}${sep}<a href='#${linkToNote.key}' data-goto-note='${linkToNote.key}'>${linkToNote.title}</a>`;
-			
-								editor.insertContent("<span data-link-node='" + key +"' contenteditable='false'>[ " + path + " ]</span>");
+								editor.insertContent("<span data-n3link-node='" + key +"' contenteditable='false'>[ " + path + " ]</span>");
 								autocompleteApi.hide();
 							});
 						});
