@@ -15,6 +15,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getNote: (key) => ipcRenderer.invoke("store:getNote", key),
   isTrash: (key) => ipcRenderer.invoke("store:isTrash", key),
   getParents: (key) => ipcRenderer.invoke("store:getParents", key),
-  addAsset: (fileType, fileName, filePathOrBase64, fileTransferType) => ipcRenderer.invoke("store:addAsset", fileType, fileName, filePathOrBase64, fileTransferType),
+  //addAsset: (fileType, fileName, filePathOrBase64, fileTransferType) => ipcRenderer.invoke("store:addAsset", fileType, fileName, filePathOrBase64, fileTransferType),
   downloadAttachment: (url) => ipcRenderer.invoke("download-attachment", url),
+  addFile: (parentKey, path, hitMode, relativeToKey) => ipcRenderer.invoke("store:addFile", parentKey, path, hitMode, relativeToKey),
 });

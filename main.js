@@ -4,7 +4,6 @@ const {app, BrowserWindow, ipcMain, dialog, Menu, MenuItem} = require('electron'
 const path = require('path');
 const { title } = require('process');
 const fs = require('fs').promises;
-const N3StoreServiceFileSystem = require('./src/js/store/N3StoreServiceFileSystem');
 const nnUserSettings = require('./now-note/user-settings');
 const nnRepositoryFactory = require('./now-note/repository-factory');
 const os = require ('os');
@@ -178,8 +177,13 @@ const createWindow = () => {
         return n3.repository.removeTag(key, tag);
       });
 
-      ipcMain.handle("store:addAsset", function(event, fileType, fileName, filePathOrBase64, fileTransferType) {
-        return n3.repository.addAsset(fileType, fileName, filePathOrBase64, fileTransferType);
+
+      // ipcMain.handle("store:addAsset", function(event, fileType, fileName, filePathOrBase64, fileTransferType) {
+      //   return n3.repository.addAsset(fileType, fileName, filePathOrBase64, fileTransferType);
+      // });
+
+      ipcMain.handle("store:addFile", function(event, parentKey, path, hitMode, relativeToKey) {
+        return n3.repository.addFile(parentKey, path, hitMode, relativeToKey);
       });
 
       ipcMain.handle("store:moveNote", function(event, key, from, to, hitMode, relativTo) {

@@ -2,13 +2,11 @@ const log = require('electron-log');
 const path = require('path');
 const { Sequelize, DataTypes, Op, QueryTypes} = require('sequelize');
 const nnNote = require('./Note');
-// const nnStructure = require('./Structure');
 const nnTitle = require('./Title');
 const nnDescription = require('./Description');
 const nnTag = require('./Tag');
 const nnLink = require('./Link');
 const nnAsset = require('./Asset');
-const search = require('./search-flexSearch');
 const cheerio = require('cheerio');
 const fs = require('fs').promises;
 
@@ -167,14 +165,16 @@ class RepositorySQLite  {
 			}
 		}, { sequelize });
 
-
-		// await this.#setupSQLite();
+		await this.#setupSQLite();
 	}
 
 
 	async #setupSQLite() {
-		await this.sequelize.sync({ alter: true });
-		let [results, metadata] = await this.sequelize.query(`CREATE VIRTUAL TABLE Notes_index USING FTS5(key UNINDEXED, path, title, descriptionAsText, tags, type, done, priority, trash, prefix='1 2 3')`);
+		let [results, metadata] = await this.sequelize.query(`SELECT name FROM sqlite_master WHERE type='table' AND name='Notes'`);
+		if (results.length == 0) {
+			await this.sequelize.sync({ alter: true });
+			let [results, metadata] = await this.sequelize.query(`CREATE VIRTUAL TABLE Notes_index USING FTS5(key UNINDEXED, path, title, descriptionAsText, tags, type, done, priority, trash, prefix='1 2 3')`);
+		}
 	}
 
 	async search(searchText, limit, trash) {
@@ -186,7 +186,7 @@ class RepositorySQLite  {
 			`SELECT * FROM Notes_index 
 			WHERE ${searchText ? "title MATCH :searchText or descriptionAsText MATCH :searchText and" : ""} Notes_index MATCH '"trash" : ${trash}' ORDER BY rank LIMIT :limit`, {
 				replacements: {
-					searchText: searchText || "*",
+					searchText: (searchText + "*") || "*",
 					limit: limit
 				},
 				raw: true,
@@ -203,10 +203,7 @@ class RepositorySQLite  {
 	async reindexAll() {
 		let reindexTree = true;
 		let path = "";
-		let trash = false;
-		await this.#modifyNoteIndex(null, reindexTree, path, trash);
-		trash = true;
-		await this.#modifyNoteIndex(null, reindexTree, path, trash);
+		await this.#modifyNoteIndex(null, reindexTree, path);
 	}
 
 	async closeRepository() {
@@ -224,7 +221,7 @@ class RepositorySQLite  {
 	async addNote(parentNoteKey, note, hitMode, relativeToKey) {
 		
 		
-		// log.debug("RepositorySQLite.addNote parentNoteKey, note, hitMode, relativeToKey", parentNoteKey, note, hitMode, relativeToKey);
+		log.debug("RepositorySQLite.addNote parentNoteKey, note, hitMode, relativeToKey", parentNoteKey, note, hitMode, relativeToKey);
 
 		// set parent
 		note.parent = parentNoteKey;
@@ -243,21 +240,77 @@ class RepositorySQLite  {
 			});
 
 			note.position = 0;
+		} else if (hitMode == "over") {
+
+			let max = await nnNote.Note.max("position", { 
+				where:  {
+					parent: parentNoteKey
+				} 
+			}); 
+
+			note.position = max == null ? 0 : max + 1;
+
+		} else if (hitMode == "after") {
+
+			const relativNote = await nnNote.Note.findByPk(relativeToKey);
+			if (relativNote === null) {
+				throw new nnNote.NoteNotFoundByKey(relativNote);
+			}
+
+			let [results, metadata] = await this.sequelize.query("UPDATE Notes SET position = position + 1 where " + (relativNote.parent == null ? "parent is NULL " : "parent = :parent") + " and trash = :trash and position > :position", {
+				replacements: {
+					parent: relativNote.parent,
+					position: relativNote.position,
+					trash: false
+				},
+				type: QueryTypes.SELECT
+			});
+
+			note.parent = relativNote.parent;
+			note.position = relativNote.position + 1;
+
+		} else if (hitMode === "before") {
+
+			const relativNote = await nnNote.Note.findByPk(relativeToKey);
+			if (relativNote === null) {
+				throw new nnNote.NoteNotFoundByKey(relativNote);
+			}
+
+			let [results, metadata] = await this.sequelize.query("UPDATE Notes SET position = position + 1 where " + (relativNote.parent == null ? "parent is NULL " : "parent = :parent") + " and trash = :trash and position >= :position", {
+				replacements: {
+					parent: relativNote.parent,
+					position: relativNote.position,
+					trash: false
+				},
+				type: QueryTypes.SELECT
+			});
+
+			note.parent = relativNote.parent;
+			note.position = relativNote.position;
+
 		}
 
 		note.createdBy = note.createdBy || this.userName;
 		note.expanded = note.expanded || false;
+		note.done = note.done || false;
+
+		if (note.hasOwnProperty("description")) {
+			let html = note.description;
+			html = await this.#setInlineImagesBeforeWrite(html);
+			html = await this.#setAttachmentsPathBeforeWrite(html);
+			note.description = html;
+		}
+
 		let newNote = await nnNote.Note.create(note);
 
+		if (newNote.hasOwnProperty("description")) {
+			let html = newNote.description;
+			html = await this.#setLinksBeforeWrite(newNote.key, html);
+			newNote.description = html;
+		}
+		newNote.save();
+
 		let resultNote = await this.toData(newNote, false, false);
-
-
-
-		/*
-		TODO
-			newNoteData.hasOwnProperty("links") ||
-			newNoteData.hasOwnProperty("backlinks") 
-		*/
 
 		this.#addNoteIndex(newNote);
 		
@@ -288,7 +341,8 @@ class RepositorySQLite  {
 
 	}
 
-	async #modifyNoteIndex(note, reindexTree, path, trash) {
+	// TODO: add Option: update only 'path', das ändert sich meinstens
+	async #modifyNoteIndex(note, reindexTree, path) {
 		// TODO: update only required fields!!! not all at ones! 
 		if (note) {
 			let tags = await nnTag.Tag.findAll({
@@ -311,7 +365,7 @@ class RepositorySQLite  {
 				type: note.type,  
 				done: note.done,  
 				priority: note.priority,   
-				trash: trash 
+				trash: note.trash 
 			};
 
 			if (reindexTree) {
@@ -335,13 +389,12 @@ class RepositorySQLite  {
 
 			let children = await nnNote.Note.findAll({
 				where: {
-					parent: note ? note.key : null,
-					trash: trash
+					parent: note ? note.key : null
 				}
 			});
 
 			for (let i = 0; i < children.length; i++) {
-				await this.#modifyNoteIndex(children[i], reindexTree, path, trash)
+				await this.#modifyNoteIndex(children[i], reindexTree, path)
 			}
 
 		}
@@ -349,8 +402,8 @@ class RepositorySQLite  {
 	}
 
 
-	async #extractInlineImagesBeforeWrite(htmltext) {
-		// log.debug("extractInlineImagesBeforeWrite htmltext", htmltext);
+	async #setInlineImagesBeforeWrite(htmltext) {
+		// log.debug("setInlineImagesBeforeWrite htmltext", htmltext);
 
 		if (!htmltext) {
 			return htmltext;
@@ -524,8 +577,8 @@ class RepositorySQLite  {
 
 			let html = note.description;
 			html = await this.#setLinksBeforeWrite(note.key, html);
-			html = await this.#setAttachmentsBeforeWrite(html);
-			html = await this.#extractInlineImagesBeforeWrite(html);
+			html = await this.#setInlineImagesBeforeWrite(html);
+			html = await this.#setAttachmentsPathBeforeWrite(html);
 
 
 			let oldDescription = await nnDescription.Description.create({
@@ -560,24 +613,11 @@ class RepositorySQLite  {
 		modifyNote.save();
 
 		if (reindex) {
-			let trash = false;
 			let parents = await this.getParents(modifyNote.key);
 			parents.pop();
-			this.#modifyNoteIndex(modifyNote, reindexTree, reindexTree ? this.#notesArrayToPath( parents ) : false, trash);
+			this.#modifyNoteIndex(modifyNote, reindexTree, reindexTree ? this.#notesArrayToPath( parents ) : false);
 		}
 
-		/*
-
-		newNoteData.hasOwnProperty("links") ||
-		newNoteData.hasOwnProperty("backlinks") 
-
-		TODO_ sqlite??
-		if (dataModified || titleModified || descriptionModified) {
-			let trash = false; // modify in trash is not allowed
-			let deep = titleModified;
-			await this.#reindexNote(note, deep, trash);
-		}
-		*/		
 		let resultNote = await this.toData(modifyNote, false, false);
 		return resultNote;
 	}
@@ -653,7 +693,10 @@ class RepositorySQLite  {
 			where: {
 				parent: !key ? null : key,
 				trash: trash
-			}
+			},
+			order: [
+				["position", "ASC"]
+			],
 		});
 
 		let resultNotes = [];
@@ -819,11 +862,13 @@ class RepositorySQLite  {
 
 		modifyNote.save();
 
-/* TODO 
-		let trash = false;
-		let deep = true;
-		await this.#reindexNote(note, deep, false);
+/* TODO TREST it
 		*/
+
+		let reindexTree = true;
+		let parents = await this.getParents(modifyNote.key);
+		parents.pop();
+		this.#modifyNoteIndex(modifyNote, reindexTree, this.#notesArrayToPath( parents ));
 	}
 
 	async moveNoteToTrash(key, parent) {
@@ -865,10 +910,9 @@ class RepositorySQLite  {
 				
 
 		let reindexTree = true;
-		trash = true;
 		let parents = await this.getParents(modifyNote.key);
 		parents.pop();
-		this.#modifyNoteIndex(modifyNote, reindexTree, this.#notesArrayToPath( parents ), trash);
+		this.#modifyNoteIndex(modifyNote, reindexTree, this.#notesArrayToPath( parents ));
 	}
 
 	async #modifyTrashFlag(key, trash) {
@@ -943,13 +987,13 @@ class RepositorySQLite  {
 
 	}
 
-	async #setImagesPathAfterRead(html) {
+	async #setInlineImagesPathAfterRead(html) {
 		let $html = cheerio.load(html || "", null, false);
 		let imgs = $html("img");
 
 		for (let i = 0; i < imgs.length; i++) {
 			let nextImg = imgs.eq(i);
-			// log.debug("#setImagesPathAfterRead nextImg", nextImg.attr("data-n3asset-key"));
+			// log.debug("#setInlineImagesPathAfterRead nextImg", nextImg.attr("data-n3asset-key"));
 			if (nextImg.attr("data-n3asset-key")) {
 
 				let assetKey = nextImg.attr("data-n3asset-key");
@@ -1015,13 +1059,74 @@ class RepositorySQLite  {
 		return $linksHiddenContainer.html();
 	}
 
+	async #setAttachmentsPathBeforeWrite(htmltext) {
+		let $linksHiddenContainer = cheerio.load(htmltext || "", null, false);
+		let links = $linksHiddenContainer("a[data-n3asset-key]");
+
+		for (let i = 0; i < links.length; i++) {
+			let nextLinks = links.eq(i);
+			// log.debug("#setAttachmentsPathAfterRead nextLinks", nextLinks.attr("data-n3asset-key"));
+			if (nextLinks.attr("data-n3asset-key")) {
+				nextLinks.attr("href", "#");
+			}
+		}
+
+		return $linksHiddenContainer.html();
+	}
+
+	async addFile(parentKey, filepath, hitMode, relativeToKey) {
+		log.debug("addFolder path", filepath);
+
+		if (!path) {
+			return;
+		}
+
+		let resultNote = undefined;
+		
+		let stats = await fs.stat(filepath);
+		log.debug("addFolder stats", stats);
+		if (stats.isDirectory()) {
+
+			log.debug("addFolder filepath isDirectory");
+			
+			resultNote = await this.addNote(parentKey, {
+				title: path.basename(filepath),
+				type: "note"
+			}, hitMode, relativeToKey);
+
+			let files = await fs.readdir(filepath, { withFileTypes: true });
+
+			for (let i = 0; i < files.length; i++) {
+				await this.addFile(resultNote.key, path.join(filepath, files[i].name), "over", resultNote.key);
+			}
+
+		} else if (stats.isFile()) {
+			log.debug("addFolder path isFile");
+
+			let asset = await this.addAsset(null, path.basename(filepath), filepath, "path");
+
+			resultNote = await this.addNote(parentKey, {
+				title: path.basename(filepath),
+				type: "note",
+				description: "<a href='" + asset.src + "' data-n3asset-key='" + asset.key + "' download>" + path.basename(filepath) + "</a>"
+			}, hitMode, relativeToKey);
+
+		
+		}
+
+		return resultNote;
+
+	}
+
+
+
 	async toData(note, withtags, withchildren) {
 		if (!note) {
 			return;
 		}
 
 		let description = note.description;
-		description = await this.#setImagesPathAfterRead(description);
+		description = await this.#setInlineImagesPathAfterRead(description);
 		description = await this.#setAttachmentsPathAfterRead(description);
 		description = await this.#setLinksAfterRead(description);
 
@@ -1033,7 +1138,8 @@ class RepositorySQLite  {
 			done: note.done,
 			priority: note.priority,
 			expanded: note.expanded,
-			description: description
+			description: description,
+			trash: note.trash,
 		};
 
 		if (withchildren) {

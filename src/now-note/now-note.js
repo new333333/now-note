@@ -625,12 +625,27 @@ window.n3.action.activateNode = function(noteKey) {
 	if (!node) {
 
 		window.electronAPI.getNote(noteKey).then(function(noteFromStore) {
-			window.electronAPI.inTrash(noteKey).then(function(inTrash) {
 
-				if (inTrash) {
-						
+			if (noteFromStore.trash) {
+					
+				$.uiAlert({
+					textHead: 'Note is in trash. ',
+					text: '',
+					bgcolor: '#F2711C', // background-color
+					textcolor: '#fff', // color
+					position: 'bottom-right', // top And bottom ||  left / center / right
+					icon: 'warning sign',
+					time: 3
+				});
+
+				return;
+			} else {
+
+				if (!noteFromStore) {
+
+					
 					$.uiAlert({
-						textHead: 'Note is in trash. ',
+						textHead: "Cannot finde note! Probably it's permanantly removed.",
 						text: '',
 						bgcolor: '#F2711C', // background-color
 						textcolor: '#fff', // color
@@ -638,77 +653,60 @@ window.n3.action.activateNode = function(noteKey) {
 						icon: 'warning sign',
 						time: 3
 					});
-
-					return;
 				} else {
 
-					if (!noteFromStore) {
+					window.electronAPI.getParents(noteKey).then(function(parents) {
 
-						
-						$.uiAlert({
-							textHead: "Cannot finde note! Probably it's permanantly removed.",
-							text: '',
-							bgcolor: '#F2711C', // background-color
-							textcolor: '#fff', // color
-							position: 'bottom-right', // top And bottom ||  left / center / right
-							icon: 'warning sign',
-							time: 3
+						openTreeToNote(parents.parents).then(function() {
+
+							let node = window.n3.getNoteByKey(noteKey);
+
+							if (!node) {
+								$.uiAlert({
+									textHead: "Cannot finde note! Probably it's permanantly removed.",
+									text: '',
+									bgcolor: '#F2711C', // background-color
+									textcolor: '#fff', // color
+									position: 'bottom-right', // top And bottom ||  left / center / right
+									icon: 'warning sign',
+									time: 3
+								});
+							} else {
+								node.setActive();
+							}
+
 						});
-					} else {
 
-						window.electronAPI.getParents(noteKey).then(function(parents) {
+						function openTreeToNote(parents) {
 
-							openTreeToNote(parents.parents).then(function() {
-	
-								let node = window.n3.getNoteByKey(noteKey);
-	
-								if (!node) {
-									$.uiAlert({
-										textHead: "Cannot finde note! Probably it's permanantly removed.",
-										text: '',
-										bgcolor: '#F2711C', // background-color
-										textcolor: '#fff', // color
-										position: 'bottom-right', // top And bottom ||  left / center / right
-										icon: 'warning sign',
-										time: 3
+							if (parents.length == 0) {
+								return Promise.resolve();
+							}
+
+							return new Promise(function(resolve, reject) {
+
+								let openNote = parents.shift();
+								let node = window.n3.getNoteByKey(openNote.key);
+								if (node) {
+									node.setExpanded().then(function() {
+										openTreeToNote(parents);
+										resolve();
 									});
 								} else {
-									node.setActive();
+									console.log("Note not found!", openNote);
+									reject("Note not found!");
 								}
-	
-							});
-	
-							function openTreeToNote(parents) {
-	
-								if (parents.length == 0) {
-									return Promise.resolve();
-								}
-	
-								return new Promise(function(resolve, reject) {
-	
-									let openNote = parents.shift();
-									let node = window.n3.getNoteByKey(openNote.key);
-									if (node) {
-										node.setExpanded().then(function() {
-											openTreeToNote(parents);
-											resolve();
-										});
-									} else {
-										console.log("Note not found!", openNote);
-										reject("Note not found!");
-									}
-	
-	
-								});
-							}
-	
-	
-						});
 
-					}
+
+							});
+						}
+
+
+					});
+
 				}
+			}
 					
-			});
 			
 		});
 
@@ -1615,15 +1613,154 @@ window.n3.initFancyTree = function(rootNodes) {
 					} else if (data.files.length) {
 						
 						// TODO: upload folder
-						/* 
+						
 						console.log("transfer.items", transfer.items);
 						for (let i = 0; i < transfer.items.length; i++) {
 							let item = transfer.items[i];
 
-							console.log("item", item);
+							let entry = item.getAsFile();
+							console.log("entry as file", entry);
+
+							window.electronAPI.addFile(data.hitMode === "over" ? node.key : node.parent.key, entry.path, data.hitMode, node.key).then(function() {
+								console.log("addFile done");
+
+								if (data.hitMode == "over") {
+									node.resetLazy();
+									node.setExpanded(true);
+								} else {
+									if (node.parent.key.startsWith("root_")) {
+										window.n3.loadNotes().then(function(tree) {
+											$.ui.fancytree.getTree("[data-tree]").reload(tree);
+										});
+									} else {
+										node.parent.resetLazy();
+										node.parent.setExpanded(true);
+									}
+									
+								}
+
+							});
+							/*
+							processEntry(entry, node, data.hitMode, node.key);
+						
+				
+							function processEntry(entryHandler, note, hitMode, relativeToKey) {
+								return new Promise(function(resolve) {
+
+									if (entryHandler.kind === 'file') {
+										
+										
+										addFile(note, entryHandler, hitMode, relativeToKey).then(function(fileNote) {
+											resolve();
+										});
+										
+									} else if (entryHandler.kind === 'directory') {
+
+										addDirectory(note, entryHandler, hitMode, relativeToKey).then(function(dirNote) {
+
+											iterateDirectoryEntries(dirNote, entryHandler.entries()).then(function() {
+												resolve();
+											});
+
+											
+										});
+
+									}
+									
+								});
+							}
+
+							function iterateDirectoryEntries(note, directoryEntries) {
+
+								return new Promise(function(resolve) {
+
+									let next = directoryEntries.next();
+
+									next.then(function(nextEntry) {
+										let done = nextEntry.done;
+
+										if (!done) {
+											let value = nextEntry.value;
+											let name = value[0];
+											let entryHandler = value[1];
+
+											processEntry(entryHandler, note, "over", note.key).then(function() {
+												iterateDirectoryEntries(note, directoryEntries).then(function() {
+
+												
+													resolve();
+										
+												});	
+
+											});
+																			
+										} else {
+											resolve();
+										}
+									});
+								});
+							}
+
+							function addDirectory(parentNote, entryHandler, hitMode, relativeToKey) {
+								console.log("TODO: addDirectory", parentNote, entryHandler, hitMode, relativeToKey);
+
+								return new Promise(function(resolve) {
+								
+									window.electronAPI.addNote(hitMode === "over" ? parentNote.key : parentNote.parent.key, {
+										title: entryHandler.name,
+										type: "note",
+									}, hitMode, relativeToKey).then(function(newNodeData) {
+
+										let treeData = window.n3.dataToTreeData([newNodeData]);
+										let newNode = parentNote.addNode(treeData[0], hitMode);
+										resolve(newNode);
+									});
+
+								});
+								
+							}
+
+							function addFile(parentNote, entryHandler, hitMode, relativeToKey) {
+								console.log("TODO: addFile", parentNote, entryHandler, hitMode, relativeToKey);
+
+								return new Promise(function(resolve) {
+
+									console.log("TODO: addAsset", entryHandler.type, entryHandler.name, entryHandler.path);
+									resolve();
+									
+									window.electronAPI.addAsset(entryHandler.type, entryHandler.name, entryHandler.path, "path").then(function(asset) {
+										console.log("file added", asset);
+		
+										let newNodeData = window.n3.node.getNewNodeData();
+										newNodeData.title = file.name;
+										newNodeData.description = "<a href='" + asset.src + "' data-n3asset-key='" + asset.key + "' download>" + file.name + "</a>";
+		
+										window.electronAPI.addNote(data.hitMode === "over" ? node.key : node.parent.key, {
+											key: newNodeData.key, 
+											title: newNodeData.title,
+											type: newNodeData.type,
+											priority: newNodeData.priority,
+											done: newNodeData.done,
+											description: newNodeData.description,
+										}, data.hitMode, node.key).then(function(newNodeData) {
+											console.log("write back added", newNodeData);
+		
+											let treeData = window.n3.dataToTreeData([newNodeData]);
+											let newNode = node.addNode(treeData[0], data.hitMode);
+
+											resolve(newNode);
+										});
+									});
+									
+								});
+								
+							}
+							*/
 						}
-						*/
+						
+
 						// Drop files
+						/*
 						for (let i = 0; i < data.files.length; i++) {
 							let file = data.files[i];
 
@@ -1643,7 +1780,7 @@ window.n3.initFancyTree = function(rootNodes) {
 									priority: newNodeData.priority,
 									done: newNodeData.done,
 									description: newNodeData.description,
-								}, data.hitMode, data.hitMode === "over" ? node.key : node.parent.key).then(function(newNodeData) {
+								}, data.hitMode, node.key).then(function(newNodeData) {
 									console.log("write back added", newNodeData);
 
 									let treeData = window.n3.dataToTreeData([newNodeData]);
@@ -1652,6 +1789,7 @@ window.n3.initFancyTree = function(rootNodes) {
 							});
 							
 						}
+						*/
 					} else {
 						// TODO: it's not ready yet
 						// Drop a non-node
