@@ -15,9 +15,7 @@ TODO
 - view: list, tree, list+tree-gointo
 - search in trash/not in trash - momenta wird igoriert - 2 indexes? 
 - drag drop files and other things in editor
-- add author to meta info
  - icons in tree!! and note
- - mark title on click - off 
  - task/note - as dropdown, the buttons are irrtating
  - move type and tags over title?
  - add note button somewhere, über/unten tree?
@@ -28,7 +26,6 @@ TODO
  - list view with sorting 
  - bilder gallery/slides
  - search index trash - zweiten index?
- - routing https://developer.chrome.com/docs/workbox/modules/workbox-routing/ ?
  - new feature: change to typ (task, note) on (date)
  - trash
  - import/export
@@ -39,7 +36,6 @@ TODO
  - plan 3 tasks for today - choose from list (https://www.youtube.com/watch?v=oJTiq-Pqp9k)
  - file strucure ändern - bei Google
  - Suche opcje: szukaj historie, szukaj skasowane
- - davon PWA machen
  - Tags colors
  - changes log - welche nodes/tasks wurden geändert für nachverfolgung von Arbeit
  - better filters - save, add, remove 
@@ -335,9 +331,6 @@ $(function() {
 		}
 	});
 
-	$(document).on("click", "[data-noteeditor] [name='title']", function() {
-		$(this).select();
-	});
 
 	$(document).on("click", "[data-type]", function() {
 		const newType = this.dataset.type;
