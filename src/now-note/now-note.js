@@ -112,7 +112,7 @@ window.nn = window.nn || {};
 // TODO: old remove
 window.n3 = window.n3 || {};
 
-window.n3.priorities = [
+window.nn.priorities = [
 	{
 		id: 3,
 		text: "Urgent &amp; Important",
@@ -994,7 +994,7 @@ window.n3.node.activateNode = function(node) {
 
 		//////////////////////////////
 
-		let priorityDropDownValues = window.n3.priorities.map(function(priority) {
+		let priorityDropDownValues = window.nn.priorities.map(function(priority) {
 			return {
 				name: priority.text,
 				value: priority.id + "",
@@ -1004,7 +1004,7 @@ window.n3.node.activateNode = function(node) {
 		let priorityDropdown = $("[data-priority]", form).dropdown({
 			values: priorityDropDownValues
 		});
-		let selectedPriority = window.n3.priorities.find(function(priority) {
+		let selectedPriority = window.nn.priorities.find(function(priority) {
 			return node.data.priority !== undefined && (priority.id + "") === (node.data.priority + "");
 		});
 		if (!selectedPriority) {

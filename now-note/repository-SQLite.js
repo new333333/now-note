@@ -138,10 +138,6 @@ class RepositorySQLite  {
 			to: {
 				type: DataTypes.UUID,
 				allowNull: false
-			},
-			type: {
-				type: DataTypes.STRING,
-				allowNull: false
 			}
 		}, { sequelize });
 
@@ -497,14 +493,12 @@ class RepositorySQLite  {
 	}
 
 	async #setLinksBeforeWrite(key, description) {
-		if (!description) {
-			return description;
-		}
+		description = description || "";
 			
 		let $htmlCntainer = cheerio.load(description, null, false);
 		let internalLinks = $htmlCntainer("[data-n3link-node]");
 	
-		// log.debug("#setLinksBeforeWrite internalLinks.length", internalLinks.length);
+		log.debug("#setLinksBeforeWrite internalLinks.length", internalLinks.length);
 
 		let newLinks = [];
 
@@ -522,18 +516,10 @@ class RepositorySQLite  {
 					await nnLink.Link.findOrCreate({
 						where: {
 							from: key,
-							to: linkToNoteKey,
-							type: "link"
+							to: linkToNoteKey
 						}
 					});
-
-					await nnLink.Link.findOrCreate({
-						where: {
-							from: linkToNoteKey,
-							to: key,
-							type: "backlink"
-						}
-					});
+					
 				}
 
 				// clean goto-links before write
@@ -543,25 +529,22 @@ class RepositorySQLite  {
 
 		let allLinks = await nnLink.Link.findAll({
 			where: {
-				from: key,
-				type: "link"
+				from: key
 			}
 		});
-
+		log.debug("#setLinksBeforeWrite newLinks", newLinks);
 		for await (const link of allLinks) {
+
+			log.debug("#setLinksBeforeWrite link", link);
+
 			const linkToNote = await nnNote.Note.findByPk(link.to);
 			if (linkToNote) {
 				if (!newLinks.includes(link.to)) {
+					log.debug("#setLinksBeforeWrite 2 link.destroy", link);
 					await link.destroy();
-					await nnNote.Note.destroy({
-						where: {
-							from: link.to,
-							to: key,
-							type: "backlink"
-						}
-					});
 				}
 			} else {
+				log.debug("#setLinksBeforeWrite link.destroy", link);
 				await link.destroy();
 			}
 		}
