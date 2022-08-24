@@ -306,7 +306,7 @@ class RepositorySQLite  {
 		}
 		newNote.save();
 
-		let resultNote = await this.toData(newNote, false, false);
+		let resultNote = await this.toData(newNote, false, false, true);
 
 		this.#addNoteIndex(newNote);
 		
@@ -617,7 +617,7 @@ class RepositorySQLite  {
 			this.#modifyNoteIndex(modifyNote, reindexTree, reindexTree ? this.#notesArrayToPath( parents ) : false, onlyPath);
 		}
 
-		let resultNote = await this.toData(modifyNote, false, false);
+		let resultNote = await this.toData(modifyNote, false, false, true);
 		return resultNote;
 	}
 
@@ -701,7 +701,7 @@ class RepositorySQLite  {
 		let resultNotes = [];
 
 		for (let i = 0; i < notes.length; i++) {
-			let resultNote = await this.toData(notes[i], false, true);
+			let resultNote = await this.toData(notes[i], false, true, false);
 			resultNotes.push(resultNote);
 		};
 
@@ -937,7 +937,6 @@ class RepositorySQLite  {
 
 
 	async getNote(key) {
-	//async getNoteStore(key, simple) {
 
 		if (!key) {
 			return;
@@ -947,7 +946,7 @@ class RepositorySQLite  {
 			if (noteModel === null) {
 				throw new nnNote.NoteNotFoundByKey(key);
 			}
-			return await this.toData(noteModel, false, false);
+			return await this.toData(noteModel, false, false, true);
 		}
 	}
 
@@ -1117,15 +1116,10 @@ class RepositorySQLite  {
 
 
 
-	async toData(note, withtags, withchildren) {
+	async toData(note, withtags, withchildren, withDescription) {
 		if (!note) {
 			return;
 		}
-
-		let description = note.description;
-		description = await this.#setInlineImagesPathAfterRead(description);
-		description = await this.#setAttachmentsPathAfterRead(description);
-		description = await this.#setLinksAfterRead(description);
 
 		let result =  {
 			key: note.key,
@@ -1135,9 +1129,17 @@ class RepositorySQLite  {
 			done: note.done,
 			priority: note.priority,
 			expanded: note.expanded,
-			description: description,
 			trash: note.trash,
 		};
+
+		if (withDescription) {
+			let description = note.description;
+			description = await this.#setInlineImagesPathAfterRead(description);
+			description = await this.#setAttachmentsPathAfterRead(description);
+			description = await this.#setLinksAfterRead(description);
+
+			result.description = description;
+		}
 
 		if (withchildren) {
 			const countChildren = await nnNote.Note.count({

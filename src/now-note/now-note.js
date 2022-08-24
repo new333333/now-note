@@ -150,15 +150,11 @@ window.n3.action = window.n3.action || {
 
 $(function() {
 	
-	// window.n3.localFolder.init();
 	window.n3.init();
 
 	window.n3.action.handlers["activate-node"] = window.n3.action.activateNode;
 	window.n3.action.handlers["add-node"] = window.n3.node.add;
 	window.n3.action.handlers["delete-node-confirm"] = window.n3.node.delete;
-
-	// window.n3.action.handlers["choose-folder"] = window.n3.localFolder.select;
-	// window.n3.action.handlers["verify-folder"] = window.n3.localFolder.queryVerifyPermission;
 
 	window.n3.action.handlers["open-modal"] = window.n3.ui.openModal;
 	window.n3.action.handlers["close-dialog"] = window.n3.action.closeDialog;
@@ -324,13 +320,15 @@ $(function() {
 
 			let newTitle = $(this).val();
 			if (currentNode.title != newTitle) {
+
+				currentNode.setTitle(newTitle);
 				
 				window.electronAPI.modifyNote({
 					key: currentNode.key, 
 					title: newTitle	
 				}).then(function(note) {
 					console.log("write back title", note);
-					currentNode.setTitle(note.title);
+					
 				});
 
 			}
@@ -621,98 +619,102 @@ window.n3.action.closeDialog = function(noteKey, $trigger) {
 
 
 window.n3.action.activateNode = function(noteKey) {
-	let node = window.n3.getNoteByKey(noteKey);
-	if (!node) {
 
-		window.electronAPI.getNote(noteKey).then(function(noteFromStore) {
+	window.electronAPI.getNote(noteKey).then(function(noteFromStore) {
 
-			if (noteFromStore.trash) {
+		if (!noteFromStore) {
 					
-				$.uiAlert({
-					textHead: 'Note is in trash. ',
-					text: '',
-					bgcolor: '#F2711C', // background-color
-					textcolor: '#fff', // color
-					position: 'bottom-right', // top And bottom ||  left / center / right
-					icon: 'warning sign',
-					time: 3
-				});
+			$.uiAlert({
+				textHead: "Cannot finde note! Probably it's permanantly removed.",
+				text: '',
+				bgcolor: '#F2711C', // background-color
+				textcolor: '#fff', // color
+				position: 'bottom-right', // top And bottom ||  left / center / right
+				icon: 'warning sign',
+				time: 3
+			});
 
-				return;
-			} else {
+			return;
 
-				if (!noteFromStore) {
+		} else if (noteFromStore.trash) {
+				
+			$.uiAlert({
+				textHead: 'Note is in trash. ',
+				text: '',
+				bgcolor: '#F2711C', // background-color
+				textcolor: '#fff', // color
+				position: 'bottom-right', // top And bottom ||  left / center / right
+				icon: 'warning sign',
+				time: 3
+			});
 
-					
-					$.uiAlert({
-						textHead: "Cannot finde note! Probably it's permanantly removed.",
-						text: '',
-						bgcolor: '#F2711C', // background-color
-						textcolor: '#fff', // color
-						position: 'bottom-right', // top And bottom ||  left / center / right
-						icon: 'warning sign',
-						time: 3
+			return;
+		
+		} else {
+
+			let node = window.n3.getNoteByKey(noteKey);
+
+			if (!node) {
+				window.electronAPI.getParents(noteKey).then(function(parents) {
+
+					openTreeToNote(parents.parents).then(function() {
+	
+						let node = window.n3.getNoteByKey(noteKey);
+	
+						if (!node) {
+							$.uiAlert({
+								textHead: "Cannot finde note! Probably it's permanantly removed.",
+								text: '',
+								bgcolor: '#F2711C', // background-color
+								textcolor: '#fff', // color
+								position: 'bottom-right', // top And bottom ||  left / center / right
+								icon: 'warning sign',
+								time: 3
+							});
+						} else {
+
+							let treeData = window.n3.dataToTreeData([noteFromStore]);
+							node.data = treeData[0].data;
+							node.setActive();
+						}
+	
 					});
-				} else {
-
-					window.electronAPI.getParents(noteKey).then(function(parents) {
-
-						openTreeToNote(parents.parents).then(function() {
-
-							let node = window.n3.getNoteByKey(noteKey);
-
-							if (!node) {
-								$.uiAlert({
-									textHead: "Cannot finde note! Probably it's permanantly removed.",
-									text: '',
-									bgcolor: '#F2711C', // background-color
-									textcolor: '#fff', // color
-									position: 'bottom-right', // top And bottom ||  left / center / right
-									icon: 'warning sign',
-									time: 3
+	
+					function openTreeToNote(parents) {
+	
+						if (parents.length == 0) {
+							return Promise.resolve();
+						}
+	
+						return new Promise(function(resolve, reject) {
+	
+							let openNote = parents.shift();
+							let node = window.n3.getNoteByKey(openNote.key);
+							if (node) {
+								node.setExpanded().then(function() {
+									openTreeToNote(parents);
+									resolve();
 								});
 							} else {
-								node.setActive();
+								console.log("Note not found!", openNote);
+								reject("Note not found!");
 							}
-
+	
+	
 						});
-
-						function openTreeToNote(parents) {
-
-							if (parents.length == 0) {
-								return Promise.resolve();
-							}
-
-							return new Promise(function(resolve, reject) {
-
-								let openNote = parents.shift();
-								let node = window.n3.getNoteByKey(openNote.key);
-								if (node) {
-									node.setExpanded().then(function() {
-										openTreeToNote(parents);
-										resolve();
-									});
-								} else {
-									console.log("Note not found!", openNote);
-									reject("Note not found!");
-								}
-
-
-							});
-						}
-
-
-					});
-
-				}
+					}
+	
+	
+				});
+	
+				
+			} else {
+				let treeData = window.n3.dataToTreeData([noteFromStore]);
+				node.data = treeData[0].data;
+				node.setActive();
 			}
-					
-			
-		});
-
-	} else {
-		node.setActive();
-	}
+		}
+	});
 };
 
 
@@ -922,6 +924,7 @@ window.n3.escapeHtml = function (s) {
 }
 
 window.n3.node.activateNode = function(node) {
+
 	return new Promise(function(resolve) {
 
 		let $nodeDataOwner = $("[data-owner='node']");
@@ -929,128 +932,135 @@ window.n3.node.activateNode = function(node) {
 
 		let form = $("[data-noteeditor]");
 
-		let rootNodeKey = undefined;
-		let noteIt = node;
-		let breadcrumbs = "";
-		let sep = "";
-		while (noteIt && !noteIt.key.startsWith("root_")) {
-			breadcrumbs = "<a href='#" + noteIt.key +"' data-link-note='" + noteIt.key + "'>" + window.n3.escapeHtml(noteIt.title) + "</a>" + sep + breadcrumbs;
-			sep = " / ";
-			rootNodeKey = noteIt.key;
-			noteIt = noteIt.parent;
-		}
-		$("[data-breadcrumbs]").html(`<button class="ui transparent mini icon button" data-link-note='${rootNodeKey}'>
-											<i class="blue home icon"></i>
-										</button>` + breadcrumbs);
-		
+		window.electronAPI.getNote(node.key).then(function(noteFromStore) {
 
-		$("[name='title']", form).val(node.title);
-		var description = ((node || {}).data || {}).description || "";
-		
-		window.n3.node.getNodeHTMLEditor(form).then(function(htmlEditor) {
-			// moved to store let htmlText = window.n3.node.updateInternalLinks(description);
-			htmlEditor.setContent(description || "");
-			htmlEditor.setDirty(false);
+			let treeData = window.n3.dataToTreeData([noteFromStore]);
+			node.data = treeData[0].data;
 
-			if (node.data.backlinks) {
-				let htmlBacklinks = "<ul class='ui list'>";
-				let countBacklinks = 0;
-				node.data.backlinks.forEach(function(backlinkNoteKey) {
-					let backlinkNote = window.n3.getNoteByKey(backlinkNoteKey);
+			let rootNodeKey = undefined;
+			let noteIt = node;
+			let breadcrumbs = "";
+			let sep = "";
+			while (noteIt && !noteIt.key.startsWith("root_")) {
+				breadcrumbs = "<a href='#" + noteIt.key +"' data-link-note='" + noteIt.key + "'>" + window.n3.escapeHtml(noteIt.title) + "</a>" + sep + breadcrumbs;
+				sep = " / ";
+				rootNodeKey = noteIt.key;
+				noteIt = noteIt.parent;
+			}
+			$("[data-breadcrumbs]").html(`<button class="ui transparent mini icon button" data-link-note='${rootNodeKey}'>
+												<i class="blue home icon"></i>
+											</button>` + breadcrumbs);
+			
 
-					let noteIt = backlinkNote;
-					let links = "";
-					let sep = "";
-					while (noteIt && noteIt.key !== "root_1") {
-						links = "<a href='#" + noteIt.key +"' data-backlink-note='" + noteIt.key + "'>" + noteIt.title + "</a>" + sep + links;
-						sep = " / ";
-						noteIt = noteIt.parent;
-					}
-					countBacklinks++;
-					htmlBacklinks += "<li>[ " + links + " ]</li>";
-				});
-				htmlBacklinks += "</ul>";
-				$("[data-backlinks-content]").html(htmlBacklinks);
-				$("[data-backlinks-count]").html(countBacklinks);
-				$("[data-backlinks-count]").addClass("blue");
+			$("[name='title']", form).val(node.title);
+			var description = ((node || {}).data || {}).description || "";
+			
+			window.n3.node.getNodeHTMLEditor(form).then(function(htmlEditor) {
+				// moved to store let htmlText = window.n3.node.updateInternalLinks(description);
+				htmlEditor.setContent(description || "");
+				htmlEditor.setDirty(false);
+
+				if (node.data.backlinks) {
+					let htmlBacklinks = "<ul class='ui list'>";
+					let countBacklinks = 0;
+					node.data.backlinks.forEach(function(backlinkNoteKey) {
+						let backlinkNote = window.n3.getNoteByKey(backlinkNoteKey);
+
+						let noteIt = backlinkNote;
+						let links = "";
+						let sep = "";
+						while (noteIt && noteIt.key !== "root_1") {
+							links = "<a href='#" + noteIt.key +"' data-backlink-note='" + noteIt.key + "'>" + noteIt.title + "</a>" + sep + links;
+							sep = " / ";
+							noteIt = noteIt.parent;
+						}
+						countBacklinks++;
+						htmlBacklinks += "<li>[ " + links + " ]</li>";
+					});
+					htmlBacklinks += "</ul>";
+					$("[data-backlinks-content]").html(htmlBacklinks);
+					$("[data-backlinks-count]").html(countBacklinks);
+					$("[data-backlinks-count]").addClass("blue");
+				} else {
+					$("[data-backlinks-content]").html("");
+					$("[data-backlinks-count]").html("0");
+					$("[data-backlinks-count]").removeClass("blue");
+				}
+
+				
+				resolve();
+			});
+
+
+
+			if (node.data.type === "task") {
+				$("[data-done]").show();
 			} else {
-				$("[data-backlinks-content]").html("");
-				$("[data-backlinks-count]").html("0");
-				$("[data-backlinks-count]").removeClass("blue");
+				$("[data-done]").hide();
 			}
+			$("[data-done] [name='done']").prop("checked", node.data.done !== undefined && node.data.done);
 
-			
-			resolve();
-		});
+			//////////////////////////////
 
-
-
-		if (node.data.type === "task") {
-			$("[data-done]").show();
-		} else {
-			$("[data-done]").hide();
-		}
-		$("[data-done] [name='done']").prop("checked", node.data.done !== undefined && node.data.done);
-
-		//////////////////////////////
-
-		let priorityDropDownValues = window.nn.priorities.map(function(priority) {
-			return {
-				name: priority.text,
-				value: priority.id + "",
-				selected: node.data.priority !== undefined && (priority.id + "") === (node.data.priority + "")
+			let priorityDropDownValues = window.nn.priorities.map(function(priority) {
+				return {
+					name: priority.text,
+					value: priority.id + "",
+					selected: node.data.priority !== undefined && (priority.id + "") === (node.data.priority + "")
+				}
+			});
+			let priorityDropdown = $("[data-priority]", form).dropdown({
+				values: priorityDropDownValues
+			});
+			let selectedPriority = window.nn.priorities.find(function(priority) {
+				return node.data.priority !== undefined && (priority.id + "") === (node.data.priority + "");
+			});
+			if (!selectedPriority) {
+				selectedPriority = 0;
 			}
-		});
-		let priorityDropdown = $("[data-priority]", form).dropdown({
-			values: priorityDropDownValues
-		});
-		let selectedPriority = window.nn.priorities.find(function(priority) {
-			return node.data.priority !== undefined && (priority.id + "") === (node.data.priority + "");
-		});
-		if (!selectedPriority) {
-			selectedPriority = 0;
-		}
-		priorityDropdown.dropdown("set selected", selectedPriority.id + "");
-		priorityDropdown.dropdown("setting", "onChange", function(value, text, $choice) {
-			node.data.priority = value;
-			
-			window.electronAPI.modifyNote({
-				key: node.key,
-				priority: node.data.priority
-			}).then(function(note) { 
-				console.log("write back priority?", note);
-			});
-
-
-			node.renderTitle();
-		});
-
-		//////////////////////////////
-
-		$("[data-type='" + node.data.type + "']").addClass("active");
-		$("[data-type='" + node.data.type + "']").addClass("primary");
-		$("[data-type='" + (node.data.type === "task" ? "note" : "task") + "']").removeClass("active");
-		$("[data-type='" + (node.data.type === "task" ? "note" : "task") + "']").removeClass("primary");
-
-		//////////////////////////////
-
-		$("[data-tag]").remove();
-		node.data.tags = node.data.tags || [];
-
-		node.data.tags.forEach(function(tag) {
-			
-			let indexExistingTag = window.n3.tags.findIndex(function(existingTag) {
-				return existingTag.title === tag;
-			});
-
-			if (indexExistingTag == -1) {
-				window.n3.tags.push({
-					title: tag
+			priorityDropdown.dropdown("set selected", selectedPriority.id + "");
+			priorityDropdown.dropdown("setting", "onChange", function(value, text, $choice) {
+				node.data.priority = value;
+				
+				window.electronAPI.modifyNote({
+					key: node.key,
+					priority: node.data.priority
+				}).then(function(note) { 
+					console.log("write back priority?", note);
 				});
-			}
 
-			window.n3.tagInput.before(window.n3.getTagHTML(tag));
+
+				node.renderTitle();
+			});
+
+			//////////////////////////////
+
+			$("[data-type='" + node.data.type + "']").addClass("active");
+			$("[data-type='" + node.data.type + "']").addClass("primary");
+			$("[data-type='" + (node.data.type === "task" ? "note" : "task") + "']").removeClass("active");
+			$("[data-type='" + (node.data.type === "task" ? "note" : "task") + "']").removeClass("primary");
+
+			//////////////////////////////
+
+			$("[data-tag]").remove();
+			node.data.tags = node.data.tags || [];
+
+			node.data.tags.forEach(function(tag) {
+				
+				let indexExistingTag = window.n3.tags.findIndex(function(existingTag) {
+					return existingTag.title === tag;
+				});
+
+				if (indexExistingTag == -1) {
+					window.n3.tags.push({
+						title: tag
+					});
+				}
+
+				window.n3.tagInput.before(window.n3.getTagHTML(tag));
+			});
 		});
+
 	});
 }
 
@@ -1108,8 +1118,8 @@ window.n3.node.getNodeHTMLEditor = function(form) {
 							description: editorContent,
 						}).then(function(note) {
 							console.log("write back description", note);
-							currentNode.data.description = note.description;
-							editor.setContent(currentNode.data.description || "");
+							// currentNode.data.description = note.description;
+							// editor.setContent(currentNode.data.description || "");
 						});
 						
 					}
@@ -1610,8 +1620,6 @@ window.n3.initFancyTree = function(rootNodes) {
 						data.tree.render(true, false);
 					} else if (data.files.length) {
 						
-						// TODO: upload folder
-						
 						console.log("transfer.items", transfer.items);
 						for (let i = 0; i < transfer.items.length; i++) {
 							let item = transfer.items[i];
@@ -1638,156 +1646,8 @@ window.n3.initFancyTree = function(rootNodes) {
 								}
 
 							});
-							/*
-							processEntry(entry, node, data.hitMode, node.key);
-						
-				
-							function processEntry(entryHandler, note, hitMode, relativeToKey) {
-								return new Promise(function(resolve) {
-
-									if (entryHandler.kind === 'file') {
-										
-										
-										addFile(note, entryHandler, hitMode, relativeToKey).then(function(fileNote) {
-											resolve();
-										});
-										
-									} else if (entryHandler.kind === 'directory') {
-
-										addDirectory(note, entryHandler, hitMode, relativeToKey).then(function(dirNote) {
-
-											iterateDirectoryEntries(dirNote, entryHandler.entries()).then(function() {
-												resolve();
-											});
-
-											
-										});
-
-									}
-									
-								});
-							}
-
-							function iterateDirectoryEntries(note, directoryEntries) {
-
-								return new Promise(function(resolve) {
-
-									let next = directoryEntries.next();
-
-									next.then(function(nextEntry) {
-										let done = nextEntry.done;
-
-										if (!done) {
-											let value = nextEntry.value;
-											let name = value[0];
-											let entryHandler = value[1];
-
-											processEntry(entryHandler, note, "over", note.key).then(function() {
-												iterateDirectoryEntries(note, directoryEntries).then(function() {
-
-												
-													resolve();
-										
-												});	
-
-											});
-																			
-										} else {
-											resolve();
-										}
-									});
-								});
-							}
-
-							function addDirectory(parentNote, entryHandler, hitMode, relativeToKey) {
-								console.log("TODO: addDirectory", parentNote, entryHandler, hitMode, relativeToKey);
-
-								return new Promise(function(resolve) {
-								
-									window.electronAPI.addNote(hitMode === "over" ? parentNote.key : parentNote.parent.key, {
-										title: entryHandler.name,
-										type: "note",
-									}, hitMode, relativeToKey).then(function(newNodeData) {
-
-										let treeData = window.n3.dataToTreeData([newNodeData]);
-										let newNode = parentNote.addNode(treeData[0], hitMode);
-										resolve(newNode);
-									});
-
-								});
-								
-							}
-
-							function addFile(parentNote, entryHandler, hitMode, relativeToKey) {
-								console.log("TODO: addFile", parentNote, entryHandler, hitMode, relativeToKey);
-
-								return new Promise(function(resolve) {
-
-									console.log("TODO: addAsset", entryHandler.type, entryHandler.name, entryHandler.path);
-									resolve();
-									
-									window.electronAPI.addAsset(entryHandler.type, entryHandler.name, entryHandler.path, "path").then(function(asset) {
-										console.log("file added", asset);
-		
-										let newNodeData = window.n3.node.getNewNodeData();
-										newNodeData.title = file.name;
-										newNodeData.description = "<a href='" + asset.src + "' data-n3asset-key='" + asset.key + "' download>" + file.name + "</a>";
-		
-										window.electronAPI.addNote(data.hitMode === "over" ? node.key : node.parent.key, {
-											key: newNodeData.key, 
-											title: newNodeData.title,
-											type: newNodeData.type,
-											priority: newNodeData.priority,
-											done: newNodeData.done,
-											description: newNodeData.description,
-										}, data.hitMode, node.key).then(function(newNodeData) {
-											console.log("write back added", newNodeData);
-		
-											let treeData = window.n3.dataToTreeData([newNodeData]);
-											let newNode = node.addNode(treeData[0], data.hitMode);
-
-											resolve(newNode);
-										});
-									});
-									
-								});
-								
-							}
-							*/
 						}
 						
-
-						// Drop files
-						/*
-						for (let i = 0; i < data.files.length; i++) {
-							let file = data.files[i];
-
-							console.log("file", file);
-
-							window.electronAPI.addAsset(file.type, file.name, file.path, "path").then(function(asset) {
-								console.log("file added", asset);
-
-								let newNodeData = window.n3.node.getNewNodeData();
-								newNodeData.title = file.name;
-								newNodeData.description = "<a href='" + asset.src + "' data-n3asset-key='" + asset.key + "' download>" + file.name + "</a>";
-
-								window.electronAPI.addNote(data.hitMode === "over" ? node.key : node.parent.key, {
-									key: newNodeData.key, 
-									title: newNodeData.title,
-									type: newNodeData.type,
-									priority: newNodeData.priority,
-									done: newNodeData.done,
-									description: newNodeData.description,
-								}, data.hitMode, node.key).then(function(newNodeData) {
-									console.log("write back added", newNodeData);
-
-									let treeData = window.n3.dataToTreeData([newNodeData]);
-									let newNode = node.addNode(treeData[0], data.hitMode);
-								});
-							});
-							
-						}
-						*/
 					} else {
 						// TODO: it's not ready yet
 						// Drop a non-node
