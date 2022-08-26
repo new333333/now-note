@@ -1910,3 +1910,14 @@ now-note-win32-x64/resources/app/n3/classes/store/N3StoreServiceFileSystem.js
 now-note-win32-x64/resources/app/n3/classes/store/N3StoreServiceSQLite.js
 now-note-win32-x64/resources/app/search/N3SearchServiceAbstract.js
 now-note-win32-x64/resources/app/search/N3SearchServiceFlexSearch.js
+.webpack/main/index.js
+.webpack/main/index.js.map
+.webpack/renderer/main_window.ae98073081d54fff8ddd.hot-update.js
+.webpack/renderer/main_window.ae98073081d54fff8ddd.hot-update.json
+.webpack/renderer/main_window.aeb873a30e0cc6e22a4a.hot-update.js
+.webpack/renderer/main_window.aeb873a30e0cc6e22a4a.hot-update.json
+.webpack/renderer/main_window.d1827470191a7e7a8566.hot-update.js
+.webpack/renderer/main_window.d1827470191a7e7a8566.hot-update.json
+.webpack/renderer/main_window/index.html
+.webpack/renderer/main_window/index.js
+.webpack/renderer/main_window/preload.js

@@ -21,12 +21,16 @@ const createWindow = () => {
       width: 1000,
       height: 800,
       webPreferences: {
-        preload: path.join(__dirname, 'preload.js')
+        preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY,
       }
     });
 
+    
+    mainWindow.loadURL(MAIN_WINDOW_WEBPACK_ENTRY);
+
+    // Open the DevTools.
     mainWindow.webContents.openDevTools();
-    mainWindow.loadFile('index.html')
+
     return mainWindow;
   }
 
