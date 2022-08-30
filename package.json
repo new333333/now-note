@@ -31,15 +31,19 @@
   },
   "dependencies": {
     "@js-joda/core": "^5.2.0",
+    "antd": "^4.22.8",
     "better-sqlite3-with-prebuilds": "^7.4.3",
     "cheerio": "^1.0.0-rc.12",
     "electron-log": "^4.4.8",
     "electron-squirrel-startup": "^1.0.0",
     "flexsearch": "^0.7.21",
     "fs-extra": "^10.1.0",
+    "jquery": "^3.6.1",
+    "jquery.fancytree": "^2.38.2",
     "lodash": "^4.17.21",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-reflex": "^4.0.9",
     "sequelize": "^6.21.3",
     "sqlite3": "^5.0.11"
   },
@@ -77,11 +81,11 @@
               "config": "./webpack.renderer.config.js",
               "entryPoints": [
                 {
-                  "html": "./src/index.html",
-                  "js": "./src/renderer.js",
+                  "html": "./src/renderer/index.html",
+                  "js": "./src/renderer/index.js",
                   "name": "main_window",
                   "preload": {
-                    "js": "./src/preload.js"
+                    "js": "./src/main/preload.js"
                   }
                 }
               ]

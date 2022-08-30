@@ -523,7 +523,7 @@ window.n3.filterTree = function() {
 		$.ui.fancytree.getTree("[data-tree]").clearFilter();
 	} else {
 
-		window.electronAPI.search(searchText, false).then(function(searchResults) {
+		window.electronAPI.search(searchText, -1, false).then(function(searchResults) {
 
 			let foundNoteKeys = [];
 
@@ -1174,7 +1174,7 @@ window.n3.node.getNodeHTMLEditor = function(form) {
 						return new Promise(function(resolve) {
 							let searchResults = [];
 
-							window.electronAPI.search(pattern, 20).then(function(searchResults) {
+							window.electronAPI.search(pattern, 20, false).then(function(searchResults) {
 								showAutocomplete(searchResults, resolve);
 							});
 

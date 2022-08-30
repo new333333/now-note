@@ -26,8 +26,17 @@
  * ```
  */
 
-import './index.css';
-import './App.jsx';
-import './index.css';
+ import React from 'react';
+import { createRoot } from 'react-dom/client';
+import 'antd/dist/antd.css';
+import './now-note.css';
+import {App} from './components/App.jsx';
 
-console.log('👋 This message is being logged by "renderer.js", included via webpack');
+const appContainer = document.getElementById('n3-app');
+const root = createRoot(appContainer);
+root.render(
+    <App />
+);
+
+
+console.log('👋 This message is being logged by "index.js", included via webpack');

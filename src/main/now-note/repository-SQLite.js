@@ -178,9 +178,15 @@ class RepositorySQLite  {
 		trash = trash || false;
 		trash = trash ? 1 : 0;
 
+		let sql = `SELECT * FROM Notes_index 
+			WHERE ${searchText ? "title MATCH :searchText or descriptionAsText MATCH :searchText and" : ""} Notes_index MATCH '"trash" : ${trash}' ORDER BY rank`;
+
+		if (limit > -1) {
+			sql += " LIMIT :limit";
+		}
+
 		let results = await this.sequelize.query(
-			`SELECT * FROM Notes_index 
-			WHERE ${searchText ? "title MATCH :searchText or descriptionAsText MATCH :searchText and" : ""} Notes_index MATCH '"trash" : ${trash}' ORDER BY rank LIMIT :limit`, {
+			sql, {
 				replacements: {
 					searchText: (searchText + "*") || "*",
 					limit: limit
