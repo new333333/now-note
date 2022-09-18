@@ -34,6 +34,12 @@ class App extends React.Component {
         super();
         this.state = {
             listView: "tree",
+            activeNoteKey: undefined,
+            title: "",
+            done: false,
+            type: "note",
+            priority: 0,
+            tags: [],
         };
         this.loadTree = this.loadTree.bind(this);
         this.activateNote = this.activateNote.bind(this);
@@ -43,14 +49,15 @@ class App extends React.Component {
         this.setTitle = this.setTitle.bind(this);
         this.setPriority = this.setPriority.bind(this);
         this.addTag = this.addTag.bind(this);
+        this.deleteTag = this.deleteTag.bind(this);
         this.handleChangeTitle = this.handleChangeTitle.bind(this);
-        this.handleChangePriority = this.handleChangePriority.bind(this);
 
+        this.fancyTreeDomRef = React.createRef();
 
         let self = this;
         window.electronAPI.getPriorityStat().then(function(priorityStat) {
             self.setState({
-                priority: priorityStat
+                priorityStat: priorityStat
             });
         });
 
@@ -147,137 +154,108 @@ class App extends React.Component {
     }
 
     async activateNote(noteKey) {
-        console.log();
-        let self = this;
-        let note = await window.electronAPI.getNote(noteKey);
-        console.log("activateNote", note);
-        let parents = await window.electronAPI.getParents(noteKey);
+        let loadedNote = await window.electronAPI.getNote(noteKey);
+        console.log("activateNote loadedNote", loadedNote);
+        this.fancyTreeDomRef.current.setNote(loadedNote);
+
+        let note = this.fancyTreeDomRef.current.setActive(noteKey);
+
         this.setState({
-            activeNote: note,
-            parents: parents,
+            activeNoteKey: note.key,
+            title: note.title,
+            done: note.data.done,
+            type: note.data.type,
+            priority: note.data.priority,
+            tags: note.data.tags,
+        });
+    }
+
+    async setTitle(noteKey, title) {
+        let modifiedNote = await window.electronAPI.modifyNote({
+            key: noteKey, 
+            title: title	
+        });
+    }
+
+    handleChangeTitle(noteKey, title) {
+        this.fancyTreeDomRef.current.setTitle(noteKey, title);
+        this.setState({
+            title: title,
         });
     }
 
     async selectNote(noteKey, done) {
-
+        this.setState({
+            done: done,
+        });
         let modifiedNote = await window.electronAPI.modifyNote({
             key: noteKey, 
             done: done	
         });
-
-        if (modifiedNote.key == this.state.activeNote.key) {
-            this.setState({
-                activeNote: modifiedNote,
-            });
-        }
-
     }
     
-    async setDone() {
-        let activeNoteKey = this.state.activeNote.key;
-        let modifiedNote = await window.electronAPI.modifyNote({
-            key: activeNoteKey, 
-            done: !this.state.activeNote.done	
+    async setDone(noteKey, done) {
+        this.setState({
+            done: done,
         });
-        if (activeNoteKey == this.state.activeNote.key) {
-            this.setState(prevState => {
-                let activeNote = Object.assign({}, prevState.activeNote);
-                activeNote.done = modifiedNote.done;             
-                return { activeNote };
-            });
-        }
+        this.fancyTreeDomRef.current.setDone(noteKey, done);
+        let modifiedNote = await window.electronAPI.modifyNote({
+            key: noteKey, 
+            done: done	
+        });
     }
 
-    async setType(type) {
-        let activeNoteKey = this.state.activeNote.key;
+    async setType(noteKey, type) {
+        this.setState({
+            type: type,
+        });
+        this.fancyTreeDomRef.current.setType(noteKey, type);
         let modifiedNote = await window.electronAPI.modifyNote({
-            key: activeNoteKey, 
+            key: noteKey, 
             type: type	
         });
-
-        if (activeNoteKey == this.state.activeNote.key) {
-            this.setState(prevState => {
-                let activeNote = Object.assign({}, prevState.activeNote);
-                activeNote.type = type;             
-                return { activeNote };
-            });
-        }
     }
 
-    async setTitle(title) {
-        let activeNoteKey = this.state.activeNote.key;
-        let modifiedNote = await window.electronAPI.modifyNote({
-            key: activeNoteKey, 
-            title: title	
+    async setPriority(noteKey, priority) {
+        this.setState({
+            priority: priority,
         });
-
-        if (activeNoteKey == this.state.activeNote.key) {
-            this.setState(prevState => {
-                let activeNote = Object.assign({}, prevState.activeNote);
-                activeNote.title = title;             
-                return { activeNote };
-            });
-        }
-    }
-
-    async setPriority(priority) {
-        let activeNoteKey = this.state.activeNote.key;
-        let modifiedNote = await window.electronAPI.modifyNote({
-            key: activeNoteKey, 
+        this.fancyTreeDomRef.current.setPriority(noteKey, priority);
+        await window.electronAPI.modifyNote({
+            key: noteKey, 
             priority: priority	
         });
 
-        if (activeNoteKey == this.state.activeNote.key) {
-            this.setState(prevState => {
-                let activeNote = Object.assign({}, prevState.activeNote);
-                activeNote.priority = priority;             
-                return { activeNote };
+        let self = this;
+        window.electronAPI.getPriorityStat().then(function(priorityStat) {
+            self.setState({
+                priorityStat: priorityStat
             });
-        }
-/*
-        let priorityStat = await window.electronAPI.getPriorityStat();
+        });
+    }
+
+    async addTag(noteKey, tag) {
+        let tags = await window.electronAPI.addTag(noteKey, tag);
+        this.fancyTreeDomRef.current.setTags(noteKey, tags);
         this.setState({
-            priority: priorityStat
-        });
-    */    
-    }
-
-    async addTag(tag) {
-        let activeNoteKey = this.state.activeNote.key;
-
-        let tags = await window.electronAPI.addTag(activeNoteKey, tag);
-
-        console.log("addTag tags", tags);
-
-        this.setState(prevState => {
-            let activeNote = Object.assign({}, prevState.activeNote);
-            activeNote.tags = tags;             
-            return { activeNote };
+            tags: tags
         });
     }
 
-    handleChangeTitle(val) {
-        this.setState(prevState => {
-            let activeNote = Object.assign({}, prevState.activeNote);  // creating copy of state variable jasper
-            activeNote.title = val;                     // update the name property, assign a new value                 
-            return { activeNote };                                 // return new object jasper object
+    async deleteTag(noteKey, tag) {
+        let tags = await window.electronAPI.removeTag(noteKey, tag);
+        this.fancyTreeDomRef.current.setTags(noteKey, tags);
+        this.setState({
+            tags: tags
         });
     }
 
-    handleChangePriority(val) {
-        this.setState(prevState => {
-            let activeNote = Object.assign({}, prevState.activeNote);  // creating copy of state variable jasper
-            activeNote.priority = val;                     // update the name property, assign a new value                 
-            return { activeNote };                                 // return new object jasper object
-        });
-    }
 
     render() {
 
-        console.log("App render this.state.activeNote", this.state.activeNote);
-
-
-        let listView = <FancyTree name="new333" 
+        let listView = <FancyTree
+                            ref={this.fancyTreeDomRef}
+                            name="new333" 
                             loadTree={this.loadTree} 
                             activeNote={this.state.activeNote} 
                             activateNote={this.activateNote} 
@@ -319,16 +297,24 @@ class App extends React.Component {
                             flex={0.5}>
                             <Note 
                                 noteTypes={noteTypes}
-                                note={this.state.activeNote} 
-                                parents={this.state.parents} 
+                                priorityStat={this.state.priorityStat}
+
+                                noteKey={this.state.activeNoteKey} 
+                                title={this.state.title} 
+                                done={this.state.done} 
+                                type={this.state.type}
+                                priority={this.state.priority}
+
                                 setDone={this.setDone} 
                                 setType={this.setType} 
                                 setTitle={this.setTitle}
-                                setPriority={this.setPriority}
                                 handleChangeTitle={this.handleChangeTitle}
-                                handleChangePriority={this.handleChangePriority}
-                                priority={this.state.priority}
+                                
+                                setPriority={this.setPriority}
+
+                                tags={this.state.tags}
                                 addTag={this.addTag}
+                                deleteTag={this.deleteTag}
                             />
                         </ReflexElement>
                 

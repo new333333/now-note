@@ -9,46 +9,24 @@ class NoteTags extends React.Component {
         super();
 
         this.inputRef = React.createRef();
-        this.editInputRef = React.createRef();
 
         this.showInput = this.showInput.bind(this);
         this.handleInputChange = this.handleInputChange.bind(this);
         this.handleInputConfirm = this.handleInputConfirm.bind(this);
-        this.handleEditInputChange = this.handleEditInputChange.bind(this);
-        this.handleEditInputConfirm = this.handleEditInputConfirm.bind(this);
         this.state = {
             inputVisible: false,
             inputValue: "",
-            editInputIndex: -1,
-            editInputValue: ""
         };
     }
 
-    handleCloseTag(event) {
-        console.log("handleCloseTag event", event);
+    handleCloseTag(tag) {
+        this.props.deleteTag(this.props.noteKey, tag);
     }
 
     showInput(event) {
         this.setState({
             inputVisible: true
         });
-    }
-
-    handleEditInputChange(event) {
-        this.setState({
-            editInputValue: event.target.value
-        });
-    };
-
-    handleEditInputConfirm(event) {
-        //const newTags = [...tags];
-        //newTags[editInputIndex] = editInputValue;
-        //setTags(newTags);
-        this.setState({
-            editInputIndex: -1,
-            editInputValue: ""
-        });
-
     }
 
     handleInputChange(event) {
@@ -59,7 +37,7 @@ class NoteTags extends React.Component {
 
     handleInputConfirm(event) {
         if (this.state.inputValue && this.props.tags.indexOf(this.state.inputValue) === -1) {
-            this.props.addTag(this.state.inputValue);
+            this.props.addTag(this.props.noteKey, this.state.inputValue);
         }
       
         this.setState({
@@ -72,9 +50,6 @@ class NoteTags extends React.Component {
         if (this.inputRef.current) {
             this.inputRef.current.focus();
         }
-        if (this.editInputRef.current) {
-            this.editInputRef.current.focus();
-        }
     }
 
     render() {
@@ -82,21 +57,6 @@ class NoteTags extends React.Component {
         return (
             <>
                 {this.props.tags.map((tag, index) => {
-
-                    if (this.state.editInputIndex === index) {
-                        return (
-                        <Input
-                            ref={this.editInputRef}
-                            key={tag}
-                            size="small"
-                            className="nn-tag-input"
-                            value={this.state.editInputValue}
-                            onChange={this.handleEditInputChange}
-                            onBlur={this.handleEditInputConfirm}
-                            onPressEnter={this.handleEditInputConfirm}
-                        />
-                        );
-                    }
 
                     const isLongTag = tag.length > 20;
                     const tagElem = (
@@ -106,15 +66,7 @@ class NoteTags extends React.Component {
                             closable={true}
                             onClose={(event)=> this.handleCloseTag(tag)}
                         >
-                            <span
-                                onClick={(e) => {
-                                    this.setState({
-                                        editInputIndex: index,
-                                        editInputValue: tag
-                                    });
-                                    e.preventDefault();
-                            }}
-                            >
+                            <span>
                             {isLongTag ? `${tag.slice(0, 20)}...` : tag}
                             </span>
                         </Tag>

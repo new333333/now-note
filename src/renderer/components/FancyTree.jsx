@@ -25,6 +25,66 @@ class FancyTree extends React.Component {
         this.init();
     }
 
+    setNote(note) {
+        if (!note) {
+            return;
+        }
+        let node = this.fancytree.getNodeByKey(note.key);
+        node.data.priority = note.priority;
+        node.data.done = note.done;
+        node.setSelected(note.done);
+        node.data.type = note.type;
+        node.data.tags = note.tags;
+        node.title = note.title;
+    }
+
+    setActive(key) {
+        let node = this.fancytree.getNodeByKey(key);
+        node.setActive();
+        return node;
+    }
+
+    setPriority(key, priority) {
+        let node = this.fancytree.getNodeByKey(key);
+        node.data.priority = priority;
+    }
+
+    setDone(key, done) {
+        let node = this.fancytree.getNodeByKey(key);
+        node.data.done = done;
+        node.setSelected(done);
+    }
+
+    setType(key, type) {
+        let node = this.fancytree.getNodeByKey(key);
+        node.data.type = type;
+        node.checkbox = node.data.type !== undefined && node.data.type === "task";
+
+        let parentNode = node;
+        while (parentNode) {
+            parentNode.renderTitle();
+            parentNode = parentNode.parent;
+        }
+    }
+
+    setTags(key, tags) {
+        let node = this.fancytree.getNodeByKey(key);
+        node.data.tags = tags;
+    }
+
+    setTitle(key, title) {
+        let node = this.fancytree.getNodeByKey(key);
+        node.title = title;
+
+        let parentNode = node;
+        while (parentNode) {
+            parentNode.renderTitle();
+            parentNode = parentNode.parent;
+        }
+
+        return node;
+    }
+
     onSearch(event) {
         console.log("search", event.target.value);
         console.log("this.fancytree", this.fancytree);
@@ -115,6 +175,7 @@ class FancyTree extends React.Component {
     }
 
     render() {
+        /*
         if (this.fancytree && this.props.activeNote && this.fancytree.getActiveNode().key != this.props.activeNote.key) {
             let node = this.fancytree.getNodeByKey(this.props.activeNote.key);
             node.setActive();
@@ -136,7 +197,7 @@ class FancyTree extends React.Component {
                 }
             }
         }
-        
+        */
 
         return (
             <div>

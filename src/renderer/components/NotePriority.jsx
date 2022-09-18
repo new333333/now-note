@@ -8,40 +8,37 @@ class NotePriority extends React.Component {
 
     constructor() {
         super();
+        this.setPriority = this.setPriority.bind(this);
     }
 
-    setPriority(event) {
-        this.props.setPriority( event.target.value );
+    setPriority(value) {
+      this.props.setPriority(this.props.noteKey, value );
     }
 
     setPriorityMenu(event) {
-        this.props.setPriority( this.props.priority[event.key] );
-    }
-
-    handleChangePriority(val) {
-        this.props.handleChangePriority( val );
+        this.props.setPriority(this.props.noteKey, this.props.priorityStat[event.key] );
     }
 
     render() {
 
         let minimumPriority = 0;
-        if (this.props.priority) {
-            minimumPriority = this.props.priority.minimum;
+        if (this.props.priorityStat) {
+            minimumPriority = this.props.priorityStat.minimum;
         }
 
         let maximumPriority = 0;
-        if (this.props.priority) {
-            maximumPriority = this.props.priority.maximum;
+        if (this.props.priorityStat) {
+            maximumPriority = this.props.priorityStat.maximum;
         }
 
         let averagePriority = 0;
-        if (this.props.priority) {
-            averagePriority = this.props.priority.average;
+        if (this.props.priorityStat) {
+            averagePriority = this.props.priorityStat.average;
         }
 
         let medianaPriority = 0;
-        if (this.props.priority) {
-            medianaPriority = this.props.priority.mediana;
+        if (this.props.priorityStat) {
+            medianaPriority = this.props.priorityStat.mediana;
         }
 
 
@@ -71,12 +68,13 @@ class NotePriority extends React.Component {
 
         return (
             <>
+                Priority:
                 <Dropdown overlay={priorityMenu}>
                     <InputNumber 
                         min={0} 
-                        value={this.props.note.priority} 
-                        onChange={(event)=> this.handleChangePriority(event)} 
-                        onBlur={(event)=> this.setPriority(event)} /> 
+                        value={this.props.priority} 
+                        onChange={(event)=> this.setPriority(event)} 
+                        /> 
                 </Dropdown>
             </>
         );
