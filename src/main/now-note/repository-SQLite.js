@@ -8,6 +8,7 @@ const nnTag = require('./Tag');
 const nnLink = require('./Link');
 const nnAsset = require('./Asset');
 const cheerio = require('cheerio');
+const { result } = require('lodash');
 const fs = require('fs').promises;
 
 class RepositorySQLite  {
@@ -952,7 +953,10 @@ class RepositorySQLite  {
 			if (noteModel === null) {
 				throw new nnNote.NoteNotFoundByKey(key);
 			}
-			return await this.toData(noteModel, false, false, true);
+			let withtags = true;
+			let withchildren = false;
+			let withDescription = true;
+			return await this.toData(noteModel, withtags, withchildren, withDescription);
 		}
 	}
 
@@ -1118,6 +1122,29 @@ class RepositorySQLite  {
 
 		return resultNote;
 
+	}
+
+
+	async getPriorityStat() {
+		let max = await nnNote.Note.max('priority', {where : {trash: false }});
+		let min = await nnNote.Note.min('priority', {where : {trash: false }});
+
+
+		
+
+		let results = await this.sequelize.query(`SELECT AVG(priority) as average FROM notes`, { type: QueryTypes.SELECT });
+		let average = Math.round(results[0]['average']);
+		
+		
+		results = await this.sequelize.query(`SELECT AVG(priority) as mediana FROM (SELECT priority FROM notes ORDER BY priority LIMIT 2 OFFSET (SELECT (COUNT(*) - 1) / 2 FROM notes))`, { type: QueryTypes.SELECT });
+		let mediana = Math.round(results[0]['mediana']);
+		
+		return {
+			minimum: min,
+			average: average,
+			mediana: mediana,
+			maximum: max
+		}
 	}
 
 

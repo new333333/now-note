@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { AudioOutlined } from '@ant-design/icons';
+
 import { Input, Space } from 'antd';
 const { Search } = Input;
 
@@ -61,6 +61,8 @@ class FancyTree extends React.Component {
     init() {
         const $domNode = $(this.domRef.current);
 
+        let self = this;
+
         $domNode.fancytree({
             extensions: ["dnd5", "filter", "table"],
 			checkbox: true,
@@ -91,16 +93,58 @@ class FancyTree extends React.Component {
 					}
 				});
 			},
+
+            activate: function(event, data) {
+                self.props.activateNote(data.node.key);
+			},
+
+            select: function(event, data) {
+                self.props.selectNote(data.node.key, data.node.selected);
+
+				data.node.data.done = data.node.selected;
+				
+				let parentNode = data.node;
+				while (parentNode) {
+					parentNode.renderTitle();
+					parentNode = parentNode.parent;
+				}
+
+			},
         });
         this.fancytree = $.ui.fancytree.getTree($domNode);
     }
 
     render() {
+        if (this.fancytree && this.props.activeNote && this.fancytree.getActiveNode().key != this.props.activeNote.key) {
+            let node = this.fancytree.getNodeByKey(this.props.activeNote.key);
+            node.setActive();
+        }
+
+        if (this.fancytree && this.props.activeNote) {
+            let node = this.fancytree.getNodeByKey(this.props.activeNote.key);
+            if (node) {
+                // console.log("Fancytree activeNote ", node);
+                node.setSelected(this.props.activeNote.done);
+                node.setTitle(this.props.activeNote.title);
+                node.data.type = this.props.activeNote.type;
+                node.checkbox = this.props.activeNote.type == "task";
+                
+                let parentNode = node;
+                while (parentNode) {
+                    parentNode.renderTitle();
+                    parentNode = parentNode.parent;
+                }
+            }
+        }
+        
+
         return (
-            <div className='n3-bar-vertical'>
+            <div>
+
                 <div>
                     <Search placeholder="filter nodes" allowClear onChange={this.onSearch} style={{ width: '100%' }} />
                 </div>
+                
                 <div className='n3-bar-grow'>
                     <div className='n3-tree'>
                         <table ref={this.domRef}>

@@ -211,6 +211,10 @@ const createWindow = () => {
         return n3.repository.getParents(key);
       });
 
+      ipcMain.handle("app:getPriorityStat", function(event) {
+        return n3.repository.getPriorityStat();
+      });
+
       ipcMain.handle("search:search", function(event, searchText, limit, trash) {
         return n3.repository.search(searchText, limit, trash);
       });

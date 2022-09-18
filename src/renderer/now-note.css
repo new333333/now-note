@@ -29,6 +29,18 @@ body {
 	flex-grow: 1;
 }
 
+.nn-site-tag-plus {
+	background: #fff;
+	border-style: dashed;
+}
+.nn-edit-tag {
+	user-select: none;
+}
+.nn-tag-input {
+	width: 78px;
+	margin-right: 8px;
+	vertical-align: top;
+}
 
 /* ************************************************* */
 
@@ -324,3 +336,5 @@ span.fancytree-title {
 .n3-tree .n3-task-priority-3 {
 	border-right-color: red;
 }
+
+

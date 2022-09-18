@@ -17,4 +17,5 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getParents: (key) => ipcRenderer.invoke("store:getParents", key),
   downloadAttachment: (url) => ipcRenderer.invoke("download-attachment", url),
   addFile: (parentKey, path, hitMode, relativeToKey) => ipcRenderer.invoke("store:addFile", parentKey, path, hitMode, relativeToKey),
+  getPriorityStat: () => ipcRenderer.invoke("app:getPriorityStat"),
 });

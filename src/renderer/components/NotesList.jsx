@@ -1,7 +1,6 @@
 import React from 'react';
 
-import { AudioOutlined } from '@ant-design/icons';
-import { Input, Space } from 'antd';
+import { Input, Space, Breadcrumb } from 'antd';
 const { Search } = Input;
 
 class NotesList extends React.Component {
@@ -16,6 +15,7 @@ class NotesList extends React.Component {
                 <Space direction="vertical">
                     <Search placeholder="input search text" allowClear style={{ width: '100%' }} />
                 </Space>
+                List...
             </div>
         );
     }
