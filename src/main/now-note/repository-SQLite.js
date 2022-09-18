@@ -691,6 +691,22 @@ class RepositorySQLite  {
 		return tagsObj;
 	}
 
+	async findTag(tag) {
+		let tags = await nnTag.Tag.findAll({
+			where: {
+				tag: {
+				  [Op.like]: [tag + "%"]
+				}
+			},
+			group: ["tag"]
+		});
+
+		let tagsObj = tags.map(function(currentTag) {
+			return currentTag.tag;
+		});
+
+		return tagsObj;
+	}
 
 	// load root nodes, if key undefined
 	// load children notes if key defined

@@ -1,5 +1,5 @@
 import { PlusOutlined } from '@ant-design/icons';
-import { Input, Tag, Tooltip } from 'antd';
+import { Input, Tag, Tooltip, AutoComplete } from 'antd';
 import { times } from 'lodash';
 import React from 'react';
 
@@ -8,47 +8,79 @@ class NoteTags extends React.Component {
     constructor() {
         super();
 
-        this.inputRef = React.createRef();
+        this.inputRefAutoComplete = React.createRef();
 
-        this.showInput = this.showInput.bind(this);
-        this.handleInputChange = this.handleInputChange.bind(this);
-        this.handleInputConfirm = this.handleInputConfirm.bind(this);
+        this.showInputAutoComplete = this.showInputAutoComplete.bind(this);
+
+        this.onSelectAutoComplete = this.onSelectAutoComplete.bind(this);
+        this.onSearchAutoComplete = this.onSearchAutoComplete.bind(this);
+        this.onChangeAutoComplete = this.onChangeAutoComplete.bind(this);
+        this.onKeyDownAutoComplete = this.onKeyDownAutoComplete.bind(this);
+
         this.state = {
-            inputVisible: false,
-            inputValue: "",
+            inputAutoCompleteVisible: false,
+            valueAutoComplete: "",
+            optionsAutoComplete: [],
         };
+    }
+
+    onKeyDownAutoComplete(event) {
+        if (event.key === 'Enter') {
+            console.log('onKeyDownAutoComplete Enter', event);
+            this.onSelectAutoComplete(event.target.value);
+        }
+    }
+
+    async onSelectAutoComplete(tag) {
+        if (tag && this.props.tags.indexOf(tag) === -1) {
+            await this.props.addTag(this.props.noteKey, tag);
+        }
+        
+        this.setState({
+            inputAutoCompleteVisible: false,
+            valueAutoComplete: "",
+            optionsAutoComplete: []
+        });
+
+    }
+
+    async onSearchAutoComplete(searchText) {
+        console.log("onSearchAutoComplete");
+
+        let tags = await window.electronAPI.findTag(searchText);
+
+        let options = tags.map(function(currentTag) {
+			return {
+                label: currentTag,
+                value: currentTag,
+            };
+		});
+
+        this.setState({
+            optionsAutoComplete: options
+        });
+    }
+
+    onChangeAutoComplete(data) {
+        console.log("onChangeAutoComplete");
+        this.setState({
+            valueAutoComplete: data
+        });
     }
 
     handleCloseTag(tag) {
         this.props.deleteTag(this.props.noteKey, tag);
     }
 
-    showInput(event) {
+    showInputAutoComplete(event) {
         this.setState({
-            inputVisible: true
+            inputAutoCompleteVisible: true
         });
     }
 
-    handleInputChange(event) {
-        this.setState({
-            inputValue: event.target.value
-        });
-    }
-
-    handleInputConfirm(event) {
-        if (this.state.inputValue && this.props.tags.indexOf(this.state.inputValue) === -1) {
-            this.props.addTag(this.props.noteKey, this.state.inputValue);
-        }
-      
-        this.setState({
-            inputVisible: false,
-            inputValue: ""
-        });
-    }
-  
     componentDidUpdate() {
-        if (this.inputRef.current) {
-            this.inputRef.current.focus();
+        if (this.inputRefAutoComplete.current) {
+            this.inputRefAutoComplete.current.focus();
         }
     }
 
@@ -81,20 +113,24 @@ class NoteTags extends React.Component {
                         );
                 })}
 
-                {this.state.inputVisible && (
-                    <Input
-                        ref={this.inputRef}
-                        type="text"
-                        size="small"
-                        className="nn-tag-input"
-                        value={this.state.inputValue}
-                        onChange={this.handleInputChange}
-                        onBlur={this.handleInputConfirm}
-                        onPressEnter={this.handleInputConfirm}
+                {this.state.inputAutoCompleteVisible && (
+                    <>
+                    <AutoComplete
+                        ref={this.inputRefAutoComplete}
+                        value={this.state.valueAutoComplete}
+                        options={this.state.optionsAutoComplete}
+                        style={{ width: 200 }}
+                        onSelect={this.onSelectAutoComplete}
+                        onBlur={this.onSelectAutoComplete}
+                        onKeyDown={this.onKeyDownAutoComplete}
+                        onSearch={this.onSearchAutoComplete}
+                        onChange={this.onChangeAutoComplete}
                     />
+
+                    </>
                 )}
-                {!this.state.inputVisible && (
-                    <Tag className="nn-site-tag-plus" onClick={this.showInput}>
+                {!this.state.inputAutoCompleteVisible && (
+                    <Tag className="nn-site-tag-plus" onClick={this.showInputAutoComplete}>
                         <PlusOutlined /> New Tag
                     </Tag>
                 )}

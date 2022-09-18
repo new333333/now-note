@@ -181,6 +181,9 @@ const createWindow = () => {
         return n3.repository.removeTag(key, tag);
       });
 
+      ipcMain.handle("store:findTag", function(event, tag) {
+        return n3.repository.findTag(tag);
+      });
 
       // ipcMain.handle("store:addAsset", function(event, fileType, fileName, filePathOrBase64, fileTransferType) {
       //   return n3.repository.addAsset(fileType, fileName, filePathOrBase64, fileTransferType);
