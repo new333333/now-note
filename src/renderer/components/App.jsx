@@ -36,6 +36,7 @@ class App extends React.Component {
             listView: "tree",
             activeNoteKey: undefined,
             title: "",
+            description: "",
             done: false,
             type: "note",
             priority: 0,
@@ -47,6 +48,7 @@ class App extends React.Component {
         this.setDone = this.setDone.bind(this);
         this.setType = this.setType.bind(this);
         this.setTitle = this.setTitle.bind(this);
+        this.setDescription = this.setDescription.bind(this);
         this.setPriority = this.setPriority.bind(this);
         this.addTag = this.addTag.bind(this);
         this.deleteTag = this.deleteTag.bind(this);
@@ -159,14 +161,23 @@ class App extends React.Component {
         this.fancyTreeDomRef.current.setNote(loadedNote);
 
         let note = this.fancyTreeDomRef.current.setActive(noteKey);
-
+        let parents = await window.electronAPI.getParents(noteKey);
         this.setState({
             activeNoteKey: note.key,
             title: note.title,
+            description: note.data.description,
             done: note.data.done,
             type: note.data.type,
             priority: note.data.priority,
             tags: note.data.tags,
+            parents: parents,
+        });
+    }
+
+    async setDescription(noteKey, description) {
+        let modifiedNote = await window.electronAPI.modifyNote({
+            key: noteKey, 
+            description: description	
         });
     }
 
@@ -269,7 +280,7 @@ class App extends React.Component {
             <ReflexContainer orientation="horizontal">
 
                 <ReflexElement  minSize="50" maxSize="50">
-                    <NoteBreadCrumb note={this.state.activeNote} parents={this.state.parents} activateNote={this.activateNote} />
+                    <NoteBreadCrumb parents={this.state.parents} activateNote={this.activateNote} />
                 </ReflexElement>
 
                 <ReflexElement>
@@ -304,12 +315,14 @@ class App extends React.Component {
                                 done={this.state.done} 
                                 type={this.state.type}
                                 priority={this.state.priority}
+                                description={this.state.description || ""}
 
                                 setDone={this.setDone} 
                                 setType={this.setType} 
                                 setTitle={this.setTitle}
                                 handleChangeTitle={this.handleChangeTitle}
                                 
+                                setDescription={this.setDescription}
                                 setPriority={this.setPriority}
 
                                 tags={this.state.tags}

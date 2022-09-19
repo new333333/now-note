@@ -32,6 +32,7 @@ class FancyTree extends React.Component {
         let node = this.fancytree.getNodeByKey(note.key);
         node.data.priority = note.priority;
         node.data.done = note.done;
+        node.data.description = note.description;
         node.setSelected(note.done);
         node.data.type = note.type;
         node.data.tags = note.tags;

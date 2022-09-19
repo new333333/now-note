@@ -26,7 +26,6 @@ class NoteTags extends React.Component {
 
     onKeyDownAutoComplete(event) {
         if (event.key === 'Enter') {
-            console.log('onKeyDownAutoComplete Enter', event);
             this.onSelectAutoComplete(event.target.value);
         }
     }
@@ -45,8 +44,6 @@ class NoteTags extends React.Component {
     }
 
     async onSearchAutoComplete(searchText) {
-        console.log("onSearchAutoComplete");
-
         let tags = await window.electronAPI.findTag(searchText);
 
         let options = tags.map(function(currentTag) {
@@ -62,7 +59,6 @@ class NoteTags extends React.Component {
     }
 
     onChangeAutoComplete(data) {
-        console.log("onChangeAutoComplete");
         this.setState({
             valueAutoComplete: data
         });
@@ -85,7 +81,6 @@ class NoteTags extends React.Component {
     }
 
     render() {
-        console.log("NoteTags render");
         return (
             <>
                 {this.props.tags.map((tag, index) => {
