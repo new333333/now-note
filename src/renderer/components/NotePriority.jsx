@@ -48,19 +48,19 @@ class NotePriority extends React.Component {
                 items={[
                     {
                         key: 'minimum',
-                        label: "Minimum: " + minimumPriority,
+                        label: "Set: " + minimumPriority + " (Minimum)",
                     },
                     {
                         key: 'average',
-                        label: "Average: " + averagePriority,
+                        label: "Set: " + averagePriority + " (Average)",
                     },
                     {
                         key: 'mediana',
-                        label: "Mediana: " + medianaPriority,
+                        label: "Set: " + medianaPriority + " (Mediana)",
                     },
                     {
                         key: 'maximum',
-                        label: "Maximum: " + maximumPriority,
+                        label: "Set: " + maximumPriority + " (Maximum)",
                     },
                 ]}
             />
@@ -72,6 +72,7 @@ class NotePriority extends React.Component {
                 <Dropdown overlay={priorityMenu}>
                     <InputNumber 
                         min={0} 
+                        size="small"
                         value={this.props.priority} 
                         onChange={(event)=> this.setPriority(event)} 
                         /> 

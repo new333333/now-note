@@ -1,5 +1,5 @@
 import React from 'react';
-import { Breadcrumb, Dropdown, Menu, Space, Input, InputNumber, Button, Select } from 'antd';
+import { Breadcrumb, Dropdown, Menu, Space, Input, InputNumber, Button, Select, Tooltip } from 'antd';
 import { HomeOutlined, DownOutlined } from '@ant-design/icons';
 import { Checkbox } from 'pretty-checkbox-react';
 import '@djthoms/pretty-checkbox';
@@ -90,6 +90,14 @@ class Note extends React.Component {
         return foundType.label;
     }
 
+    getOtherNoteTypeLabel(type) {
+        let otherType =  this.props.noteTypes.find(function(noteType) {
+            return noteType.key !== type;
+        });
+        return otherType.label;
+    }
+    
+
     onBlur(value, editor) {
         console.log("onBlur(value, editor)", value);
         if (this.inputRefTinyMCE.current) {
@@ -113,42 +121,48 @@ class Note extends React.Component {
         }
 
         return (
-            <div>
-                {this.props.noteKey ?
+            <div style={{padding: "5px"}}>
                 <div>
-                    <div style={{display: "flex" }}>
-                        {this.props.type == "task" ?
-                            
-                            <div>
-                                <Checkbox shape="round" bigger 
-                                    color="success" style={{ display: "inline-block" }} 
-                                    checked={this.props.done} 
-                                    onChange={(event)=> this.setDone(event)} /></div> :
-                            ""
-                        }
-                        <div style={{flexBasis: "100%" }}>
-                            <Input 
-                                size="large" 
-                                value={this.props.title} 
-                                onChange={(event)=> this.handleChangeTitle(event)} 
-                                onBlur={(event)=> this.setTitle(event)} />
+                    {this.props.noteKey ?
+                    <Space direction="vertical" style={{ width: "100%" }}>
+                        <div style={{display: "flex", alignItems: "center" }}>
+                            {
+                                this.props.type == "task" &&
+                                    <div style={{width: "27px", margin: "0 8px"}}>
+                                        <Tooltip title={"Mark as" + (this.props.done ? " NOT" : "") + " Done"}>
+                                            <Checkbox shape="round"  
+                                                color="success" 
+                                                style={{ 
+                                                    display: "inline-block",
+                                                    fontSize: 25  }} 
+                                                checked={this.props.done} 
+                                                onChange={(event)=> this.setDone(event)} />
+                                        </Tooltip>
+                                    </div>
+                            }
+                            <div style={{flexBasis: "100%" }}>
+                                <Input 
+                                    size="large" 
+                                    value={this.props.title} 
+                                    onChange={(event)=> this.handleChangeTitle(event)} 
+                                    onBlur={(event)=> this.setTitle(event)} />
+                            </div>
                         </div>
-                    </div>
-                    <div>
                         <div>
-                            
                             <Space>
-                                <a href="#" onClick={(event)=> this.setType()} ><strong>{this.getNoteTypeLabel(this.props.type)}</strong></a>
+                                <div>
+                                    This is a&nbsp; 
+                                    <Tooltip title={"Change to " + this.getOtherNoteTypeLabel(this.props.type)}>
+                                        <a href="#" onClick={(event)=> this.setType()}><strong>{this.getNoteTypeLabel(this.props.type)}</strong></a>
+                                    </Tooltip>
+                                </div>
+                                <NotePriority 
+                                    noteKey={this.props.noteKey}
+                                    priority={this.props.priority}
+                                    setPriority={this.props.setPriority} 
+                                    priorityStat={this.props.priorityStat}
+                                    />
                             </Space>
-                            
-                        </div>
-                        <div>
-                            <NotePriority 
-                                noteKey={this.props.noteKey}
-                                priority={this.props.priority}
-                                setPriority={this.props.setPriority} 
-                                priorityStat={this.props.priorityStat}
-                                />
                         </div>
                         <div>
                             <NoteTags 
@@ -159,40 +173,42 @@ class Note extends React.Component {
                                 deleteTag={this.props.deleteTag}
                                 />
                         </div>
-                    </div>
-                    <div>
-                        <Editor
-                            onInit={(evt, editor) => this.inputRefTinyMCE.current = editor}
-                            initialValue={this.props.description}
-                            onBlur={this.onBlur}
-                            init={{
-                                skin: false,
-                                content_css: false,
-                                content_style: [contentCss, contentUiCss].join('\n'),
-                                height: 500,
-                                toolbar_sticky: true,
-                                toolbar_sticky_offset: 0,
-                                min_height: 400,
-                                inline_boundaries: false,
-                                powerpaste_word_import: "clean",
-                                powerpaste_html_import: "clean",
-                                block_unsupported_drop: false,
-                                menubar: false,
-                                plugins: [
-                                    "advlist", "autolink", "lists", "link", "image", "charmap", "preview",
-                                    "anchor", "searchreplace", "visualblocks", "code", "fullscreen",
-                                    "insertdatetime", "media", "table", "code", "help", "wordcount",
-                                    "autoresize"
-                                ],
-                                toolbar: 'undo redo | formatselect | ' +
-                                    'bold italic backcolor | alignleft aligncenter ' +
-                                    'alignright alignjustify | bullist numlist outdent indent | ' +
-                                    'removeformat | help',
-                            }}
-                        />
-                    </div>
-                </div> :
-                <div>no note selected</div>}
+                        <div>
+                            <Editor
+                                onInit={(evt, editor) => this.inputRefTinyMCE.current = editor}
+                                initialValue={this.props.description}
+                                onBlur={this.onBlur}
+                                init={{
+                                    skin: false,
+                                    content_css: false,
+                                    content_style: [contentCss, contentUiCss].join('\n'),
+                                    toolbar_sticky: true,
+                                    toolbar_sticky_offset: 0,
+                                    min_height: 100,
+                                    inline_boundaries: false,
+                                    powerpaste_word_import: "clean",
+                                    powerpaste_html_import: "clean",
+                                    block_unsupported_drop: false,
+                                    menubar: false,
+                                    plugins: [
+                                        "advlist", "autolink", "lists", "link", "image", "charmap", "preview",
+                                        "anchor", "searchreplace", "visualblocks", "code", "fullscreen",
+                                        "insertdatetime", "media", "table", "code", "help", "wordcount",
+                                        "autoresize"
+                                    ],
+                                    toolbar: 'undo redo | formatselect | ' +
+                                        'bold italic backcolor | alignleft aligncenter ' +
+                                        'alignright alignjustify | bullist numlist outdent indent | ' +
+                                        'removeformat | help',
+                                }}
+                            />
+                        </div>
+                    </Space> :
+                    <div>no note selected</div>}
+                </div>
+                <div>
+                    TODO backlinks...
+                </div>
 
             </div>
         );

@@ -290,7 +290,7 @@ class App extends React.Component {
                         <ReflexElement className="left-bar"
                             minSize="200"
                             flex={0.5}>
-                            <div className='n3-bar-vertical'>
+                            <div className='n3-bar-vertical' >
                                 <div>
                                     <Space>
                                         <ApartmentOutlined onClick={(event)=> this.setNotesListView("tree", event)} />

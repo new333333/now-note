@@ -176,32 +176,9 @@ class FancyTree extends React.Component {
     }
 
     render() {
-        /*
-        if (this.fancytree && this.props.activeNote && this.fancytree.getActiveNode().key != this.props.activeNote.key) {
-            let node = this.fancytree.getNodeByKey(this.props.activeNote.key);
-            node.setActive();
-        }
-
-        if (this.fancytree && this.props.activeNote) {
-            let node = this.fancytree.getNodeByKey(this.props.activeNote.key);
-            if (node) {
-                // console.log("Fancytree activeNote ", node);
-                node.setSelected(this.props.activeNote.done);
-                node.setTitle(this.props.activeNote.title);
-                node.data.type = this.props.activeNote.type;
-                node.checkbox = this.props.activeNote.type == "task";
-                
-                let parentNode = node;
-                while (parentNode) {
-                    parentNode.renderTitle();
-                    parentNode = parentNode.parent;
-                }
-            }
-        }
-        */
 
         return (
-            <div>
+            <div style={{height: "100%", display: "flex", flexDirection: "column"}}>
 
                 <div>
                     <Search placeholder="filter nodes" allowClear onChange={this.onSearch} style={{ width: '100%' }} />

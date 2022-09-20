@@ -120,7 +120,10 @@ class NoteTags extends React.Component {
                         onKeyDown={this.onKeyDownAutoComplete}
                         onSearch={this.onSearchAutoComplete}
                         onChange={this.onChangeAutoComplete}
-                    />
+                        style={{ width: 150 }}
+                    >
+                        <Input.Search size="small" placeholder="" />
+                    </AutoComplete>
 
                     </>
                 )}

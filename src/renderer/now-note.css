@@ -42,6 +42,9 @@ body {
 	vertical-align: top;
 }
 
+.ant-breadcrumb ol {
+	font-size: 20px;
+}
 /* ************************************************* */
 
 
