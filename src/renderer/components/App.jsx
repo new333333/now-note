@@ -1,7 +1,7 @@
 import React from 'react';
 
-import { ApartmentOutlined, BarsOutlined, NodeExpandOutlined } from '@ant-design/icons';
-import { Input, Space } from 'antd';
+import { ApartmentOutlined, BarsOutlin1ed, NodeExpandOutlined, PlusOutlined, ThunderboltFilled } from '@ant-design/icons';
+import { Input, Space, Button } from 'antd';
 const { Search } = Input;
 
 import {
@@ -15,7 +15,7 @@ import {FancyTree} from './FancyTree.jsx';
 import {NotesList} from './NotesList.jsx';
 import {Note} from './Note.jsx';
 import {NoteBreadCrumb} from './NoteBreadCrumb.jsx';
-
+const dayjs = require('dayjs')
 
 let noteTypes = [
     {
@@ -32,6 +32,7 @@ class App extends React.Component {
 
     constructor() {
         super();
+        this.dataSource = window.electronAPI;
         this.state = {
             listView: "tree",
             activeNoteKey: undefined,
@@ -41,6 +42,8 @@ class App extends React.Component {
             type: "note",
             priority: 0,
             tags: [],
+            childNotes: [],
+            filterByParentNotesKey: [],
         };
         this.loadTree = this.loadTree.bind(this);
         this.activateNote = this.activateNote.bind(this);
@@ -53,11 +56,16 @@ class App extends React.Component {
         this.addTag = this.addTag.bind(this);
         this.deleteTag = this.deleteTag.bind(this);
         this.handleChangeTitle = this.handleChangeTitle.bind(this);
+        this.getNoteTypeLabel = this.getNoteTypeLabel.bind(this);
+        this.getOtherNoteTypeLabel = this.getOtherNoteTypeLabel.bind(this);
+        this.addNote = this.addNote.bind(this);
+        this.setFilterByParentNotesKey = this.setFilterByParentNotesKey.bind(this);
 
         this.fancyTreeDomRef = React.createRef();
+        this.simpleListDomRef = React.createRef();
 
         let self = this;
-        window.electronAPI.getPriorityStat().then(function(priorityStat) {
+        this.dataSource.getPriorityStat().then(function(priorityStat) {
             self.setState({
                 priorityStat: priorityStat
             });
@@ -65,12 +73,23 @@ class App extends React.Component {
 
     }
     
+    async findNotes() {
+        return await this.dataSource.findNotes();
+    }
+
+    setFilterByParentNotesKey(keys) {
+        console.log("setFilterByParentNotesKey keys", keys);
+        this.setState({
+            filterByParentNotesKey: keys
+        });
+    }
+
     loadTree(key, data) {
         let self = this;
 
         if (key.type == 'source') {
 
-            return window.electronAPI.getChildren().then(function(rootNodes) {
+            return this.dataSource.getChildren().then(function(rootNodes) {
                 rootNodes = self.mapToTreeData(rootNodes);
                 return rootNodes;
             });
@@ -78,7 +97,7 @@ class App extends React.Component {
 
         } else if (data.node) {
 
-            data.result = window.electronAPI.getChildren(data.node.key).then(function(children) {
+            data.result = this.dataSource.getChildren(data.node.key).then(function(children) {
                 children = self.mapToTreeData(children);
                 return children;
             });
@@ -148,50 +167,143 @@ class App extends React.Component {
     }
 
     setNotesListView(listViewtype, event) {
-        console.log("setNotesListView", listViewtype);
-
         this.setState({
             listView: listViewtype
         });
     }
 
-    async activateNote(noteKey) {
-        let loadedNote = await window.electronAPI.getNote(noteKey);
-        console.log("activateNote loadedNote", loadedNote);
-        this.fancyTreeDomRef.current.setNote(loadedNote);
+    addNote() {
+        console.log("addNote");
 
-        let note = this.fancyTreeDomRef.current.setActive(noteKey);
-        let parents = await window.electronAPI.getParents(noteKey);
-        this.setState({
-            activeNoteKey: note.key,
-            title: note.title,
-            description: note.data.description,
-            done: note.data.done,
-            type: note.data.type,
-            priority: note.data.priority,
-            tags: note.data.tags,
-            parents: parents,
-        });
+        let newNoteData = {
+            checkbox: false,
+            title: dayjs().format("DD.MM.YYYY HH:mm"),
+            type: "note",
+            priority: 0,
+            done: false,
+            expanded: false
+        };
+
+        if (this.state.listView != "simpleList") {
+            this.fancyTreeDomRef.current.addNote(this.state.activeNoteKey, newNoteData);
+        }
+    }
+
+    async activateNote(noteKey) {
+
+        if (noteKey) {
+
+            let note = await this.dataSource.getNote(noteKey);
+            if (this.state.listView == "simpleList") {
+
+                this.simpleListDomRef.current.setActive(noteKey);
+
+                let parents = await this.dataSource.getParents(noteKey);
+                let backlinks = await this.dataSource.getBacklinks(noteKey);
+                let childNotes = await this.dataSource.search("", -1, false, {parentNotesKey: [noteKey]});
+
+                this.setState({
+                    activeNoteKey: note.key,
+                    title: note.title,
+                    description: note.description,
+                    done: note.done,
+                    type: note.type,
+                    priority: note.priority,
+                    tags: note.tags,
+                    parents: parents,
+                    backlinks: backlinks,
+                    childNotes: childNotes,
+                });
+
+
+            } else {
+                this.fancyTreeDomRef.current.setNote(note);
+                note = this.fancyTreeDomRef.current.setActive(noteKey);
+                let parents = await this.dataSource.getParents(noteKey);
+                let backlinks = await this.dataSource.getBacklinks(noteKey);
+                let childNotes = await this.dataSource.search("", -1, false, {parentNotesKey: [noteKey]});
+
+                this.setState({
+                    activeNoteKey: note.key,
+                    title: note.title,
+                    description: note.data.description,
+                    done: note.data.done,
+                    type: note.data.type,
+                    priority: note.data.priority,
+                    tags: note.data.tags,
+                    parents: parents,
+                    backlinks: backlinks,
+                    childNotes: childNotes,
+                });
+            }
+
+        } else {
+            if (this.state.listView == "simpleList") {
+
+                this.simpleListDomRef.current.setActive(undefined);
+                this.setState({
+                    activeNoteKey: undefined,
+                    title: undefined,
+                    description: undefined,
+                    done: undefined,
+                    type: undefined,
+                    priority: undefined,
+                    tags: undefined,
+                    parents: undefined,
+                    backlinks: undefined
+                });
+
+            } else {
+                this.fancyTreeDomRef.current.deactiveNote();
+                this.setState({
+                    activeNoteKey: undefined,
+                    title: undefined,
+                    description: undefined,
+                    done: undefined,
+                    type: undefined,
+                    priority: undefined,
+                    tags: undefined,
+                    parents: undefined,
+                    backlinks: undefined
+                });
+            }
+        }
+
     }
 
     async setDescription(noteKey, description) {
-        let modifiedNote = await window.electronAPI.modifyNote({
+        let modifiedNote = await this.dataSource.modifyNote({
             key: noteKey, 
             description: description	
         });
     }
 
     async setTitle(noteKey, title) {
-        let modifiedNote = await window.electronAPI.modifyNote({
+        let modifiedNote = await this.dataSource.modifyNote({
             key: noteKey, 
             title: title	
+        });
+        let parents = await this.dataSource.getParents(noteKey);
+        this.setState({
+            parents: parents,
         });
     }
 
     handleChangeTitle(noteKey, title) {
         this.fancyTreeDomRef.current.setTitle(noteKey, title);
+
         this.setState({
             title: title,
+        });
+
+        this.setState((previousState) => {
+            let parents = JSON.parse(JSON.stringify(previousState.parents));
+            if (parents) {
+                parents[parents.length - 1].title = title;
+                return {
+                    parents: parents,
+                };
+            }
         });
     }
 
@@ -199,7 +311,7 @@ class App extends React.Component {
         this.setState({
             done: done,
         });
-        let modifiedNote = await window.electronAPI.modifyNote({
+        let modifiedNote = await this.dataSource.modifyNote({
             key: noteKey, 
             done: done	
         });
@@ -210,7 +322,7 @@ class App extends React.Component {
             done: done,
         });
         this.fancyTreeDomRef.current.setDone(noteKey, done);
-        let modifiedNote = await window.electronAPI.modifyNote({
+        let modifiedNote = await this.dataSource.modifyNote({
             key: noteKey, 
             done: done	
         });
@@ -221,7 +333,7 @@ class App extends React.Component {
             type: type,
         });
         this.fancyTreeDomRef.current.setType(noteKey, type);
-        let modifiedNote = await window.electronAPI.modifyNote({
+        let modifiedNote = await this.dataSource.modifyNote({
             key: noteKey, 
             type: type	
         });
@@ -232,13 +344,13 @@ class App extends React.Component {
             priority: priority,
         });
         this.fancyTreeDomRef.current.setPriority(noteKey, priority);
-        await window.electronAPI.modifyNote({
+        await this.dataSource.modifyNote({
             key: noteKey, 
             priority: priority	
         });
 
         let self = this;
-        window.electronAPI.getPriorityStat().then(function(priorityStat) {
+        this.dataSource.getPriorityStat().then(function(priorityStat) {
             self.setState({
                 priorityStat: priorityStat
             });
@@ -246,7 +358,7 @@ class App extends React.Component {
     }
 
     async addTag(noteKey, tag) {
-        let tags = await window.electronAPI.addTag(noteKey, tag);
+        let tags = await this.dataSource.addTag(noteKey, tag);
         this.fancyTreeDomRef.current.setTags(noteKey, tags);
         this.setState({
             tags: tags
@@ -254,12 +366,30 @@ class App extends React.Component {
     }
 
     async deleteTag(noteKey, tag) {
-        let tags = await window.electronAPI.removeTag(noteKey, tag);
+        let tags = await this.dataSource.removeTag(noteKey, tag);
         this.fancyTreeDomRef.current.setTags(noteKey, tags);
         this.setState({
             tags: tags
         });
     }
+
+    getNoteTypeLabel(type) {
+        let foundType =  noteTypes.find(function(noteType) {
+            return noteType.key === type;
+        });
+        if (!foundType) {
+            throw new Error(`Unknown note type: '${type}'.`);
+        }
+        return foundType.label;
+    }
+
+    getOtherNoteTypeLabel(type) {
+        let otherType =  noteTypes.find(function(noteType) {
+            return noteType.key !== type;
+        });
+        return otherType.label;
+    }
+    
 
 
     render() {
@@ -268,74 +398,110 @@ class App extends React.Component {
                             ref={this.fancyTreeDomRef}
                             name="new333" 
                             loadTree={this.loadTree} 
-                            activeNote={this.state.activeNote} 
                             activateNote={this.activateNote} 
                             selectNote={this.selectNote} 
+                            dataSource={this.dataSource}
                             />;
         if (this.state.listView == "simpleList") {
-            listView = <NotesList />;
+            listView = <NotesList 
+                            ref={this.simpleListDomRef}
+
+                            dataSource={this.dataSource}
+
+                            findNotes={this.findNotes}  
+                            activateNote={this.activateNote} 
+                            setFilterByParentNotesKey={this.setFilterByParentNotesKey}
+                            filterByParentNotesKey={this.state.filterByParentNotesKey}
+                        />;
         }
 
         return (
-            <ReflexContainer orientation="horizontal">
+            <ReflexContainer orientation="vertical">
+        
+                <ReflexElement className="left-bar"
+                    minSize="200"
+                    flex={0.25}>
+                    <div className='n3-bar-vertical'>
+                        <div>
+                            <Space>
+                                {/*
+                                    <Button
+                                        icon={<ApartmentOutlined />}
+                                        onClick={(event)=> this.setNotesListView("tree", event)}
+                                    />
 
-                <ReflexElement  minSize="50" maxSize="50">
-                    <NoteBreadCrumb parents={this.state.parents} activateNote={this.activateNote} />
-                </ReflexElement>
+                                    <Button
+                                        icon={<BarsOutlined />}
+                                        onClick={(event)=> this.setNotesListView("simpleList", event)}
+                                    />
+                                */}
 
-                <ReflexElement>
-
-                    <ReflexContainer orientation="vertical">
-                
-                        <ReflexElement className="left-bar"
-                            minSize="200"
-                            flex={0.5}>
-                            <div className='n3-bar-vertical' >
-                                <div>
-                                    <Space>
-                                        <ApartmentOutlined onClick={(event)=> this.setNotesListView("tree", event)} />
-                                        <BarsOutlined onClick={(event)=> this.setNotesListView("simpleList", event)} />
-                                    </Space>
-                                </div>
-                                {listView}
-                            </div>
-                        </ReflexElement>
-                
-                        <ReflexSplitter propagate={true}/>
-                
-                        <ReflexElement className="right-bar"
-                            minSize="200"
-                            flex={0.5}>
-                            <Note 
-                                noteTypes={noteTypes}
-                                priorityStat={this.state.priorityStat}
-
-                                noteKey={this.state.activeNoteKey} 
-                                title={this.state.title} 
-                                done={this.state.done} 
-                                type={this.state.type}
-                                priority={this.state.priority}
-                                description={this.state.description || ""}
-
-                                setDone={this.setDone} 
-                                setType={this.setType} 
-                                setTitle={this.setTitle}
-                                handleChangeTitle={this.handleChangeTitle}
+                                <Button
+                                    onClick={(event)=> this.addNote()}
+                                ><PlusOutlined /> Add note </Button>
+                            </Space>
                                 
-                                setDescription={this.setDescription}
-                                setPriority={this.setPriority}
-
-                                tags={this.state.tags}
-                                addTag={this.addTag}
-                                deleteTag={this.deleteTag}
-                            />
-                        </ReflexElement>
-                
-                    </ReflexContainer>
-
+                        </div>
+                        {listView}
+                    </div>
                 </ReflexElement>
-            
-            
+
+                <ReflexSplitter propagate={true}/>
+
+                <ReflexElement minSize="200"
+                    flex={0.25}>
+                    <NotesList 
+                        ref={this.simpleListDomRef}
+
+                        dataSource={this.dataSource}
+
+                        findNotes={this.findNotes}  
+                        activateNote={this.activateNote} 
+                        setFilterByParentNotesKey={this.setFilterByParentNotesKey}
+                        notes={this.state.childNotes}
+                        getNoteTypeLabel={this.getNoteTypeLabel}
+                    />
+                </ReflexElement>
+        
+                <ReflexSplitter propagate={true}/>
+        
+                <ReflexElement className="right-bar"
+                    minSize="200"
+                    flex={0.5}>
+                    <Note 
+                        dataSource={this.dataSource}
+
+                        noteTypes={noteTypes}
+                        getNoteTypeLabel={this.getNoteTypeLabel}
+                        getOtherNoteTypeLabel={this.getOtherNoteTypeLabel}
+                        priorityStat={this.state.priorityStat}
+
+                        noteKey={this.state.activeNoteKey} 
+                        title={this.state.title} 
+                        done={this.state.done} 
+                        type={this.state.type}
+                        priority={this.state.priority}
+                        description={this.state.description || ""}
+                        backlinks={this.state.backlinks}
+                        parents={this.state.parents} 
+
+                        setDone={this.setDone} 
+                        setType={this.setType} 
+                        setTitle={this.setTitle}
+                        handleChangeTitle={this.handleChangeTitle}
+                        
+                        setDescription={this.setDescription}
+                        setPriority={this.setPriority}
+
+                        tags={this.state.tags}
+                        addTag={this.addTag}
+                        deleteTag={this.deleteTag}
+                        activateNote={this.activateNote}
+
+                        setFilterByParentNotesKey={this.setFilterByParentNotesKey}
+                    />
+                </ReflexElement>
+        
             </ReflexContainer>
         )
     }

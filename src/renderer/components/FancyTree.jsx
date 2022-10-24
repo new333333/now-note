@@ -45,6 +45,12 @@ class FancyTree extends React.Component {
         return node;
     }
 
+    deactiveNote() {
+        let node = this.fancytree.getActiveNode();
+        node.setActive(false);
+        return node;
+    }
+
     setPriority(key, priority) {
         let node = this.fancytree.getNodeByKey(key);
         node.data.priority = priority;
@@ -93,7 +99,7 @@ class FancyTree extends React.Component {
         let self = this;
 
         let searchText = event.target.value;
-        window.electronAPI.search(searchText, -1, false).then(function(searchResults) {
+        this.props.dataSource.search(searchText, -1, false).then(function(searchResults) {
 
             let foundNoteKeys = [];
 
@@ -119,13 +125,54 @@ class FancyTree extends React.Component {
         });
     }
 
+    addNote(key, newNoteData) {
+        console.log("addNote key", key, newNoteData);
+
+        let node;
+        if (!key) {
+			node = this.fancytree.getRootNode();
+		} else {
+            node = this.fancytree.getNodeByKey(key);
+        }
+
+        console.log("addNote node", node);
+        
+
+		let hitMode = "over";
+		let relativeToKey = node.key;
+        let self = this;
+
+		this.props.dataSource.addNote(node.key, {
+			title: newNoteData.title,
+			type: newNoteData.type,
+			priority: newNoteData.priority,
+			done: newNoteData.done,
+			expanded: false,
+			// createdBy: window.nn.userSettings.settings.userName
+		}, "firstChild", relativeToKey).then(function(newNoteData) {
+			console.log("write back added", newNoteData);
+
+            if (node.key.startsWith("root_")) {
+                self.fancytree.reload();
+            } else {
+                node.resetLazy();
+                node.setExpanded(true);
+            }
+
+
+			// let treeData = window.n3.dataToTreeData([newNoteData]);
+			// let newNode = node.addNode(treeData[0], "firstChild");
+			// newNode.setActive();
+		});
+    }
+
     init() {
         const $domNode = $(this.domRef.current);
 
         let self = this;
 
         $domNode.fancytree({
-            extensions: ["dnd5", "filter", "table"],
+            extensions: ["dnd5", "filter"],
 			checkbox: true,
 			icon: false,
 			escapeTitles: true,
@@ -172,6 +219,7 @@ class FancyTree extends React.Component {
 
 			},
         });
+        $(".fancytree-container", $domNode).addClass("fancytree-connectors");
         this.fancytree = $.ui.fancytree.getTree($domNode);
     }
 
@@ -185,19 +233,7 @@ class FancyTree extends React.Component {
                 </div>
                 
                 <div className='n3-bar-grow'>
-                    <div className='n3-tree'>
-                        <table ref={this.domRef}>
-                            <colgroup>
-                                <col width="*"></col>
-                            </colgroup>
-                            <thead>
-                                <tr>
-                                    <th></th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                            </tbody>
-                        </table>
+                    <div className='n3-tree' ref={this.domRef}>
                     </div>
                 </div>
             </div>

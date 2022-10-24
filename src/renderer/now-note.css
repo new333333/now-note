@@ -230,6 +230,7 @@ body {
 	/* overflow: scroll; */
 	overflow: auto;
 	height: 100%;
+	background-color: #efefef;
 }
 
 .fancytree-node {

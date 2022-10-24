@@ -11,11 +11,12 @@ class NoteTags extends React.Component {
         this.inputRefAutoComplete = React.createRef();
 
         this.showInputAutoComplete = this.showInputAutoComplete.bind(this);
-
         this.onSelectAutoComplete = this.onSelectAutoComplete.bind(this);
         this.onSearchAutoComplete = this.onSearchAutoComplete.bind(this);
         this.onChangeAutoComplete = this.onChangeAutoComplete.bind(this);
         this.onKeyDownAutoComplete = this.onKeyDownAutoComplete.bind(this);
+        this.onBlurAutoComplete = this.onBlurAutoComplete.bind(this);
+
 
         this.state = {
             inputAutoCompleteVisible: false,
@@ -25,12 +26,23 @@ class NoteTags extends React.Component {
     }
 
     onKeyDownAutoComplete(event) {
-        if (event.key === 'Enter') {
-            this.onSelectAutoComplete(event.target.value);
+        console.log("onKeyDownAutoComplete", event);
+        if (event.key === 'Escape') {
+            this.onBlurAutoComplete();
         }
     }
 
+    onBlurAutoComplete() {
+        this.setState({
+            inputAutoCompleteVisible: false,
+            valueAutoComplete: "",
+            optionsAutoComplete: []
+        });
+    }
+
     async onSelectAutoComplete(tag) {
+        console.log("onSelectAutoComplete", tag);
+
         if (tag && this.props.tags.indexOf(tag) === -1) {
             await this.props.addTag(this.props.noteKey, tag);
         }
@@ -40,18 +52,28 @@ class NoteTags extends React.Component {
             valueAutoComplete: "",
             optionsAutoComplete: []
         });
-
     }
 
     async onSearchAutoComplete(searchText) {
-        let tags = await window.electronAPI.findTag(searchText);
+        let tags = await this.props.dataSource.findTag(searchText);
 
+        let found = false;
         let options = tags.map(function(currentTag) {
+            if (currentTag == searchText) {
+                found = true;
+            }
 			return {
                 label: currentTag,
                 value: currentTag,
             };
 		});
+
+        if (!found && searchText) {
+            options.unshift({
+                label: "New tag: " + searchText,
+                value: searchText,
+            });
+        }
 
         this.setState({
             optionsAutoComplete: options
@@ -109,23 +131,20 @@ class NoteTags extends React.Component {
                 })}
 
                 {this.state.inputAutoCompleteVisible && (
-                    <>
                     <AutoComplete
                         ref={this.inputRefAutoComplete}
+                        defaultActiveFirstOption={true}
                         value={this.state.valueAutoComplete}
                         options={this.state.optionsAutoComplete}
                         style={{ width: 200 }}
                         onSelect={this.onSelectAutoComplete}
-                        onBlur={this.onSelectAutoComplete}
+                        onBlur={this.onBlurAutoComplete}
                         onKeyDown={this.onKeyDownAutoComplete}
                         onSearch={this.onSearchAutoComplete}
                         onChange={this.onChangeAutoComplete}
-                        style={{ width: 150 }}
                     >
                         <Input.Search size="small" placeholder="" />
                     </AutoComplete>
-
-                    </>
                 )}
                 {!this.state.inputAutoCompleteVisible && (
                     <Tag className="nn-site-tag-plus" onClick={this.showInputAutoComplete}>

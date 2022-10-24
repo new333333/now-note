@@ -1,12 +1,14 @@
 import React from 'react';
 import { Breadcrumb, Dropdown, Menu, Space, Input, InputNumber, Button, Select, Tooltip } from 'antd';
-import { HomeOutlined, DownOutlined } from '@ant-design/icons';
+import { HomeOutlined, DownOutlined, PlusSquareOutlined } from '@ant-design/icons';
 import { Checkbox } from 'pretty-checkbox-react';
 import '@djthoms/pretty-checkbox';
 import {NotePriority} from './NotePriority.jsx';
+import {NoteBacklinks} from './NoteBacklinks.jsx';
 import {NoteTags} from './NoteTags.jsx';
 import { Editor } from '@tinymce/tinymce-react';
-
+import {NoteBreadCrumb} from './NoteBreadCrumb.jsx';
+import {ModalFilterByParentNotes} from './ModalFilterByParentNotes.jsx';
 
 import tinymce from 'tinymce/tinymce';
 
@@ -55,9 +57,14 @@ class Note extends React.Component {
         super();
         
         this.inputRefTinyMCE = React.createRef();
+        this.modalFilterByParentNotesRef = React.createRef();
 
         this.setType = this.setType.bind(this);
-        this.onBlur = this.onBlur.bind(this);
+        this.onBlurEditor = this.onBlurEditor.bind(this);
+        this.onClickEditor = this.onClickEditor.bind(this);
+        this.setupTinyMce = this.setupTinyMce.bind(this);
+        this.handleSetFilter = this.handleSetFilter.bind(this);
+        this.addParentNotesFilter = this.addParentNotesFilter.bind(this);
     }
 
     setDone(event) {
@@ -80,29 +87,26 @@ class Note extends React.Component {
         this.props.handleChangeTitle(this.props.noteKey, event.target.value );
     }
 
-    getNoteTypeLabel(type) {
-        let foundType =  this.props.noteTypes.find(function(noteType) {
-            return noteType.key === type;
-        });
-        if (!foundType) {
-            throw new Error(`Unknown note type: '${type}'.`);
-        }
-        return foundType.label;
-    }
-
-    getOtherNoteTypeLabel(type) {
-        let otherType =  this.props.noteTypes.find(function(noteType) {
-            return noteType.key !== type;
-        });
-        return otherType.label;
-    }
-    
-
-    onBlur(value, editor) {
-        console.log("onBlur(value, editor)", value);
+    onBlurEditor(value, editor) {
+        console.log("onBlurEditor(value, editor)", value);
         if (this.inputRefTinyMCE.current) {
             this.props.setDescription(this.props.noteKey, this.inputRefTinyMCE.current.getContent());
         }
+    }
+
+    onClickEditor(e, editor) {
+        console.log("onClickEditor(e, editor)", e, editor);
+
+        if (e.srcElement &&  e.srcElement.dataset && e.srcElement.dataset.gotoNote) {
+            console.log("activateNode", e.srcElement.dataset.gotoNote);
+            this.props.activateNote(e.srcElement.dataset.gotoNote);
+        }
+        
+        if (e.srcElement &&  e.srcElement.dataset && e.srcElement.dataset.n3asset) {
+            console.log("open attachment in ew tab", e.srcElement.href);
+            this.props.dataSource.downloadAttachment(e.srcElement.href);
+        }
+
     }
 
     componentWillUnmount() {
@@ -112,105 +116,289 @@ class Note extends React.Component {
         }
     }
 
-    render() {
+    handleSetFilter(event) {
+        if (event.key == "filterByParentNote") {
+            this.modalFilterByParentNotesRef.current.open();
+        }
+    }
 
-        // console.log("Note render done", this.props.noteKey);
+    setupTinyMce(editor) {
+
+        let self = this;
+
+        editor.ui.registry.addAutocompleter("specialchars", {
+            ch: '#',
+            minChars: 0,
+            columns: 1,
+            onAction: function(autocompleteApi, rng, key) {
+                editor.selection.setRng(rng);
+
+                self.props.dataSource.getNote(key).then(function(linkToNote) {
+
+                    console.log("getNote", key, linkToNote);
+                    self.props.dataSource.getParents(key).then(function(parents) {
+                        let path = "";
+                        let sep = "";
+                        if (parents) {
+                            parents.forEach(function(parentNote) {
+                                path = `${path}${sep}<a href='#${parentNote.key}' data-goto-note='${parentNote.key}'>${parentNote.title}</a>`;
+                                sep = " / ";
+                            });
+                        }
+                        editor.insertContent("<span class='nn-link' data-n3link-node='" + key +"' contenteditable='false'>#" + path + "</span> ");
+                        autocompleteApi.hide();
+                    });
+                });
+                // TODO: on reject ? no note found or other errors...
+            },
+            fetch: function(pattern) {
+                console.log("addAutocompleter fetch pattern", pattern);
+                return new Promise(function(resolve) {
+                    let searchResults = [];
+
+                    self.props.dataSource.search(pattern, 20, false).then(function(searchResults) {
+                        showAutocomplete(searchResults, resolve);
+                    });
+
+                    function showAutocomplete(searchResults, resolve) {
+                        console.log("addAutocompleter searchResults", searchResults);
+
+                        if (searchResults.length > 0) {
+                            let results = searchResults.map(function(searchResult) {
+                                return {
+                                    type: 'cardmenuitem',
+                                    value: searchResult.key,
+                                    label: searchResult.path ? searchResult.path + " / " + searchResult.title : searchResult.title,
+                                    items: [
+                                        {
+                                            type: 'cardcontainer',
+                                            direction: 'vertical',
+                                            items: [
+                                                {
+                                                    type: 'cardtext',
+                                                    text: searchResult.path ? searchResult.path + " / " + searchResult.title : searchResult.title,
+                                                    name: 'char_name'
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            });
+                            resolve(results);
+                        } else {
+                            resolve([{
+                                type: "cardmenuitem",
+                                value: "value",
+                                label: "label",
+                                items: [
+                                    {
+                                        type: "cardcontainer",
+                                        direction: "vertical",
+                                        items: [
+                                            {
+                                                type: "cardtext",
+                                                text: "New note: " + pattern,
+                                                name: "char_name"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }]);
+                        }
+                    }
+                    
+                });
+            }
+        });
+    }
+
+    getFilterMenuItems() {
+        let menuItems = [
+            {
+                label:  <>
+                            Add or Edit Filter by Parent Notes
+                        </>,
+                key: 'filterByParentNote',
+            },
+        ];
+
+        if (this.props.filterByParentNotesKey && this.props.filterByParentNotesKey.length > 0) {
+            menuItems.push({
+                type: 'divider',
+            });
+
+            menuItems.push({
+                label:  <>
+                            <Typography.Text strong>Remove Filter by Parent Notes <Typography.Text mark>{this.props.filterByParentNotesKey.length}</Typography.Text></Typography.Text>
+                        </>,
+                key: 'removeFilterByParentNote',
+            });
+
+        }
+
+        return menuItems;
+    }
+
+    addParentNotesFilter(keys) {
+        console.log("addParentNotesFilter, keys", keys);
+        let self = this;
+
+        this.props.setFilterByParentNotesKey(keys);
+        
+        this.props.dataSource.search("", -1, false, {parentNotesKey: keys}).then(function(searchResults) {
+            self.setState({
+                notes: searchResults,
+            });
+        });
+
+    }
+
+    render() {
 
         if (this.inputRefTinyMCE.current) {
             this.inputRefTinyMCE.current.setContent(this.props.description);
         }
 
+        const filterMenu = (
+            <Menu
+                onClick={(event)=> this.handleSetFilter(event)} 
+                items={this.getFilterMenuItems()}
+            />
+        );
+        let activeFiltersCount = 0;
+
         return (
-            <div style={{padding: "5px"}}>
-                <div>
-                    {this.props.noteKey ?
-                    <Space direction="vertical" style={{ width: "100%" }}>
-                        <div style={{display: "flex", alignItems: "center" }}>
-                            {
-                                this.props.type == "task" &&
-                                    <div style={{width: "27px", margin: "0 8px"}}>
-                                        <Tooltip title={"Mark as" + (this.props.done ? " NOT" : "") + " Done"}>
-                                            <Checkbox shape="round"  
-                                                color="success" 
-                                                style={{ 
-                                                    display: "inline-block",
-                                                    fontSize: 25  }} 
-                                                checked={this.props.done} 
-                                                onChange={(event)=> this.setDone(event)} />
+            <>
+                <div style={{padding: "5px"}}>
+                    <div>
+                        <NoteBreadCrumb parents={this.props.parents} activateNote={this.props.activateNote} />
+                    </div>
+                    <div>
+                        {this.props.noteKey ?
+                        <Space direction="vertical" style={{ width: "100%" }}>
+                            <div style={{display: "flex", alignItems: "center" }}>
+                                {
+                                    this.props.type == "task" &&
+                                        <div style={{width: "27px", margin: "0 8px"}}>
+                                            <Tooltip title={"Mark as" + (this.props.done ? " NOT" : "") + " Done"}>
+                                                <Checkbox shape="round"  
+                                                    color="success" 
+                                                    style={{ 
+                                                        display: "inline-block",
+                                                        fontSize: 25  }} 
+                                                    checked={this.props.done} 
+                                                    onChange={(event)=> this.setDone(event)} />
+                                            </Tooltip>
+                                        </div>
+                                }
+                                <div style={{flexBasis: "100%" }}>
+                                    <Input 
+                                        size="large" 
+                                        value={this.props.title} 
+                                        onChange={(event)=> this.handleChangeTitle(event)} 
+                                        onBlur={(event)=> this.setTitle(event)} />
+                                </div>
+                            </div>
+                            <div>
+                                <Space>
+                                    <div>
+                                        This is a&nbsp; 
+                                        <Tooltip title={"Change to " + this.props.getOtherNoteTypeLabel(this.props.type)}>
+                                            <a href="#" onClick={(event)=> this.setType()}><strong>{this.props.getNoteTypeLabel(this.props.type)}</strong></a>
                                         </Tooltip>
                                     </div>
-                            }
-                            <div style={{flexBasis: "100%" }}>
-                                <Input 
-                                    size="large" 
-                                    value={this.props.title} 
-                                    onChange={(event)=> this.handleChangeTitle(event)} 
-                                    onBlur={(event)=> this.setTitle(event)} />
+                                    <NotePriority 
+                                        noteKey={this.props.noteKey}
+                                        priority={this.props.priority}
+                                        setPriority={this.props.setPriority} 
+                                        priorityStat={this.props.priorityStat}
+                                        />
+                                </Space>
                             </div>
-                        </div>
-                        <div>
-                            <Space>
+                            {/*
+                            <div>
+                                <Space>
+
+                                    <Dropdown overlay={filterMenu}>
+                                        <Button>
+                                            <Space>
+                                                Filter {activeFiltersCount > 0 ? <Typography.Text mark>{activeFiltersCount}</Typography.Text> : ""}
+                                                <DownOutlined />
+                                            </Space>
+                                        </Button>
+                                    </Dropdown>
+
+
+                                </Space>
+                            </div>
+                            */}
+                            {/*
                                 <div>
-                                    This is a&nbsp; 
-                                    <Tooltip title={"Change to " + this.getOtherNoteTypeLabel(this.props.type)}>
-                                        <a href="#" onClick={(event)=> this.setType()}><strong>{this.getNoteTypeLabel(this.props.type)}</strong></a>
-                                    </Tooltip>
+                                    <NoteTags 
+                                        dataSource={this.props.dataSource}
+
+                                        noteKey={this.props.noteKey}
+                                        tags={this.props.tags || []}
+
+                                        addTag={this.props.addTag} 
+                                        deleteTag={this.props.deleteTag}
+                                        />
                                 </div>
-                                <NotePriority 
-                                    noteKey={this.props.noteKey}
-                                    priority={this.props.priority}
-                                    setPriority={this.props.setPriority} 
-                                    priorityStat={this.props.priorityStat}
-                                    />
-                            </Space>
-                        </div>
-                        <div>
-                            <NoteTags 
-                                noteKey={this.props.noteKey}
-                                tags={this.props.tags || []}
-
-                                addTag={this.props.addTag} 
-                                deleteTag={this.props.deleteTag}
+                            */}
+                            <div>
+                                <Editor
+                                    onInit={(evt, editor) => this.inputRefTinyMCE.current = editor}
+                                    initialValue={this.props.description}
+                                    onBlur={this.onBlurEditor}
+                                    onClick={this.onClickEditor}
+                                    init={{
+                                        setup: this.setupTinyMce,
+                                        skin: false,
+                                        // menubar: false,
+                                        // inline: true,
+                                        content_css: false,
+                                        content_style: [contentCss, contentUiCss, " .nn-link {color: blue; font-size: 20px; } "].join('\n'),
+                                        toolbar_sticky: true,
+                                        toolbar_sticky_offset: 0,
+                                        height: 50,
+                                        inline_boundaries: false,
+                                        powerpaste_word_import: "clean",
+                                        powerpaste_html_import: "clean",
+                                        block_unsupported_drop: false,
+                                        menubar: false,
+                                        plugins: [
+                                            "advlist", "autolink", "lists", "link", "image", "charmap", "preview",
+                                            "anchor", "searchreplace", "visualblocks", "code", "fullscreen",
+                                            "insertdatetime", "media", "table", "code", "help", "wordcount",
+                                            "autoresize"
+                                        ],
+                                        toolbar: "undo redo | blocks | " +
+                                            "bold italic underline strikethrough  backcolor | alignleft aligncenter " +
+                                            "alignright alignjustify | bullist numlist outdent indent | " +
+                                            "removeformat | code",
+                                    }}
                                 />
-                        </div>
-                        <div>
-                            <Editor
-                                onInit={(evt, editor) => this.inputRefTinyMCE.current = editor}
-                                initialValue={this.props.description}
-                                onBlur={this.onBlur}
-                                init={{
-                                    skin: false,
-                                    content_css: false,
-                                    content_style: [contentCss, contentUiCss].join('\n'),
-                                    toolbar_sticky: true,
-                                    toolbar_sticky_offset: 0,
-                                    min_height: 100,
-                                    inline_boundaries: false,
-                                    powerpaste_word_import: "clean",
-                                    powerpaste_html_import: "clean",
-                                    block_unsupported_drop: false,
-                                    menubar: false,
-                                    plugins: [
-                                        "advlist", "autolink", "lists", "link", "image", "charmap", "preview",
-                                        "anchor", "searchreplace", "visualblocks", "code", "fullscreen",
-                                        "insertdatetime", "media", "table", "code", "help", "wordcount",
-                                        "autoresize"
-                                    ],
-                                    toolbar: 'undo redo | formatselect | ' +
-                                        'bold italic backcolor | alignleft aligncenter ' +
-                                        'alignright alignjustify | bullist numlist outdent indent | ' +
-                                        'removeformat | help',
-                                }}
+                            </div>
+                        </Space> :
+                        <div>no note selected</div>}
+                    </div>
+                    <div>
+                        <NoteBacklinks 
+                            noteKey={this.props.noteKey}
+                            backlinks={this.props.backlinks}
+                            activateNote={this.props.activateNote}
                             />
-                        </div>
-                    </Space> :
-                    <div>no note selected</div>}
-                </div>
-                <div>
-                    TODO backlinks...
-                </div>
+                    </div>
 
-            </div>
+                </div>
+                <ModalFilterByParentNotes 
+                    ref={this.modalFilterByParentNotesRef}
+                    dataSource={this.props.dataSource}
+
+                    addParentNotesFilter={this.addParentNotesFilter}
+                    filterByParentNotesKey={this.props.filterByParentNotesKey}
+                />
+            </>
         );
     }
 }

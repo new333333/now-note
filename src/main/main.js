@@ -214,12 +214,16 @@ const createWindow = () => {
         return n3.repository.getParents(key);
       });
 
+      ipcMain.handle("store:getBacklinks", function(event, key) {
+        return n3.repository.getBacklinks(key);
+      });
+
       ipcMain.handle("app:getPriorityStat", function(event) {
         return n3.repository.getPriorityStat();
       });
 
-      ipcMain.handle("search:search", function(event, searchText, limit, trash) {
-        return n3.repository.search(searchText, limit, trash);
+      ipcMain.handle("search:search", function(event, searchText, limit, trash, options) {
+        return n3.repository.search(searchText, limit, trash, options);
       });
 
       ipcMain.handle('download-attachment',  function(event, url) {

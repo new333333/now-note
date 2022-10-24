@@ -16,12 +16,17 @@ class NoteBreadCrumb extends React.Component {
     render() {
 
         return (
-            <div style={{padding: "5px"}}>
-                {this.props.parents && 
-                    <Breadcrumb>
-                        {this.props.parents.map((parentNote, i) => <Breadcrumb.Item key={parentNote.key} href="#" onClick={(event)=> this.activateNote(parentNote.key, event)}>{parentNote.title}</Breadcrumb.Item>)}
-                    </Breadcrumb>} 
-            </div>
+            <>
+                <Breadcrumb>
+                    <Breadcrumb.Item key="root" href="#" onClick={(event)=> this.activateNote(undefined, event)}>
+                        <HomeOutlined />
+                    </Breadcrumb.Item>
+
+                    {this.props.parents &&
+                        (this.props.parents.map((parentNote, i) => <Breadcrumb.Item key={parentNote.key} href="#" onClick={(event)=> this.activateNote(parentNote.key, event)}>{parentNote.title}</Breadcrumb.Item>))
+                    }
+                </Breadcrumb>
+            </>
         );
     }
 }
