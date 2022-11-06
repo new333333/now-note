@@ -32,7 +32,7 @@ class FancyTree extends React.Component {
         let node = this.fancytree.getNodeByKey(note.key);
         node.data.priority = note.priority;
         node.data.done = note.done;
-        node.data.description = note.description;
+        // memory... node.data.description = note.description;
         node.setSelected(note.done);
         node.data.type = note.type;
         node.data.tags = note.tags;
@@ -53,24 +53,30 @@ class FancyTree extends React.Component {
 
     setPriority(key, priority) {
         let node = this.fancytree.getNodeByKey(key);
-        node.data.priority = priority;
+        if (node) {
+            node.data.priority = priority;
+        }
     }
 
     setDone(key, done) {
         let node = this.fancytree.getNodeByKey(key);
-        node.data.done = done;
-        node.setSelected(done);
+        if (node) {
+            node.data.done = done;
+            node.setSelected(done);
+        }
     }
 
     setType(key, type) {
         let node = this.fancytree.getNodeByKey(key);
-        node.data.type = type;
-        node.checkbox = node.data.type !== undefined && node.data.type === "task";
+        if (node) {
+            node.data.type = type;
+            node.checkbox = node.data.type !== undefined && node.data.type === "task";
 
-        let parentNode = node;
-        while (parentNode) {
-            parentNode.renderTitle();
-            parentNode = parentNode.parent;
+            let parentNode = node;
+            while (parentNode) {
+                parentNode.renderTitle();
+                parentNode = parentNode.parent;
+            }
         }
     }
 
@@ -81,14 +87,15 @@ class FancyTree extends React.Component {
 
     setTitle(key, title) {
         let node = this.fancytree.getNodeByKey(key);
-        node.title = title;
+        if (node) {
+            node.title = title;
 
-        let parentNode = node;
-        while (parentNode) {
-            parentNode.renderTitle();
-            parentNode = parentNode.parent;
+            let parentNode = node;
+            while (parentNode) {
+                parentNode.renderTitle();
+                parentNode = parentNode.parent;
+            }
         }
-
         return node;
     }
 
@@ -203,11 +210,34 @@ class FancyTree extends React.Component {
 			},
 
             activate: function(event, data) {
-                self.props.activateNote(data.node.key);
+                // use click insteed self.props.activateNote(data.node.key);
+                
 			},
 
+            expand: function(event, data, a, b) {
+                self.props.expandNote(data.node.key, true);
+			},
+
+			collapse: function(event, data) {
+                self.props.expandNote(data.node.key, false);
+			},
+
+            click: function(event, data) {
+                var node = data.node,
+                    // Only for click and dblclick events:
+                    // 'title' | 'prefix' | 'expander' | 'checkbox' | 'icon'
+                    targetType = data.targetType;
+            
+                // we could return false to prevent default handling, i.e. generating
+                // activate, expand, or select events
+
+                if (data.targetType != "checkbox" && data.targetType != "expander") {
+                    self.props.activateNote(data.node.key);
+                }
+            },
+
             select: function(event, data) {
-                self.props.selectNote(data.node.key, data.node.selected);
+                self.props.handleChangeDone(data.node.key, data.node.selected, true);
 
 				data.node.data.done = data.node.selected;
 				
@@ -218,6 +248,166 @@ class FancyTree extends React.Component {
 				}
 
 			},
+
+            dnd5: {
+				// autoExpandMS: 400,
+				// preventForeignNodes: true,
+				// preventNonNodes: true,
+				preventRecursion: true, // Prevent dropping nodes on own descendants
+				// preventSameParent: true,
+				preventVoidMoves: true, // Prevent moving nodes 'before self', etc.
+				// effectAllowed: "all",
+				dropEffectDefault: "move", // "auto",
+				multiSource: false,  // drag all selected nodes (plus current node)
+
+				// --- Drag-support:
+
+				dragStart: function(node, data) {
+					/* This function MUST be defined to enable dragging for the tree.
+					  *
+					  * Return false to cancel dragging of node.
+					  * data.dataTransfer.setData() and .setDragImage() is available
+					  * here.
+					  */
+					console.log("T1: dragStart: " + "data: " + data.dropEffect + "/" + data.effectAllowed +
+						", dataTransfer: " + data.dataTransfer.dropEffect + "/" + data.dataTransfer.effectAllowed, data);
+
+					// Set the allowed effects (i.e. override the 'effectAllowed' option)
+					data.effectAllowed = "all";
+
+					// Set a drop effect (i.e. override the 'dropEffectDefault' option)
+					// data.dropEffect = "link";
+					data.dropEffect = "copy";
+
+					// We could use a custom image here:
+					// data.dataTransfer.setDragImage($("<div>TEST</div>").appendTo("body")[0], -10, -10);
+					// data.useDefaultImage = false;
+
+					// Return true to allow the drag operation
+					return true;
+				},
+				dragDrag: function(node, data) {
+					//   console.log("dragDrag", null, 2000,
+					//     "T1: dragDrag: " + "data: " + data.dropEffect + "/" + data.effectAllowed +
+					//     ", dataTransfer: " + data.dataTransfer.dropEffect + "/" + data.dataTransfer.effectAllowed );
+				},
+				dragEnd: function(node, data) {
+					//   console.log( "T1: dragEnd: " + "data: " + data.dropEffect + "/" + data.effectAllowed +
+					//     ", dataTransfer: " + data.dataTransfer.dropEffect + "/" + data.dataTransfer.effectAllowed, data);
+					//     alert("T1: dragEnd")
+				},
+
+				// --- Drop-support:
+
+				dragEnter: function(node, data) {
+					// console.log("T1: dragEnter: " + "data: " + data.dropEffect + "/" + data.effectAllowed +
+					//	", dataTransfer: " + data.dataTransfer.dropEffect + "/" + data.dataTransfer.effectAllowed, data);
+
+					// data.dropEffect = "copy";
+					return true;
+				},
+				dragOver: function(node, data) {
+					// console.log("dragOver", null, 2000,
+					// 	"T1: dragOver: " + "data: " + data.dropEffect + "/" + data.effectAllowed +
+					// 	", dataTransfer: " + data.dataTransfer.dropEffect + "/" + data.dataTransfer.effectAllowed);
+
+					// Assume typical mapping for modifier keys
+					data.dropEffect = data.dropEffectSuggested;
+					// data.dropEffect = "move";
+				},
+				dragLeave(node, data) {
+					// console.log("dragLeave", null, 2000,
+					// 	"T1: dragOver: " + "data: " + data.dropEffect + "/" + data.effectAllowed +
+					// 	", dataTransfer: " + data.dataTransfer.dropEffect + "/" + data.dataTransfer.effectAllowed);
+
+				},
+				dragDrop: function(node, data) {
+
+					let newNode,
+						transfer = data.dataTransfer,
+						sourceNodes = data.otherNodeList,
+						mode = data.dropEffect;
+
+					if (data.hitMode === "after" && sourceNodes) {
+						// sourceNodes is undefined when dropping not node (file, text, etc.)
+						// If node are inserted directly after target node one-by-one,
+						// this would reverse them. So we compensate:
+						sourceNodes.reverse();
+					}
+					if (data.otherNode) {
+						// ignore mode, always move
+						var oldParentNote = data.otherNode.parent;
+						
+						// hitMode === "after" || hitMode === "before" || hitMode === "over"
+						console.log("data.hitMode", data.hitMode);
+						
+						self.props.dataSource.moveNote(data.otherNode.key, oldParentNote.key, data.hitMode === "over" ? node.key : node.parent.key, data.hitMode, node.key).then(function() {
+							console.log("moveNote done");
+							data.otherNode.moveTo(node, data.hitMode);
+						});
+						
+						data.tree.render(true, false);
+					} else if (data.files.length) {
+						
+						console.log("transfer.items", transfer.items);
+						for (let i = 0; i < transfer.items.length; i++) {
+							let item = transfer.items[i];
+
+							let entry = item.getAsFile();
+							console.log("entry as file", entry);
+
+							self.props.dataSource.addFile(data.hitMode === "over" ? node.key : node.parent.key, entry.path, data.hitMode, node.key).then(function() {
+								console.log("addFile done");
+
+								if (data.hitMode == "over") {
+									node.resetLazy();
+									node.setExpanded(true);
+								} else {
+									if (node.parent.key.startsWith("root_")) {
+										window.n3.loadNotes().then(function(tree) {
+											$.ui.fancytree.getTree("[data-tree]").reload(tree);
+										});
+									} else {
+										node.parent.resetLazy();
+										node.parent.setExpanded(true);
+									}
+									
+								}
+
+							});
+						}
+						
+					} else {
+						console.log("@TODO: it's not ready yet");
+						// Drop a non-node
+						let newNodeData = window.n3.node.getNewNodeData();
+						console.log("transfer", transfer);
+						let text = transfer.getData("text");
+						newNodeData.data.description = text;
+
+						console.log("transfer text", text);
+						var firstLine = text.split('\n')[0] || "";
+						newNodeData.title = firstLine.trim();
+						
+
+	
+						self.props.dataSource.addNote(data.hitMode === "over" ? node.key : node.parent.key, {
+							title: newNodeData.title,
+							type: newNodeData.type,
+							priority: newNodeData.priority,
+							done: newNodeData.done,
+							description: newNodeData.description
+						}, data.hitMode, data.hitMode === "over" ? node.key : node.parent.key).then(function(newNodeData) {
+							console.log("write back added", note);
+
+							let newNode = node.addNode(newNodeData, data.hitMode);
+
+						});
+
+					}
+					node.setExpanded();
+				}
+			}
         });
         $(".fancytree-container", $domNode).addClass("fancytree-connectors");
         this.fancytree = $.ui.fancytree.getTree($domNode);

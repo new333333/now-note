@@ -8,15 +8,15 @@ class NotePriority extends React.Component {
 
     constructor() {
         super();
-        this.setPriority = this.setPriority.bind(this);
+        this.handleChangePriority = this.handleChangePriority.bind(this);
     }
 
-    setPriority(value) {
-      this.props.setPriority(this.props.noteKey, value );
+    handleChangePriority(value) {
+      this.props.handleChangePriority(this.props.noteKey, value );
     }
 
-    setPriorityMenu(event) {
-        this.props.setPriority(this.props.noteKey, this.props.priorityStat[event.key] );
+    handleChangePriorityMenu(event) {
+        this.props.handleChangePriority(this.props.noteKey, this.props.priorityStat[event.key] );
     }
 
     render() {
@@ -44,7 +44,7 @@ class NotePriority extends React.Component {
 
         const priorityMenu = (
             <Menu
-                onClick={(event)=> this.setPriorityMenu(event)}
+                onClick={(event)=> this.handleChangePriorityMenu(event)}
                 items={[
                     {
                         key: 'minimum',
@@ -74,7 +74,7 @@ class NotePriority extends React.Component {
                         min={0} 
                         size="small"
                         value={this.props.priority} 
-                        onChange={(event)=> this.setPriority(event)} 
+                        onChange={(event)=> this.handleChangePriority(event)} 
                         /> 
                 </Dropdown>
             </>

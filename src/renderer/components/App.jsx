@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { ApartmentOutlined, BarsOutlin1ed, NodeExpandOutlined, PlusOutlined, ThunderboltFilled } from '@ant-design/icons';
-import { Input, Space, Button } from 'antd';
+import { Input, Space, Button, List } from 'antd';
 const { Search } = Input;
 
 import {
@@ -28,38 +28,44 @@ let noteTypes = [
     }
 ];
 
+
+
+
 class App extends React.Component {
 
     constructor() {
         super();
         this.dataSource = window.electronAPI;
+
         this.state = {
-            listView: "tree",
             activeNoteKey: undefined,
-            title: "",
-            description: "",
-            done: false,
-            type: "note",
-            priority: 0,
-            tags: [],
-            childNotes: [],
+            activeNote: undefined,
+            detailsNote: undefined,
             filterByParentNotesKey: [],
+            filterOnlyTasks: false,
+            filterOnlyNotes: false,
+            childNotes: undefined,
         };
         this.loadTree = this.loadTree.bind(this);
+        this.openNoteDetails = this.openNoteDetails.bind(this);
         this.activateNote = this.activateNote.bind(this);
-        this.selectNote = this.selectNote.bind(this);
-        this.setDone = this.setDone.bind(this);
-        this.setType = this.setType.bind(this);
-        this.setTitle = this.setTitle.bind(this);
+        this.expandNote = this.expandNote.bind(this);
+        this.handleChangeDone = this.handleChangeDone.bind(this);
+        this.handleChangeType = this.handleChangeType.bind(this);
         this.setDescription = this.setDescription.bind(this);
-        this.setPriority = this.setPriority.bind(this);
+        this.handleChangePriority = this.handleChangePriority.bind(this);
         this.addTag = this.addTag.bind(this);
         this.deleteTag = this.deleteTag.bind(this);
         this.handleChangeTitle = this.handleChangeTitle.bind(this);
         this.getNoteTypeLabel = this.getNoteTypeLabel.bind(this);
         this.getOtherNoteTypeLabel = this.getOtherNoteTypeLabel.bind(this);
         this.addNote = this.addNote.bind(this);
-        this.setFilterByParentNotesKey = this.setFilterByParentNotesKey.bind(this);
+
+        this.setFilterOnlyTasks = this.setFilterOnlyTasks.bind(this);
+        this.setFilterOnlyNotes = this.setFilterOnlyNotes.bind(this);
+
+        this.setFilterOnlyDone = this.setFilterOnlyDone.bind(this);
+        this.setFilterOnlyNotDone = this.setFilterOnlyNotDone.bind(this);
 
         this.fancyTreeDomRef = React.createRef();
         this.simpleListDomRef = React.createRef();
@@ -71,17 +77,152 @@ class App extends React.Component {
             });
         });
 
-    }
-    
-    async findNotes() {
-        return await this.dataSource.findNotes();
+        this.dataSource.isRepositoryInitialized().then(function(isRepositoryInitialized) {
+            console.log("isRepositoryInitialized", isRepositoryInitialized);
+
+            self.setState({
+                isRepositoryInitialized: isRepositoryInitialized
+            });
+        });
+
+        this.dataSource.getRepositories().then(function(repositories) {
+            self.setState({
+                repositories: repositories
+            });
+        });
+
+        this.dataSource.onChangeRepository((_event, value) => {
+            console.log("onChangeRepository", _event, value);
+
+            self.dataSource.closeRepository().then(function() {
+                console.log("closeRepository done");
+
+                self.dataSource.getRepositories().then(function(repositories) {
+                    self.setState({
+                        repositories: repositories,
+                        isRepositoryInitialized: false
+                    });
+                });
+            });
+        });
+
+        
     }
 
-    setFilterByParentNotesKey(keys) {
-        console.log("setFilterByParentNotesKey keys", keys);
-        this.setState({
-            filterByParentNotesKey: keys
+
+    async chooseRepositoryFolder() {
+        let self = this;
+        this.dataSource.chooseRepositoryFolder().then(function(repository) {
+            console.log("chooseRepositoryFolder", repository);
+
+            self.setState({
+                isRepositoryInitialized: repository !== undefined,
+            });
         });
+    }
+
+    async handleClickRepository(repositoryFolder) {
+        let self = this;
+        this.dataSource.changeRepository(repositoryFolder).then(function(repositoryChanged) {
+            console.log("chooseRepositoryFolder", repositoryChanged);
+
+            self.setState({
+                isRepositoryInitialized: repositoryChanged,
+                childNotes: undefined,
+                detailsNote: undefined,
+                activeNoteKey: undefined,
+                activeNote: undefined,
+            });
+        });
+    }
+
+
+
+    async reloadChildNotes(key, setTaskOnly, setNoteOnly, setDone, setNotDone) {
+        let types = [];
+        if (!this.state.filterOnlyTasks && setTaskOnly) {
+            types.push("'task'");
+        } else if (this.state.filterOnlyTasks && !setTaskOnly && !setNoteOnly) {
+            types.push("'task'");
+        } else if (!this.state.filterOnlyNotes && setNoteOnly) {
+            types.push("'note'");
+        } else if (this.state.filterOnlyNotes && !setNoteOnly && !setTaskOnly) {
+            types.push("'note'");
+        }
+
+
+        let dones = [];
+        if (!this.state.filterOnlyDone && setDone) {
+            dones.push(1);
+        } else if (this.state.filterOnlyDone && !setDone && !setNotDone) {
+            dones.push(1);
+        } else if (!this.state.filterOnlyNotDone && setNotDone) {
+            dones.push(0);
+        } else if (this.state.filterOnlyNotDone && !setNotDone && !setDone) {
+            dones.push(0);
+        }
+
+        let childNotes = await this.dataSource.search("", -1, false, {
+            parentNotesKey: [key],
+            types: types.length == 0 ? ["'note'", "'task'"] : types,
+            dones: dones.length == 0 ? [0, 1] : dones,
+            sortBy: "priority desc"
+        });
+
+        this.setState((previousState) => {
+            return {
+                childNotes: childNotes,
+            }
+        });
+    }
+
+    async setFilterOnlyTasks() {
+        this.setState((previousState) => {
+            return {
+                filterOnlyTasks: (!previousState.filterOnlyTasks && !previousState.filterOnlyNotes) ? true : (
+                                    (previousState.filterOnlyTasks && !previousState.filterOnlyNotes) ? false : (
+                                        (!previousState.filterOnlyTasks && previousState.filterOnlyNotes) ? true : false)), 
+                filterOnlyNotes: false, 
+            }
+        });
+        await this.reloadChildNotes(this.state.activeNoteKey, true, false);
+    }
+
+    async setFilterOnlyNotes() {
+        this.setState((previousState) => {
+            return {
+                filterOnlyTasks: false, 
+                filterOnlyNotes: (!previousState.filterOnlyTasks && !previousState.filterOnlyNotes) ? true : (
+                    (previousState.filterOnlyTasks && !previousState.filterOnlyNotes) ? true : (
+                        (!previousState.filterOnlyTasks && previousState.filterOnlyNotes) ? false : false)),    
+            }
+        });
+
+        await this.reloadChildNotes(this.state.activeNoteKey,false, true);
+    }
+
+    async setFilterOnlyDone() {
+        this.setState((previousState) => {
+            return {
+                filterOnlyDone: (!previousState.filterOnlyDone && !previousState.filterOnlyNotDone) ? true : (
+                                    (previousState.filterOnlyDone && !previousState.filterOnlyNotDone) ? false : (
+                                        (!previousState.filterOnlyDone && previousState.filterOnlyNotDone) ? true : false)), 
+                filterOnlyNotDone: false, 
+            }
+        });
+        await this.reloadChildNotes(this.state.activeNoteKey,false, false, true, false);
+    }
+
+    async setFilterOnlyNotDone() {
+        this.setState((previousState) => {
+            return {
+                filterOnlyDone: false, 
+                filterOnlyNotDone: (!previousState.filterOnlyDone && !previousState.filterOnlyNotDone) ? true : (
+                    (previousState.filterOnlyDone && !previousState.filterOnlyNotDone) ? true : (
+                        (!previousState.filterOnlyDone && previousState.filterOnlyNotDone) ? false : false)),    
+            }
+        });
+        await this.reloadChildNotes(this.state.activeNoteKey,false, false, false, true);
     }
 
     loadTree(key, data) {
@@ -166,107 +307,78 @@ class App extends React.Component {
     
     }
 
-    setNotesListView(listViewtype, event) {
-        this.setState({
-            listView: listViewtype
-        });
-    }
-
     addNote() {
         console.log("addNote");
 
         let newNoteData = {
             checkbox: false,
-            title: dayjs().format("DD.MM.YYYY HH:mm"),
+            title: dayjs().format("[am] DD.MM.YYYY [um] HH:mm[Uhr]"),
             type: "note",
             priority: 0,
             done: false,
             expanded: false
         };
-
-        if (this.state.listView != "simpleList") {
-            this.fancyTreeDomRef.current.addNote(this.state.activeNoteKey, newNoteData);
-        }
+    
+        this.fancyTreeDomRef.current.addNote(this.state.activeNoteKey, newNoteData);
     }
 
-    async activateNote(noteKey) {
+    async openNoteDetails(noteKey) {
 
         if (noteKey) {
 
-            let note = await this.dataSource.getNote(noteKey);
-            if (this.state.listView == "simpleList") {
+            let detailsNote = await this.dataSource.getNote(noteKey);
+            let detailsNoteParents = await this.dataSource.getParents(noteKey);
+            let detailsNoteBacklinks = await this.dataSource.getBacklinks(noteKey);
 
-                this.simpleListDomRef.current.setActive(noteKey);
+            detailsNote.parents = detailsNoteParents;
+            detailsNote.backlinks = detailsNoteBacklinks;
 
-                let parents = await this.dataSource.getParents(noteKey);
-                let backlinks = await this.dataSource.getBacklinks(noteKey);
-                let childNotes = await this.dataSource.search("", -1, false, {parentNotesKey: [noteKey]});
-
-                this.setState({
-                    activeNoteKey: note.key,
-                    title: note.title,
-                    description: note.description,
-                    done: note.done,
-                    type: note.type,
-                    priority: note.priority,
-                    tags: note.tags,
-                    parents: parents,
-                    backlinks: backlinks,
-                    childNotes: childNotes,
-                });
-
-
-            } else {
-                this.fancyTreeDomRef.current.setNote(note);
-                note = this.fancyTreeDomRef.current.setActive(noteKey);
-                let parents = await this.dataSource.getParents(noteKey);
-                let backlinks = await this.dataSource.getBacklinks(noteKey);
-                let childNotes = await this.dataSource.search("", -1, false, {parentNotesKey: [noteKey]});
-
-                this.setState({
-                    activeNoteKey: note.key,
-                    title: note.title,
-                    description: note.data.description,
-                    done: note.data.done,
-                    type: note.data.type,
-                    priority: note.data.priority,
-                    tags: note.data.tags,
-                    parents: parents,
-                    backlinks: backlinks,
-                    childNotes: childNotes,
-                });
-            }
+            this.setState({
+                detailsNote: detailsNote
+            });
 
         } else {
-            if (this.state.listView == "simpleList") {
+            this.setState({
+                detailsNote: undefined,
+            });
+        }
 
-                this.simpleListDomRef.current.setActive(undefined);
-                this.setState({
-                    activeNoteKey: undefined,
-                    title: undefined,
-                    description: undefined,
-                    done: undefined,
-                    type: undefined,
-                    priority: undefined,
-                    tags: undefined,
-                    parents: undefined,
-                    backlinks: undefined
-                });
+    }
 
-            } else {
-                this.fancyTreeDomRef.current.deactiveNote();
-                this.setState({
-                    activeNoteKey: undefined,
-                    title: undefined,
-                    description: undefined,
-                    done: undefined,
-                    type: undefined,
-                    priority: undefined,
-                    tags: undefined,
-                    parents: undefined,
-                    backlinks: undefined
-                });
-            }
+    async expandNote(key, expanded) {
+        let modifiedNote = await this.dataSource.modifyNote({
+            key: key, 
+            expanded: expanded	
+        });
+    }
+
+    async activateNote(noteKey) {
+        if (noteKey) {
+
+            let detailsNote = await this.dataSource.getNote(noteKey);
+            this.fancyTreeDomRef.current.setNote(detailsNote);
+            this.fancyTreeDomRef.current.setActive(noteKey);
+            let detailsNoteParents = await this.dataSource.getParents(noteKey);
+            let detailsNoteBacklinks = await this.dataSource.getBacklinks(noteKey);
+            
+            detailsNote.parents = detailsNoteParents;
+            detailsNote.backlinks = detailsNoteBacklinks;
+
+            this.setState({
+                detailsNote: detailsNote,
+                activeNoteKey: detailsNote.key,
+                activeNote: detailsNote,
+            });
+            await this.reloadChildNotes(detailsNote.key, false, false, false, false);
+            
+        } else {
+            this.fancyTreeDomRef.current.deactiveNote();
+            this.setState({
+                detailsNote: undefined,
+                activeNoteKey: undefined,
+                activeNote: undefined,
+                childNotes: undefined,
+            });
         }
 
     }
@@ -278,71 +390,153 @@ class App extends React.Component {
         });
     }
 
-    async setTitle(noteKey, title) {
+    async handleChangeTitle(noteKey, title) {
+        title = title.replaceAll("/", "");
+        this.setState((previousState) => {
+            if (previousState.detailsNote || previousState.childNotes) {
+                let newState = {}
+                if (previousState.detailsNote) {
+                    let note = JSON.parse(JSON.stringify(previousState.detailsNote));
+                    note.title = title;
+                    if (note.parents) {
+                        note.parents[note.parents.length - 1].title = title;
+                    }
+                    newState.detailsNote = note;
+                }
+
+                if (previousState.childNotes) {
+                    const newChildNotes = previousState.childNotes.map((note) => {
+                        if (note.key === noteKey) {
+                            note = JSON.parse(JSON.stringify(note));
+                            note.title = title;
+                        }
+                        return note;
+                    });
+                    newState.childNotes = newChildNotes;
+                }
+                return newState;
+            }
+        });
+        this.fancyTreeDomRef.current.setTitle(noteKey, title);
+        
         let modifiedNote = await this.dataSource.modifyNote({
             key: noteKey, 
             title: title	
         });
-        let parents = await this.dataSource.getParents(noteKey);
-        this.setState({
-            parents: parents,
-        });
+
     }
 
-    handleChangeTitle(noteKey, title) {
-        this.fancyTreeDomRef.current.setTitle(noteKey, title);
-
-        this.setState({
-            title: title,
-        });
-
+    // from Tree
+    async selectNote(noteKey, done) {
         this.setState((previousState) => {
-            let parents = JSON.parse(JSON.stringify(previousState.parents));
-            if (parents) {
-                parents[parents.length - 1].title = title;
+            if (previousState.detailsNote) {
+                let note = JSON.parse(JSON.stringify(previousState.detailsNote));
+                note.done = done;
                 return {
-                    parents: parents,
+                    detailsNote: note,
                 };
             }
         });
-    }
 
-    async selectNote(noteKey, done) {
-        this.setState({
-            done: done,
-        });
         let modifiedNote = await this.dataSource.modifyNote({
             key: noteKey, 
             done: done	
         });
     }
     
-    async setDone(noteKey, done) {
-        this.setState({
-            done: done,
+    // from details or list
+    async handleChangeDone(noteKey, done, fromTree) {
+        this.setState((previousState) => {
+            if (previousState.detailsNote || previousState.childNotes) {
+                let newState = {}
+                if (previousState.detailsNote && previousState.detailsNote.key == noteKey) {
+                    let note = JSON.parse(JSON.stringify(previousState.detailsNote));
+                    note.done = done;
+                    newState.detailsNote = note;
+                }
+/*
+                if (previousState.childNotes) {
+                    const newChildNotes = previousState.childNotes.map((note) => {
+                        if (note.key === noteKey) {
+                            note = JSON.parse(JSON.stringify(note));
+                            note.done = done;
+                        }
+                        return note;
+                    });
+                    newState.childNotes = newChildNotes;
+                }
+*/
+                return newState;
+            }
         });
-        this.fancyTreeDomRef.current.setDone(noteKey, done);
+
+        if (!fromTree) {
+            this.fancyTreeDomRef.current.setDone(noteKey, done);
+        }
         let modifiedNote = await this.dataSource.modifyNote({
             key: noteKey, 
             done: done	
         });
+
+        await this.reloadChildNotes(this.state.activeNoteKey, false, false, false, false);
     }
 
-    async setType(noteKey, type) {
-        this.setState({
-            type: type,
+    async handleChangeType(noteKey, type) {
+        this.setState((previousState) => {
+            if (previousState.detailsNote || previousState.childNotes) {
+                let newState = {}
+                if (previousState.detailsNote && previousState.detailsNote.key == noteKey) {
+                    let note = JSON.parse(JSON.stringify(previousState.detailsNote));
+                    note.type = type;
+                    newState.detailsNote = note;
+                }
+
+                if (previousState.childNotes) {
+                    const newChildNotes = previousState.childNotes.map((note) => {
+                        if (note.key === noteKey) {
+                            note = JSON.parse(JSON.stringify(note));
+                            note.type = type;
+                        }
+                        return note;
+                    });
+                    newState.childNotes = newChildNotes;
+                }
+                return newState;
+            }
         });
+
         this.fancyTreeDomRef.current.setType(noteKey, type);
         let modifiedNote = await this.dataSource.modifyNote({
             key: noteKey, 
             type: type	
         });
+        await this.reloadChildNotes(this.state.activeNoteKey,false, false, false, false);
     }
 
-    async setPriority(noteKey, priority) {
-        this.setState({
-            priority: priority,
+    async handleChangePriority(noteKey, priority) {
+        this.setState((previousState) => {
+            if (previousState.detailsNote || previousState.childNotes) {
+                let newState = {}
+                if (previousState.detailsNote && previousState.detailsNote.key == noteKey) {
+                    let note = JSON.parse(JSON.stringify(previousState.detailsNote));
+                    note.priority = priority;
+                    newState.detailsNote = note;
+                }
+
+                if (previousState.childNotes) {
+                    const newChildNotes = previousState.childNotes.map((note) => {
+                        if (note.key === noteKey) {
+                            note = JSON.parse(JSON.stringify(note));
+                            note.priority = priority;
+                        }
+                        return note;
+                    });
+                    newState.childNotes = newChildNotes;
+                }
+                return newState;
+            }
         });
+
         this.fancyTreeDomRef.current.setPriority(noteKey, priority);
         await this.dataSource.modifyNote({
             key: noteKey, 
@@ -360,16 +554,33 @@ class App extends React.Component {
     async addTag(noteKey, tag) {
         let tags = await this.dataSource.addTag(noteKey, tag);
         this.fancyTreeDomRef.current.setTags(noteKey, tags);
-        this.setState({
-            tags: tags
+
+        
+        this.setState((previousState) => {
+            if (previousState.detailsNote) {
+                let note = JSON.parse(JSON.stringify(previousState.detailsNote));
+                note.tags = tags;
+                return {
+                    detailsNote: note,
+                };
+            }
         });
+
     }
 
     async deleteTag(noteKey, tag) {
         let tags = await this.dataSource.removeTag(noteKey, tag);
         this.fancyTreeDomRef.current.setTags(noteKey, tags);
-        this.setState({
-            tags: tags
+
+        
+        this.setState((previousState) => {
+            if (previousState.detailsNote) {
+                let note = JSON.parse(JSON.stringify(previousState.detailsNote));
+                detailsNote.tags = tags;
+                return {
+                    detailsNote: note,
+                };
+            }
         });
     }
 
@@ -391,118 +602,134 @@ class App extends React.Component {
     }
     
 
-
     render() {
 
-        let listView = <FancyTree
-                            ref={this.fancyTreeDomRef}
-                            name="new333" 
-                            loadTree={this.loadTree} 
-                            activateNote={this.activateNote} 
-                            selectNote={this.selectNote} 
-                            dataSource={this.dataSource}
-                            />;
-        if (this.state.listView == "simpleList") {
-            listView = <NotesList 
+        return (
+
+            <>
+            {
+            
+                !this.state.isRepositoryInitialized ? 
+                <div className='nn-center-screen'>
+                    <div style={{margin: "10px 100px"}}>
+                        <List
+                            bordered
+                            locale={{emptyText: "No repositories"}}
+                            dataSource={this.state.repositories}
+                            renderItem={repository => (
+                                <List.Item 
+                                    
+                                >
+                                    <List.Item.Meta
+                                        title={
+                                                <a
+                                                onClick={(event)=> this.handleClickRepository(repository.path)}>{repository.path}</a>
+                                        }
+                                    />
+                                </List.Item>
+                            )}
+                        />
+                    </div>
+                    <div className="nn-flex-break"></div>
+                    <div>
+                        <Button
+                            onClick={(event)=> this.chooseRepositoryFolder()}
+                        >Choose Repository Folder</Button>
+                    </div>
+                </div> 
+                :
+                <ReflexContainer orientation="vertical">
+            
+                    <ReflexElement className="left-bar"
+                        minSize="200"
+                        flex={0.25}>
+                        <div className='n3-bar-vertical'>
+                            <div>
+                                <Space>
+                                    <Button
+                                        onClick={(event)=> this.addNote()}
+                                    ><PlusOutlined /> Add note </Button>
+                                </Space>
+                                    
+                            </div>
+                            <FancyTree
+                                ref={this.fancyTreeDomRef}
+                                name="new333" 
+                                loadTree={this.loadTree} 
+                                activateNote={this.activateNote}
+                                expandNote={this.expandNote}
+                                handleChangeDone={this.handleChangeDone} 
+                                dataSource={this.dataSource}
+                                />
+                        </div>
+                    </ReflexElement>
+
+                    <ReflexSplitter propagate={true}/>
+
+                    <ReflexElement minSize="200"
+                        flex={0.25}>
+                        <NotesList 
                             ref={this.simpleListDomRef}
 
+                            note={this.state.activeNote} 
+                            notes={this.state.childNotes}
+
+                            dataSource={this.dataSource}
+                            noteTypes={noteTypes}
+                            handleChangeDone={this.handleChangeDone} 
+                            handleChangeType={this.handleChangeType} 
+                            handleChangePriority={this.handleChangePriority}
+
+                            openNoteDetails={this.openNoteDetails} 
+
+                            setFilterOnlyTasks={this.setFilterOnlyTasks}
+                            filterOnlyTasks={this.state.filterOnlyTasks}
+                            setFilterOnlyNotes={this.setFilterOnlyNotes}
+                            filterOnlyNotes={this.state.filterOnlyNotes}
+
+                            setFilterOnlyDone={this.setFilterOnlyDone}
+                            filterOnlyDone={this.state.filterOnlyDone}
+                            setFilterOnlyNotDone={this.setFilterOnlyNotDone}
+                            filterOnlyNotDone={this.state.filterOnlyNotDone}
+
+                            
+                            getNoteTypeLabel={this.getNoteTypeLabel}
+                        />
+                    </ReflexElement>
+            
+                    <ReflexSplitter propagate={true}/>
+            
+                    <ReflexElement className="right-bar"
+                        minSize="200"
+                        flex={0.5}>
+                        <Note 
                             dataSource={this.dataSource}
 
-                            findNotes={this.findNotes}  
-                            activateNote={this.activateNote} 
-                            setFilterByParentNotesKey={this.setFilterByParentNotesKey}
-                            filterByParentNotesKey={this.state.filterByParentNotesKey}
-                        />;
-        }
+                            noteTypes={noteTypes}
+                            getNoteTypeLabel={this.getNoteTypeLabel}
+                            getOtherNoteTypeLabel={this.getOtherNoteTypeLabel}
+                            priorityStat={this.state.priorityStat}
 
-        return (
-            <ReflexContainer orientation="vertical">
-        
-                <ReflexElement className="left-bar"
-                    minSize="200"
-                    flex={0.25}>
-                    <div className='n3-bar-vertical'>
-                        <div>
-                            <Space>
-                                {/*
-                                    <Button
-                                        icon={<ApartmentOutlined />}
-                                        onClick={(event)=> this.setNotesListView("tree", event)}
-                                    />
+                            note={this.state.detailsNote} 
 
-                                    <Button
-                                        icon={<BarsOutlined />}
-                                        onClick={(event)=> this.setNotesListView("simpleList", event)}
-                                    />
-                                */}
+                            handleChangeDone={this.handleChangeDone} 
+                            handleChangeType={this.handleChangeType} 
+                            handleChangeTitle={this.handleChangeTitle}
+                            
+                            setDescription={this.setDescription}
+                            handleChangePriority={this.handleChangePriority}
 
-                                <Button
-                                    onClick={(event)=> this.addNote()}
-                                ><PlusOutlined /> Add note </Button>
-                            </Space>
-                                
-                        </div>
-                        {listView}
-                    </div>
-                </ReflexElement>
+                            
+                            addTag={this.addTag}
+                            deleteTag={this.deleteTag}
+                            openNoteDetails={this.openNoteDetails}
 
-                <ReflexSplitter propagate={true}/>
-
-                <ReflexElement minSize="200"
-                    flex={0.25}>
-                    <NotesList 
-                        ref={this.simpleListDomRef}
-
-                        dataSource={this.dataSource}
-
-                        findNotes={this.findNotes}  
-                        activateNote={this.activateNote} 
-                        setFilterByParentNotesKey={this.setFilterByParentNotesKey}
-                        notes={this.state.childNotes}
-                        getNoteTypeLabel={this.getNoteTypeLabel}
-                    />
-                </ReflexElement>
-        
-                <ReflexSplitter propagate={true}/>
-        
-                <ReflexElement className="right-bar"
-                    minSize="200"
-                    flex={0.5}>
-                    <Note 
-                        dataSource={this.dataSource}
-
-                        noteTypes={noteTypes}
-                        getNoteTypeLabel={this.getNoteTypeLabel}
-                        getOtherNoteTypeLabel={this.getOtherNoteTypeLabel}
-                        priorityStat={this.state.priorityStat}
-
-                        noteKey={this.state.activeNoteKey} 
-                        title={this.state.title} 
-                        done={this.state.done} 
-                        type={this.state.type}
-                        priority={this.state.priority}
-                        description={this.state.description || ""}
-                        backlinks={this.state.backlinks}
-                        parents={this.state.parents} 
-
-                        setDone={this.setDone} 
-                        setType={this.setType} 
-                        setTitle={this.setTitle}
-                        handleChangeTitle={this.handleChangeTitle}
-                        
-                        setDescription={this.setDescription}
-                        setPriority={this.setPriority}
-
-                        tags={this.state.tags}
-                        addTag={this.addTag}
-                        deleteTag={this.deleteTag}
-                        activateNote={this.activateNote}
-
-                        setFilterByParentNotesKey={this.setFilterByParentNotesKey}
-                    />
-                </ReflexElement>
-        
-            </ReflexContainer>
+                        />
+                    </ReflexElement>
+            
+                </ReflexContainer>
+            }
+            </>
         )
     }
 }

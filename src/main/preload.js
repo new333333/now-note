@@ -1,6 +1,13 @@
 const { contextBridge, ipcRenderer } = require('electron')
 
+
 contextBridge.exposeInMainWorld('electronAPI', {
+  onChangeRepository: (callback) => ipcRenderer.on("changeRepository", callback),
+  chooseRepositoryFolder: () => ipcRenderer.invoke("app:chooseRepositoryFolder"),
+  changeRepository: (repositoryFolder) => ipcRenderer.invoke("app:changeRepository", repositoryFolder),
+  closeRepository: () => ipcRenderer.invoke("app:closeRepository"),
+  getRepositories: () => ipcRenderer.invoke("app:getRepositories"),
+  isRepositoryInitialized: () => ipcRenderer.invoke("app:isRepositoryInitialized"),
   getUserSettings: () => ipcRenderer.invoke("app:getUserSettings"),
   getRepository: () => ipcRenderer.invoke("app:getRepository"),
   shutdown: () => ipcRenderer.invoke("app:shutdown"),
@@ -14,6 +21,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   moveNoteToTrash: (key, parent) => ipcRenderer.invoke("store:moveNoteToTrash", key, parent),
   search: (searchText, limit, trash, options) => ipcRenderer.invoke("search:search", searchText, limit, trash, options),
   getNote: (key) => ipcRenderer.invoke("store:getNote", key),
+  getNoteIndex: (key) => ipcRenderer.invoke("store:getNoteIndex", key),
   isTrash: (key) => ipcRenderer.invoke("store:isTrash", key),
   getParents: (key) => ipcRenderer.invoke("store:getParents", key),
   getBacklinks: (key) => ipcRenderer.invoke("store:getBacklinks", key),
@@ -21,3 +29,4 @@ contextBridge.exposeInMainWorld('electronAPI', {
   addFile: (parentKey, path, hitMode, relativeToKey) => ipcRenderer.invoke("store:addFile", parentKey, path, hitMode, relativeToKey),
   getPriorityStat: () => ipcRenderer.invoke("app:getPriorityStat"),
 });
+

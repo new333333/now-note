@@ -7,27 +7,55 @@ class UserSettings {
 
     #fileName = "userSettings.json";
 
-    constructor(userDataPath) {
-        this.userDataPath  = userDataPath;
+    constructor(userDataPath, userName) {
+        this.userDataPath = userDataPath;
+        log.info("UserSettings.constructor userName", userName);
+        this.userName = userName;
     }
 
     #getFilePath() {
         return path.join(this.userDataPath, this.#fileName);
     }
 
+    async getRepositories() {
+        if (!this.settings) {
+            await this.#load();
+        }
+        return this.settings.repositories;
+    }
+
     async connectDefaultRepository() {
         if (!this.settings) {
             await this.#load();
         }
-
-        let repositoryFactory = new nnRepositoryFactory.RepositoryFactory(this.settings.repositories, this.settings.userName);
+        log.info("UserSettings call RepositoryFactory this.userName", this.userName);
+        let repositoryFactory = new nnRepositoryFactory.RepositoryFactory(this.settings.repositories, this.userName);
         return await repositoryFactory.connectDefaultRepository();
+    }
+
+    async connectRepository(repositoryFolder) {
+        if (!this.settings) {
+            try {
+                await this.#load();
+            } catch (error) {
+            }
+        }
+
+        let repositoryByPath = this.settings.repositories.find(function(repository) {
+            log.info("connectRepository ", repositoryFolder, repository.path, repository.path == repositoryFolder);
+            return repository.path == repositoryFolder;
+        });
+
+        let repositoryFactory = new nnRepositoryFactory.RepositoryFactory(this.settings.repositories, this.userName);
+        return await repositoryFactory.connectRepository(repositoryByPath);
     }
 
     async #load() {
         try {
             this.settings = await fs.readFile(this.#getFilePath(), "utf-8");
         } catch (error) {
+            this.settings = this.settings || {};
+            this.settings.repositories = this.settings.repositories || [];
             if (error.code === 'ENOENT') {
                 throw new UserSettingsNoFoundError(error);
             } else {
@@ -41,27 +69,26 @@ class UserSettings {
         await fs.writeFile(this.#getFilePath(), JSON.stringify(this.settings, null, 2));
     }
 
-    setUserName(userName) {
-        this.settings = this.settings || {};
-        this.settings.userName = userName;
-    }
-
-    getUserName() {
-        if (this.settings) {
-            return this.settings.userName;
+    async addRepository(name, repositoryFolder, type) {
+        try {
+            await this.#load();
+        } catch (error) {
         }
-        return undefined;
-    }
 
-    addRepository(name, path, type, isDefault) {
-        this.settings = this.settings || {};
-        this.settings.repositories = this.settings.repositories || [];
-        this.settings.repositories.push({
-            name: name,
-			path: path,
-			type: type,
-			default: isDefault
+        let repositoryByPath = this.settings.repositories.find(function(repository) {
+            return repository.path == repositoryFolder;
         });
+
+        if (!repositoryByPath) {
+            this.settings.repositories.push({
+                name: name,
+                path: repositoryFolder,
+                type: type,
+                default: this.settings.repositories.length == 0,
+            });
+        } else {
+            log.info(`Repository ${repositoryFolder} already exists.`);
+        }
     }
 
     async exists() {

@@ -6,8 +6,11 @@ module.exports = {
    * that runs in the main process.
    */
   entry: './src/main/main.js',
+  devtool: 'cheap-module-source-map',
   // Put your normal webpack config below here
   module: {
     rules: require('./webpack.rules'),
   },
+  externals: ['pg', 'sqlite3', 'tedious', 'pg-hstore'],
 };
+

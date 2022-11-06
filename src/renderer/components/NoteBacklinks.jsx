@@ -22,7 +22,7 @@ class NoteBacklinks extends React.Component {
 
                                 return (
                                     <li key={backlink.key}>
-                                        <NoteBreadCrumb parents={backlink.parents} activateNote={this.props.activateNote} />
+                                        <NoteBreadCrumb parents={backlink.parents} openNoteDetails={this.props.openNoteDetails} />
                                     </li>
                                 )
 

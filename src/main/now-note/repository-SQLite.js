@@ -10,6 +10,8 @@ const nnAsset = require('./Asset');
 const cheerio = require('cheerio');
 const { result } = require('lodash');
 const fs = require('fs').promises;
+const fsSync = require('fs');
+
 
 class RepositorySQLite  {
 
@@ -20,12 +22,14 @@ class RepositorySQLite  {
 		this.directory = directory;
 		this.isDefault = isDefault;
 		this.#assetsFolderName = "assets";
+		log.info("RepositorySQLite.constructor userName", userName);
 		this.userName = userName;
 	};
 
 	async open() {
 		// local variable required by init
 		let sequelize = new Sequelize({
+			logging: false, // Disables logging
 			dialect: 'sqlite',
 			storage: path.join(this.directory, "db.sqlite3")
 		});
@@ -174,26 +178,55 @@ class RepositorySQLite  {
 		}
 	}
 
+	async tempMigrateOldStorage() {
+		log.info("tempMigrateOldStorage start");
+
+		let folderPath = "e:\\Projekte\\now-note-migrate-repositries\\2022-11-06";
+
+
+
+		
+
+		log.info("tempMigrateOldStorage end");
+	}
+
+	async getNoteIndex(key) {
+		let sql = `SELECT * FROM Notes_index WHERE key = :key LIMIT 1`;
+
+		let results = await this.sequelize.query(sql, {
+			replacements: {
+				key: key,
+			},
+			raw: true,
+			type: QueryTypes.SELECT
+		});
+
+		return results;
+	}
+
 	async search(searchText, limit, trash, options) {
 
 		trash = trash || false;
 		trash = trash ? 1 : 0;
 		options = options || {};
 
-		console.log("search - options", options);
+		// console.log("search - options", options);
 
 		let sql = `SELECT * FROM Notes_index 
 			WHERE 
 				${searchText ? "title MATCH :searchText or descriptionAsText MATCH :searchText and" : ""} 
 				${options.parentNotesKey && options.parentNotesKey.length > 0 ? " (" + options.parentNotesKey.map((key, index) => " parents like '%," + key + ",%' " + (index < options.parentNotesKey.length - 1 ? " or " : " ")).join(" ") + ") and" : ""}
+				${options.types ? "  type in (" + options.types.join(", ") + ") and" : ""}
+				${options.dones ? "  done in (" + options.dones.join(", ") + ") and" : ""}
 				trash=${trash} 
-			ORDER BY rank`;
+			${options.sortBy ? " ORDER BY " + options.sortBy : " ORDER BY rank"}
+			`;
 
 		if (limit > -1) {
 			sql += " LIMIT :limit";
 		}
 
-		console.log("search - sql", sql);
+		// console.log("search - sql", sql);
 
 		let results = await this.sequelize.query(
 			sql, {
@@ -205,9 +238,6 @@ class RepositorySQLite  {
 				type: QueryTypes.SELECT
 			}
 		);
-
-		// log.debug("search - searchText, limit, trash", searchText, limit, trash, results);
-
 
 		return results;
 	}
@@ -235,7 +265,7 @@ class RepositorySQLite  {
 	async addNote(parentNoteKey, note, hitMode, relativeToKey) {
 		
 		
-		log.debug("RepositorySQLite.addNote parentNoteKey, note, hitMode, relativeToKey", parentNoteKey, note, hitMode, relativeToKey);
+		// log.debug("RepositorySQLite.addNote parentNoteKey, note, hitMode, relativeToKey", parentNoteKey, note, hitMode, relativeToKey);
 
 		// set parent
 		note.parent = parentNoteKey;
@@ -459,15 +489,21 @@ class RepositorySQLite  {
 				}
 			} else {
 
-				// save as asset data:image/png;base64,...
-				let fileType = nextImg.attr("src").substring(5, 14); // image/png
-				let fileName = "img.png";
-				let filePathOrBase64 = nextImg.attr("src").substring(22);
-				let fileTransferType = nextImg.attr("src").substring(15, 21); // base64
-				let asset = await this.addAsset(fileType, fileName, filePathOrBase64, fileTransferType);
-				// log.debug("write back img?", asset);
-				nextImg.attr("src", "");
-				nextImg.attr("data-n3asset-key", asset.key);
+				if (nextImg.attr("data-n3asset-key")) {
+					nextImg.attr("src", "");
+				} else {
+
+					// save as asset data:image/png;base64,...
+					let fileType = nextImg.attr("src").substring(5, 14); // image/png
+					let fileName = "img.png";
+					let filePathOrBase64 = nextImg.attr("src").substring(22);
+					let fileTransferType = nextImg.attr("src").substring(15, 21); // base64
+					let asset = await this.addAsset(fileType, fileName, filePathOrBase64, fileTransferType);
+					// log.debug("write back img?", asset);
+					nextImg.attr("src", "");
+					nextImg.attr("data-n3asset-key", asset.key);
+
+				}
 			}
 		}
 
@@ -648,7 +684,7 @@ class RepositorySQLite  {
 			let parents = await this.getParents(modifyNote.key);
 			parents.pop();
 			let onlyPath = reindexTree && !reindex;
-			this.#modifyNoteIndex(modifyNote, reindexTree, reindexTree ? this.#notesArrayToPath( parents ) : false, reindexTree ? this.#notesArrayToKeys( parents ) : false, onlyPath);
+			await this.#modifyNoteIndex(modifyNote, reindexTree, reindexTree ? this.#notesArrayToPath( parents ) : false, reindexTree ? this.#notesArrayToKeys( parents ) : false, onlyPath);
 		}
 
 		let resultNote = await this.toData(modifyNote, false, false, true);
@@ -915,7 +951,7 @@ class RepositorySQLite  {
 		let onlyPath = true;
 		let parents = await this.getParents(modifyNote.key);
 		parents.pop();
-		this.#modifyNoteIndex(modifyNote, reindexTree, this.#notesArrayToPath(parents), this.#notesArrayToKeys(parents), onlyPath);
+		await this.#modifyNoteIndex(modifyNote, reindexTree, this.#notesArrayToPath(parents), this.#notesArrayToKeys(parents), onlyPath);
 	}
 
 	// links/backlinks are not checked
@@ -959,7 +995,7 @@ class RepositorySQLite  {
 		let onlyPath = true;
 		let parents = await this.getParents(modifyNote.key);
 		parents.pop();
-		this.#modifyNoteIndex(modifyNote, reindexTree, this.#notesArrayToPath(parents), this.#notesArrayToKeys(parents), onlyPath);
+		await this.#modifyNoteIndex(modifyNote, reindexTree, this.#notesArrayToPath(parents), this.#notesArrayToKeys(parents), onlyPath);
 	}
 
 	async #modifyTrashFlag(key, trash) {
@@ -991,7 +1027,7 @@ class RepositorySQLite  {
 		let withDescription = true;
 		let withParents = false;
 
-		console.log("getNote key withDescription", key, withDescription);
+		// console.log("getNote key withDescription", key, withDescription);
 		return await this.getNoteWith(key, withtags, withchildren, withDescription, withParents);
 
 	}
@@ -1005,7 +1041,7 @@ class RepositorySQLite  {
 			if (noteModel === null) {
 				throw new nnNote.NoteNotFoundByKey(key);
 			}
-			console.log("getNote2 key withDescription", key, withDescription);
+			// console.log("getNote2 key withDescription", key, withDescription);
 			return await this.toData(noteModel, withtags, withchildren, withDescription, withParents);
 		}
 	}
@@ -1066,13 +1102,16 @@ class RepositorySQLite  {
 
 		for (let i = 0; i < imgs.length; i++) {
 			let nextImg = imgs.eq(i);
-			// log.debug("#setInlineImagesPathAfterRead nextImg", nextImg.attr("data-n3asset-key"));
 			if (nextImg.attr("data-n3asset-key")) {
 
 				let assetKey = nextImg.attr("data-n3asset-key");
 				let assetModel = await nnAsset.Asset.findByPk(assetKey);
 
-				nextImg.attr("src", path.join(this.directory, this.#assetsFolderName, assetKey, assetModel.name));
+				let assetSrc = path.join(this.directory, this.#assetsFolderName, assetKey, assetModel.name);
+				log.debug("#setInlineImagesPathAfterRead nextImg", assetKey, assetModel, assetSrc);
+				
+				var imgUrl = fsSync.readFileSync(assetSrc).toString('base64');
+				nextImg.attr("src", "data:image/png;base64," + imgUrl);
 			}
 		}
 
@@ -1232,7 +1271,7 @@ class RepositorySQLite  {
 			trash: note.trash,
 		};
 
-		console.log("toData withDescription, note", withDescription, note);
+		// console.log("toData withDescription, note", withDescription, note);
 		if (withDescription) {
 			let description = note.description;
 			description = await this.#setInlineImagesPathAfterRead(description);
@@ -1241,7 +1280,7 @@ class RepositorySQLite  {
 
 			result.description = description;
 		}
-		console.log("toData result", result);
+		// console.log("toData result", result);
 
 		if (withchildren) {
 			const countChildren = await nnNote.Note.count({
