@@ -52,7 +52,7 @@ class App extends React.Component {
         this.expandNote = this.expandNote.bind(this);
         this.handleChangeDone = this.handleChangeDone.bind(this);
         this.handleChangeType = this.handleChangeType.bind(this);
-        this.setDescription = this.setDescription.bind(this);
+        this.handleChangeDescription = this.handleChangeDescription.bind(this);
         this.handleChangePriority = this.handleChangePriority.bind(this);
         this.addTag = this.addTag.bind(this);
         this.deleteTag = this.deleteTag.bind(this);
@@ -383,7 +383,7 @@ class App extends React.Component {
 
     }
 
-    async setDescription(noteKey, description) {
+    async handleChangeDescription(noteKey, description) {
         let modifiedNote = await this.dataSource.modifyNote({
             key: noteKey, 
             description: description	
@@ -664,6 +664,37 @@ class App extends React.Component {
                         </div>
                     </ReflexElement>
 
+            
+                    <ReflexSplitter propagate={true}/>
+            
+                    <ReflexElement className="right-bar"
+                        minSize="200"
+                        flex={0.5}>
+                        <Note 
+                            dataSource={this.dataSource}
+
+                            noteTypes={noteTypes}
+                            getNoteTypeLabel={this.getNoteTypeLabel}
+                            getOtherNoteTypeLabel={this.getOtherNoteTypeLabel}
+                            priorityStat={this.state.priorityStat}
+
+                            note={this.state.detailsNote} 
+
+                            handleChangeDone={this.handleChangeDone} 
+                            handleChangeType={this.handleChangeType} 
+                            handleChangeTitle={this.handleChangeTitle}
+                            
+                            handleChangeDescription={this.handleChangeDescription}
+                            handleChangePriority={this.handleChangePriority}
+
+                            
+                            addTag={this.addTag}
+                            deleteTag={this.deleteTag}
+                            openNoteDetails={this.openNoteDetails}
+
+                        />
+                    </ReflexElement>
+
                     <ReflexSplitter propagate={true}/>
 
                     <ReflexElement minSize="200"
@@ -696,37 +727,7 @@ class App extends React.Component {
                             getNoteTypeLabel={this.getNoteTypeLabel}
                         />
                     </ReflexElement>
-            
-                    <ReflexSplitter propagate={true}/>
-            
-                    <ReflexElement className="right-bar"
-                        minSize="200"
-                        flex={0.5}>
-                        <Note 
-                            dataSource={this.dataSource}
-
-                            noteTypes={noteTypes}
-                            getNoteTypeLabel={this.getNoteTypeLabel}
-                            getOtherNoteTypeLabel={this.getOtherNoteTypeLabel}
-                            priorityStat={this.state.priorityStat}
-
-                            note={this.state.detailsNote} 
-
-                            handleChangeDone={this.handleChangeDone} 
-                            handleChangeType={this.handleChangeType} 
-                            handleChangeTitle={this.handleChangeTitle}
-                            
-                            setDescription={this.setDescription}
-                            handleChangePriority={this.handleChangePriority}
-
-                            
-                            addTag={this.addTag}
-                            deleteTag={this.deleteTag}
-                            openNoteDetails={this.openNoteDetails}
-
-                        />
-                    </ReflexElement>
-            
+                                
                 </ReflexContainer>
             }
             </>

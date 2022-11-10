@@ -1163,7 +1163,7 @@ window.n3.node.getNodeHTMLEditor = function(form) {
 										sep = " / ";
 									});
 								}
-								editor.insertContent("<span data-n3link-node='" + key +"' contenteditable='false'>[ " + path + " ]</span>");
+								editor.insertContent("<span data-nnlink-node='" + key +"' contenteditable='false'>[ " + path + " ]</span>");
 								autocompleteApi.hide();
 							});
 						});

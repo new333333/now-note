@@ -89,7 +89,8 @@ class Note extends React.Component {
     onBlurEditor(value, editor) {
         // console.log("onBlurEditor(value, editor)", value);
         if (this.inputRefTinyMCE.current) {
-            this.props.setDescription(this.props.note.key, this.inputRefTinyMCE.current.getContent());
+            // TODO: check dirty?
+            this.props.handleChangeDescription(this.props.note.key, this.inputRefTinyMCE.current.getContent());
         }
     }
 
@@ -98,14 +99,21 @@ class Note extends React.Component {
 
         if (e.srcElement &&  e.srcElement.dataset && e.srcElement.dataset.gotoNote) {
             // console.log("activateNode", e.srcElement.dataset.gotoNote);
-            this.props.setDescription(this.props.note.key, this.inputRefTinyMCE.current.getContent());
+            // TODO: check dirty?
+            this.props.handleChangeDescription(this.props.note.key, this.inputRefTinyMCE.current.getContent());
             this.props.openNoteDetails(e.srcElement.dataset.gotoNote);
         }
         
         if (e.srcElement &&  e.srcElement.dataset && e.srcElement.dataset.n3assetKey) {
-            // console.log("open attachment in ew tab", e.srcElement.href);
-            this.props.setDescription(this.props.note.key, this.inputRefTinyMCE.current.getContent());
-            this.props.dataSource.downloadAttachment(e.srcElement.href);
+            // TODO: check dirty?
+            this.props.handleChangeDescription(this.props.note.key, this.inputRefTinyMCE.current.getContent());
+            if (e.srcElement.tagName == "A") {
+                // TODO: download by assetKey, don't set HREF any more by loading description
+                this.props.dataSource.downloadAttachment(e.srcElement.href);
+            } else if (e.srcElement.tagName == "IMG") {
+                console.log("TODO: download image");
+            }
+            
         }
 
     }
@@ -113,7 +121,8 @@ class Note extends React.Component {
     componentWillUnmount() {
         // console.log("componentWillUnmount(value, editor)", value);
         if (this.inputRefTinyMCE.current) {
-            this.props.setDescription(this.props.note.key, this.inputRefTinyMCE.current.getContent());
+            // TODO: check dirty?
+            this.props.handleChangeDescription(this.props.note.key, this.inputRefTinyMCE.current.getContent());
         }
     }
 
@@ -146,7 +155,7 @@ class Note extends React.Component {
                                 sep = " / ";
                             });
                         }
-                        editor.insertContent("<span class='nn-link' data-n3link-node='" + key +"' contenteditable='false'>#" + path + "</span> ");
+                        editor.insertContent("<span class='nn-link' data-nnlink-node='" + key +"' contenteditable='false'>#" + path + "</span> ");
                         autocompleteApi.hide();
                     });
                 });

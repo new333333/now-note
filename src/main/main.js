@@ -42,11 +42,29 @@ const createWindow = () => {
       }
     },
     {
-      label: "TODO Migrate old",
+      label: "Import TODO",
       click: () => {
-        n3.repository.tempMigrateOldStorage().then(function() {
-          log.debug("tempMigrateOldStorage done.");
-      });
+
+        let choosedFolders = dialog.showOpenDialogSync({
+          properties: [
+            "openDirectory",
+            "createDirectory",
+            "promptToCreate"
+          ]
+        });
+        if (choosedFolders) {
+          let importFolder = choosedFolders[0];
+
+          n3.repository.import(importFolder).then(function() {
+            log.debug("import done.");
+          });
+
+        } else {
+          console.log("No repository choosed");
+        }
+
+        
+
       }
     },
     {
