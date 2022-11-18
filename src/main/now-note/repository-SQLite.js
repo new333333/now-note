@@ -62,6 +62,11 @@ class RepositorySQLite  {
 		this.userName = userName;
 	};
 
+
+	getDirectory() {
+		return this.directory;
+	}
+
 	async open() {
 		// local variable required by init
 		let sequelize = new Sequelize({

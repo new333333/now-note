@@ -1,6 +1,6 @@
 import React from 'react';
 import { Breadcrumb, Dropdown, Menu, Space, Input, InputNumber, Button, Select, Tooltip } from 'antd';
-import { HomeOutlined, DownOutlined, PlusSquareOutlined } from '@ant-design/icons';
+import Icon, { PlusSquareOutlined, DeleteFilled } from '@ant-design/icons';
 import { Checkbox } from 'pretty-checkbox-react';
 import '@djthoms/pretty-checkbox';
 import {NotePriority} from './NotePriority.jsx';
@@ -51,6 +51,17 @@ import contentCss from '!!raw-loader!tinymce/skins/content/default/content.min.c
 import contentUiCss from '!!raw-loader!tinymce/skins/ui/oxide/content.min.css';
 import { replace } from 'lodash';
 
+
+const TreeSvg = () => (
+    <svg width="24px" height="24px" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <g>
+            <path fill="none" d="M0 0H24V24H0z"/>
+            <path d="M10 2c.552 0 1 .448 1 1v4c0 .552-.448 1-1 1H8v2h5V9c0-.552.448-1 1-1h6c.552 0 1 .448 1 1v4c0 .552-.448 1-1 1h-6c-.552 0-1-.448-1-1v-1H8v6h5v-1c0-.552.448-1 1-1h6c.552 0 1 .448 1 1v4c0 .552-.448 1-1 1h-6c-.552 0-1-.448-1-1v-1H7c-.552 0-1-.448-1-1V8H4c-.552 0-1-.448-1-1V3c0-.552.448-1 1-1h6zm9 16h-4v2h4v-2zm0-8h-4v2h4v-2zM9 4H5v2h4V4z"/>
+        </g>
+    </svg>
+);
+
+const TreeIcon = (props) => <Icon component={TreeSvg} {...props} />;
 
 class Note extends React.Component {
 
@@ -263,6 +274,12 @@ class Note extends React.Component {
 
     }
 
+    async addNote(key) {
+        console.log("addNote, key=", key);
+        let newNote = await this.props.addNote(key);
+        this.props.activateNote(newNote.key);
+    }
+
     render() {
 
         if (this.inputRefTinyMCE.current) {
@@ -279,7 +296,26 @@ class Note extends React.Component {
 
         return (
             <>
-                <div style={{padding: "5px"}}>
+                <div style={{padding: "5px", overflow: "auto", height: "100vh"}}>
+                    <div>
+                        {
+                            this.props.note &&
+                            <Space direction="horizontal" style={{fontSize: "12px"}}>
+                                <Tooltip title={"Show in tree"}>
+                                    <TreeIcon onClick={(event) => this.props.openNoteInTree(this.props.note.key)} />
+                                </Tooltip>
+                                <Tooltip title={"Add note"}>
+                                    <PlusSquareOutlined onClick={(event) => this.addNote(this.props.note.key)} />
+                                </Tooltip>
+                                
+                                {/* 
+                                    <Tooltip title={"Move to Trash"}>
+                                        <DeleteFilled onClick={(event) => this.moveToTrash(this.props.note.key)} />
+                                    </Tooltip>
+                                */}
+                            </Space>
+                        }
+                    </div>
                     <div>
                         {
                             this.props.note &&
@@ -362,8 +398,8 @@ class Note extends React.Component {
                                         // inline: true,
                                         content_css: false,
                                         content_style: [contentCss, contentUiCss, " .nn-link {color: blue; font-size: 20px; } "].join('\n'),
-                                        toolbar_sticky: true,
-                                        toolbar_sticky_offset: 0,
+                                        // toolbar_sticky: true,
+                                        // toolbar_sticky_offset: 100,
                                         height: 50,
                                         inline_boundaries: false,
                                         powerpaste_word_import: "clean",

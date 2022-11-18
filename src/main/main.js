@@ -41,7 +41,7 @@ const createWindow = () => {
         n3.mainWindow.webContents.send('changeRepository')
       }
     },
-    {
+  /*  {
       label: "Import TODO",
       click: () => {
 
@@ -152,6 +152,7 @@ const createWindow = () => {
           }
        ]
     }
+    */
  ]
   
 
@@ -224,6 +225,14 @@ app.whenReady().then(() => {
 
   ipcMain.handle("app:changeRepository", function(event, repositoryFolder) {
     log.info("app:changeRepository", repositoryFolder);
+    return n3.userSettings.connectRepository(repositoryFolder).then(function(repository) {
+      n3.repository = repository;
+      return n3.repository !== undefined;
+    });
+  });
+
+  ipcMain.handle("app:setRepositorySettings", function(event, settings) {
+    log.info("app:setRepositorySettings", settings);
     return n3.userSettings.connectRepository(repositoryFolder).then(function(repository) {
       n3.repository = repository;
       return n3.repository !== undefined;

@@ -239,10 +239,15 @@ body {
 	border-bottom: 2px solid #aFaFaF;
 }
 
+.nn-header {
+	height: 44px;
+	padding: 5px;
+	background-color: #001529;
+}
+
 .n3-tree {
-	/* overflow: scroll; */
 	overflow: auto;
-	height: 100%;
+	/* height: 100vh; */
 	background-color: #efefef;
 }
 

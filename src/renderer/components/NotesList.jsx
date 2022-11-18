@@ -96,86 +96,88 @@ class NotesList extends React.Component {
         }
 
         return (
-            <>
-
-                <div>
-                    {
-                        this.props.note &&
-                        <NoteBreadCrumb parents={this.props.note.parents} />}
-                </div>
-                
-                <div style={{height: "100%", display: "flex", flexDirection: "column"}}>
-                    <div>
-                        <Space>
-                            <Dropdown overlay={filterMenu}>
-                                <Button>
-                                    <Space>
-                                        Filter {activeFiltersCount > 0 ? <Badge count={activeFiltersCount} /> : ""}
-                                        <DownOutlined />
-                                    </Space>
-                                </Button>
-                            </Dropdown>
-
+            <div className='n3-bar-vertical'>
+                <div className="nn-header">
+                    <Space>
+                        <Dropdown overlay={filterMenu}>
                             <Button>
                                 <Space>
-                                    Sort
+                                    Filter {activeFiltersCount > 0 ? <Badge count={activeFiltersCount} /> : ""}
                                     <DownOutlined />
                                 </Space>
                             </Button>
-                        </Space>
+                        </Dropdown>
+
+                        <Button>
+                            <Space>
+                                Sort
+                                <DownOutlined />
+                            </Space>
+                        </Button>
+                    </Space>
+                </div>
+                <div style={{padding: "5px", overflow: "auto", height: "100vh"}}>
+
+                    <div>
+                        {
+                            this.props.note &&
+                            <NoteBreadCrumb parents={this.props.note.parents} />}
                     </div>
 
+                    <div>
 
-                    <List
-                        bordered
-                        size="small"
-                        dataSource={this.props.notes}
-                        renderItem={note => (
-                            <List.Item 
-                                
-                            >
-                                <List.Item.Meta
-                                    title={
+                        <List
+                            
+                            bordered
+                            size="small"
+                            dataSource={this.props.notes}
+                            renderItem={note => (
+                                <List.Item 
+                                    
+                                >
+                                    <List.Item.Meta
+                                        title={
+                                                <>
+                                                    {
+                                                        note.type == "task" &&
+                                                            <Checkbox shape="round"  
+                                                            color="success" 
+                                                            style={{ 
+                                                                display: "inline-block",
+                                                                fontSize: 14  }} 
+                                                            checked={note.done} 
+                                                            onChange={(event)=> this.handleChangeDone(note.key, event)} />
+                                                    }
+                                                    <a style={{fontWeight: "bold"}}
+                                                    onClick={(event)=> this.handleClickNote(note.key, event)}>{note.title}</a>
+                                                    
+                                                </>
+                                            }
+                                        description={
                                             <>
                                                 <div style={{marginLeft: "5px", color: "#bbb", fontSize: "12px"}}>{note.path}</div>
-                                                {
-                                                    note.type == "task" &&
-                                                        <Checkbox shape="round"  
-                                                        color="success" 
-                                                        style={{ 
-                                                            display: "inline-block",
-                                                            fontSize: 14  }} 
-                                                        checked={note.done} 
-                                                        onChange={(event)=> this.handleChangeDone(note.key, event)} />
-                                                }
-                                                <a style={{fontWeight: "bold"}}
-                                                onClick={(event)=> this.handleClickNote(note.key, event)}>{note.title}</a>
-                                                
+                                                <span style={{marginRight: "5px", fontWeight: "bold"}}>
+                                                    <a href="#" onClick={(event)=> this.handleChangeType(note.key, note.type)}><strong>{this.props.getNoteTypeLabel(note.type)}</strong></a>
+                                                </span>
+                                                <span style={{whiteSpace: "nowrap"}}>
+                                                    Priority:
+                                                    <InputNumber 
+                                                        min={0} 
+                                                        size="small"
+                                                        value={note.priority} 
+                                                        onChange={(event)=> this.props.handleChangePriority(note.key, event)} 
+                                                    />
+                                                </span>
                                             </>
                                         }
-                                    description={
-                                        <>
-                                            <span style={{marginRight: "5px", fontWeight: "bold"}}>
-                                                <a href="#" onClick={(event)=> this.handleChangeType(note.key, note.type)}><strong>{this.props.getNoteTypeLabel(note.type)}</strong></a>
-                                            </span>
-                                            <span style={{whiteSpace: "nowrap"}}>
-                                                Priority:
-                                                <InputNumber 
-                                                    min={0} 
-                                                    size="small"
-                                                    value={note.priority} 
-                                                    onChange={(event)=> this.props.handleChangePriority(note.key, event)} 
-                                                />
-                                            </span>
-                                        </>
-                                    }
-                                />
-                            </List.Item>
-                        )}
-                    />
+                                    />
+                                </List.Item>
+                            )}
+                        />
 
+                    </div>
                 </div>
-            </>
+            </div>
         );
     }
 }

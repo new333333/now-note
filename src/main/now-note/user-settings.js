@@ -50,6 +50,26 @@ class UserSettings {
         return await repositoryFactory.connectRepository(repositoryByPath);
     }
 
+    async setRepositorySettings(repositoryFolder, settings) {
+        if (!this.settings) {
+            try {
+                await this.#load();
+            } catch (error) {
+            }
+        }
+
+        let repositoryByPath = this.settings.repositories.find(function(repository) {
+            log.info("connectRepository ", repositoryFolder, repository.path, repository.path == repositoryFolder);
+            return repository.path == repositoryFolder;
+        });
+
+        repositoryByPath.settings = repositoryByPath.settings || {};
+        let mergedSettings = {...repositoryByPath.settings, ...settings};
+
+        repositoryByPath.settings = mergedSettings;
+        this.save();
+    }
+
     async #load() {
         try {
             this.settings = await fs.readFile(this.#getFilePath(), "utf-8");

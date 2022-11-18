@@ -17,3 +17,5 @@ Build
 > npm run postinstall
 > npm run make
 > npm run dist
+
+Folder 'dist'

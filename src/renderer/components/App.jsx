@@ -1,7 +1,7 @@
 import React from 'react';
 
-import { ApartmentOutlined, BarsOutlin1ed, NodeExpandOutlined, PlusOutlined, ThunderboltFilled } from '@ant-design/icons';
-import { Input, Space, Button, List } from 'antd';
+import { ApartmentOutlined, UserOutlined , BarsOutlin1ed, NodeExpandOutlined, PlusOutlined, ThunderboltFilled } from '@ant-design/icons';
+import { Input, Space, Button, List, AutoComplete } from 'antd';
 const { Search } = Input;
 
 import {
@@ -14,8 +14,8 @@ import 'react-reflex/styles.css'
 import {FancyTree} from './FancyTree.jsx';
 import {NotesList} from './NotesList.jsx';
 import {Note} from './Note.jsx';
+import {SearchNotes} from './SearchNotes.jsx';
 import {NoteBreadCrumb} from './NoteBreadCrumb.jsx';
-const dayjs = require('dayjs')
 
 let noteTypes = [
     {
@@ -48,6 +48,7 @@ class App extends React.Component {
         };
         this.loadTree = this.loadTree.bind(this);
         this.openNoteDetails = this.openNoteDetails.bind(this);
+        this.openNoteInTree = this.openNoteInTree.bind(this);
         this.activateNote = this.activateNote.bind(this);
         this.expandNote = this.expandNote.bind(this);
         this.handleChangeDone = this.handleChangeDone.bind(this);
@@ -232,6 +233,10 @@ class App extends React.Component {
 
             return this.dataSource.getChildren().then(function(rootNodes) {
                 rootNodes = self.mapToTreeData(rootNodes);
+
+                console.log("loadTree, rootNodes=", rootNodes);
+
+
                 return rootNodes;
             });
           
@@ -307,20 +312,26 @@ class App extends React.Component {
     
     }
 
-    addNote() {
+    async addNote(key) {
         console.log("addNote");
-
-        let newNoteData = {
-            checkbox: false,
-            title: dayjs().format("[am] DD.MM.YYYY [um] HH:mm[Uhr]"),
-            type: "note",
-            priority: 0,
-            done: false,
-            expanded: false
-        };
-    
-        this.fancyTreeDomRef.current.addNote(this.state.activeNoteKey, newNoteData);
+        key = key || this.state.activeNoteKey;
+        let newNote = await this.fancyTreeDomRef.current.addNote(key);
+        this.activateNote(newNote.key);
+        return newNote;
     }
+
+    async openNoteInTree(key) {
+        console.log("openNoteInTree", key);
+
+        let detailsNoteParents = await this.dataSource.getParents(key);
+
+        console.log("openNoteInTree, detailsNoteParents=", detailsNoteParents);
+
+        this.fancyTreeDomRef.current.openNotes(detailsNoteParents);
+
+        this.activateNote(key);
+    }
+
 
     async openNoteDetails(noteKey) {
 
@@ -384,10 +395,25 @@ class App extends React.Component {
     }
 
     async handleChangeDescription(noteKey, description) {
+        console.log("handleChangeDescription noteKey=, description=", noteKey, description);
         let modifiedNote = await this.dataSource.modifyNote({
             key: noteKey, 
             description: description	
         });
+        console.log("handleChangeDescription modifiedNote=", modifiedNote);
+        this.setState((previousState) => {
+            if (previousState.detailsNote) {
+                let newState = {}
+                if (previousState.detailsNote) {
+                    let note = JSON.parse(JSON.stringify(previousState.detailsNote));
+                    note.description = description;
+                    newState.detailsNote = note;
+                }
+
+                return newState;
+            }
+        });
+
     }
 
     async handleChangeTitle(noteKey, title) {
@@ -604,6 +630,53 @@ class App extends React.Component {
 
     render() {
 
+        const renderTitle = (title) => (
+            <span>
+              {title}
+              <a
+                style={{
+                  float: 'right',
+                }}
+                href="https://www.google.com/search?q=antd"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                more
+              </a>
+            </span>
+          );
+          const renderItem = (title, count) => ({
+            value: title,
+            label: (
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                }}
+              >
+                {title}
+                <span>
+                  <UserOutlined /> {count}
+                </span>
+              </div>
+            ),
+          });
+          const options = [
+            {
+              label: renderTitle('Libraries'),
+              options: [renderItem('AntDesign', 10000), renderItem('AntDesign UI', 10600)],
+            },
+            {
+              label: renderTitle('Solutions'),
+              options: [renderItem('AntDesign UI FAQ', 60100), renderItem('AntDesign FAQ', 30010)],
+            },
+            {
+              label: renderTitle('Articles'),
+              options: [renderItem('AntDesign design language', 100000)],
+            },
+          ];
+
+
         return (
 
             <>
@@ -644,7 +717,7 @@ class App extends React.Component {
                         minSize="200"
                         flex={0.25}>
                         <div className='n3-bar-vertical'>
-                            <div>
+                            <div className="nn-header">
                                 <Space>
                                     <Button
                                         onClick={(event)=> this.addNote()}
@@ -670,35 +743,45 @@ class App extends React.Component {
                     <ReflexElement className="right-bar"
                         minSize="200"
                         flex={0.5}>
-                        <Note 
-                            dataSource={this.dataSource}
+                        <div className='n3-bar-vertical'>
+                            <div className="nn-header">
+                                <SearchNotes  
+                                    dataSource={this.dataSource}
+                                    openNoteInTree={this.openNoteInTree}
+                                />
+                                
+                            </div>
+                            <Note 
+                                dataSource={this.dataSource}
 
-                            noteTypes={noteTypes}
-                            getNoteTypeLabel={this.getNoteTypeLabel}
-                            getOtherNoteTypeLabel={this.getOtherNoteTypeLabel}
-                            priorityStat={this.state.priorityStat}
+                                noteTypes={noteTypes}
+                                getNoteTypeLabel={this.getNoteTypeLabel}
+                                getOtherNoteTypeLabel={this.getOtherNoteTypeLabel}
+                                priorityStat={this.state.priorityStat}
 
-                            note={this.state.detailsNote} 
+                                note={this.state.detailsNote} 
 
-                            handleChangeDone={this.handleChangeDone} 
-                            handleChangeType={this.handleChangeType} 
-                            handleChangeTitle={this.handleChangeTitle}
-                            
-                            handleChangeDescription={this.handleChangeDescription}
-                            handleChangePriority={this.handleChangePriority}
+                                handleChangeDone={this.handleChangeDone} 
+                                handleChangeType={this.handleChangeType} 
+                                handleChangeTitle={this.handleChangeTitle}
+                                
+                                handleChangeDescription={this.handleChangeDescription}
+                                handleChangePriority={this.handleChangePriority}
 
-                            
-                            addTag={this.addTag}
-                            deleteTag={this.deleteTag}
-                            openNoteDetails={this.openNoteDetails}
-
-                        />
+                                
+                                addNote={this.addNote}
+                                addTag={this.addTag}
+                                deleteTag={this.deleteTag}
+                                openNoteDetails={this.openNoteDetails}
+                                activateNote={this.activateNote} 
+                                openNoteInTree={this.openNoteInTree}
+                            />
+                        </div>
                     </ReflexElement>
 
                     <ReflexSplitter propagate={true}/>
 
-                    <ReflexElement minSize="200"
-                        flex={0.25}>
+                    <ReflexElement minSize="200" flex={0.25}>
                         <NotesList 
                             ref={this.simpleListDomRef}
 
@@ -712,6 +795,7 @@ class App extends React.Component {
                             handleChangePriority={this.handleChangePriority}
 
                             openNoteDetails={this.openNoteDetails} 
+                            
 
                             setFilterOnlyTasks={this.setFilterOnlyTasks}
                             filterOnlyTasks={this.state.filterOnlyTasks}

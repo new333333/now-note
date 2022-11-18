@@ -5,6 +5,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onChangeRepository: (callback) => ipcRenderer.on("changeRepository", callback),
   chooseRepositoryFolder: () => ipcRenderer.invoke("app:chooseRepositoryFolder"),
   changeRepository: (repositoryFolder) => ipcRenderer.invoke("app:changeRepository", repositoryFolder),
+  setRepositorySettings: (settings) => ipcRenderer.invoke("app:setRepositorySettings", settings),
+  getRepositorySettings: () => ipcRenderer.invoke("app:getRepositorySettings"),
   closeRepository: () => ipcRenderer.invoke("app:closeRepository"),
   getRepositories: () => ipcRenderer.invoke("app:getRepositories"),
   isRepositoryInitialized: () => ipcRenderer.invoke("app:isRepositoryInitialized"),

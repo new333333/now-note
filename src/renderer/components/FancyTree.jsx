@@ -3,6 +3,7 @@ import React from 'react';
 
 import { Input, Space } from 'antd';
 const { Search } = Input;
+const dayjs = require('dayjs')
 
 import {createTree} from 'jquery.fancytree';
 
@@ -100,9 +101,6 @@ class FancyTree extends React.Component {
     }
 
     onSearch(event) {
-        console.log("search", event.target.value);
-        console.log("this.fancytree", this.fancytree);
-
         let self = this;
 
         let searchText = event.target.value;
@@ -132,46 +130,80 @@ class FancyTree extends React.Component {
         });
     }
 
-    addNote(key, newNoteData) {
-        console.log("addNote key", key, newNoteData);
+    async addNote(key) {
+        console.log("addNote key", key);
 
-        let node;
-        if (!key) {
-			node = this.fancytree.getRootNode();
-		} else {
-            node = this.fancytree.getNodeByKey(key);
-        }
+		let self = this;
 
-        console.log("addNote node", node);
-        
+		return new Promise(function(resolve) {
 
-		let hitMode = "over";
-		let relativeToKey = node.key;
-        let self = this;
+			let newNoteData = {
+				checkbox: false,
+				title: dayjs().format("[am] DD.MM.YYYY [um] HH:mm[Uhr]"),
+				type: "note",
+				priority: 0,
+				done: false,
+				expanded: false
+			};
 
-		this.props.dataSource.addNote(node.key, {
-			title: newNoteData.title,
-			type: newNoteData.type,
-			priority: newNoteData.priority,
-			done: newNoteData.done,
-			expanded: false,
-			// createdBy: window.nn.userSettings.settings.userName
-		}, "firstChild", relativeToKey).then(function(newNoteData) {
-			console.log("write back added", newNoteData);
+			let node;
+			if (!key) {
+				node = self.fancytree.getRootNode();
+			} else {
+				node = self.fancytree.getNodeByKey(key);
+			}
 
-            if (node.key.startsWith("root_")) {
-                self.fancytree.reload();
-            } else {
-                node.resetLazy();
-                node.setExpanded(true);
-            }
+			console.log("addNote node", node);
+			
 
+			let hitMode = "over";
+			let relativeToKey = node.key;
 
-			// let treeData = window.n3.dataToTreeData([newNoteData]);
-			// let newNode = node.addNode(treeData[0], "firstChild");
-			// newNode.setActive();
+			self.props.dataSource.addNote(node.key, {
+				title: newNoteData.title,
+				type: newNoteData.type,
+				priority: newNoteData.priority,
+				done: newNoteData.done,
+				expanded: false,
+				// createdBy: window.nn.userSettings.settings.userName
+			}, "firstChild", relativeToKey).then(function(newNoteData) {
+				if (node.key.startsWith("root_")) {
+					self.fancytree.reload().then(function() {
+						resolve(newNoteData);
+					});
+				} else {
+					node.resetLazy();
+					node.setExpanded(true).then(function() {
+						resolve(newNoteData);
+					});
+				}
+				// let treeData = window.n3.dataToTreeData([newNoteData]);
+				// let newNode = node.addNode(treeData[0], "firstChild");
+				// newNode.setActive();
+			});
 		});
     }
+
+	async openNotes(detailsNoteParents) {
+		let self = this;
+		return new Promise(function(resolve) {
+			let noteToOpen = detailsNoteParents.shift();
+
+			console.log("openNotes, noteToOpen.key=", noteToOpen.key);
+			let node = self.fancytree.getNodeByKey(noteToOpen.key);
+			console.log("openNotes, node=", node);
+
+			node.setExpanded().then(function() {
+				node.makeVisible().then(function() {
+					if (detailsNoteParents.length > 0) {
+						self.openNotes(detailsNoteParents);
+					} else{
+						resolve();
+					}
+				});
+			});
+		});
+	}
 
     init() {
         const $domNode = $(this.domRef.current);
@@ -416,17 +448,8 @@ class FancyTree extends React.Component {
     render() {
 
         return (
-            <div style={{height: "100%", display: "flex", flexDirection: "column"}}>
-
-                <div>
-                    <Search placeholder="filter nodes" allowClear onChange={this.onSearch} style={{ width: '100%' }} />
-                </div>
-                
-                <div className='n3-bar-grow'>
-                    <div className='n3-tree' ref={this.domRef}>
-                    </div>
-                </div>
-            </div>
+			<div className='n3-tree' ref={this.domRef}>
+			</div>
         );
     }
 }
