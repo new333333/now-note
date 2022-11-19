@@ -309,10 +309,10 @@ class Note extends React.Component {
                         </div>
                         <div>
                             <Space direction="horizontal" style={{fontSize: "12px"}}>
-                                <Tooltip title={"Show in tree"}>
+                                <Tooltip placement="bottom" title={"Show in tree"}>
                                     <TreeIcon onClick={(event) => this.props.openNoteInTree(this.props.note.key)} />
                                 </Tooltip>
-                                <Tooltip title={"Add note"}>
+                                <Tooltip placement="bottom" title={"Add note"}>
                                     <PlusSquareOutlined onClick={(event) => this.addNote(this.props.note.key)} />
                                 </Tooltip>
                                 
@@ -327,7 +327,7 @@ class Note extends React.Component {
                             {
                                 this.props.note.type == "task" &&
                                     <div style={{width: "27px", margin: "0 8px"}}>
-                                        <Tooltip title={"Mark as" + (this.props.note.done ? " NOT" : "") + " Done"}>
+                                        <Tooltip placement="bottom" title={"Mark as" + (this.props.note.done ? " NOT" : "") + " Done"}>
                                             <Checkbox shape="round"  
                                                 color="success" 
                                                 style={{ 
@@ -348,7 +348,7 @@ class Note extends React.Component {
                         </div>
                         <div style={{padding: "5px 0"}}>
                                 <span style={{marginRight: "5px"}}>
-                                    <Tooltip title={"Change to " + this.props.getOtherNoteTypeLabel(this.props.note.type)}><a href="#" onClick={(event)=> this.handleChangeType()}><strong>{this.props.getNoteTypeLabel(this.props.note.type)}</strong></a></Tooltip>
+                                    <Tooltip placement="bottom" title={"Change to " + this.props.getOtherNoteTypeLabel(this.props.note.type)}><a href="#" onClick={(event)=> this.handleChangeType()}><strong>{this.props.getNoteTypeLabel(this.props.note.type)}</strong></a></Tooltip>
                                 </span>
                                 <NotePriority 
                                     noteKey={this.props.note.key}

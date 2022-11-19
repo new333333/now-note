@@ -116,7 +116,7 @@ class NotesList extends React.Component {
                         </Button>
                     </Space>
                 </div>
-                <div style={{padding: "5px", overflow: "auto"}}>
+                <div style={{backgroundColor: "#fafafa", padding: "5px", overflow: "auto", height: "100%"}}>
 
                     <div>
                         {
