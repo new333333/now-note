@@ -402,13 +402,14 @@ class App extends React.Component {
             key: noteKey, 
             description: description	
         });
+        
         console.log("handleChangeDescription modifiedNote=", modifiedNote);
         this.setState((previousState) => {
             if (previousState.detailsNote) {
                 let newState = {}
                 if (previousState.detailsNote) {
                     let note = JSON.parse(JSON.stringify(previousState.detailsNote));
-                    note.description = description;
+                    note.description = modifiedNote.description;
                     newState.detailsNote = note;
                 }
 

@@ -864,27 +864,48 @@ class RepositorySQLite  {
 		for (let i = 0; i < imgs.length; i++) {
 			let nextImg = imgs.eq(i);
 
-			if (!nextImg.attr("src") || nextImg.attr("src").indexOf("data:image/") == -1) {
-				if (nextImg.attr("data-n3asset-key")) {
-					nextImg.attr("src", "");
-				}
-			} else {
+			// log.debug("setInlineImagesBeforeWrite nextImg", nextImg);
+			// log.debug("setInlineImagesBeforeWrite nextImg.attr(src)", nextImg.attr("src"));
+
+			// log.debug("setInlineImagesBeforeWrite indexOf", nextImg.attr("src").indexOf("file://"));
+			// log.debug("setInlineImagesBeforeWrite if", (nextImg.attr("src") && nextImg.attr("src").indexOf("file://") == 0));
+
+			let imgSrc = nextImg.attr("src");
+			// log.debug("setInlineImagesBeforeWrite imgSrc", imgSrc);
+
+			if (imgSrc) {
+				// log.debug("setInlineImagesBeforeWrite has imgSrc", imgSrc);
 
 				if (nextImg.attr("data-n3asset-key")) {
+					// log.debug("setInlineImagesBeforeWrite has n3asset-key");
+
 					nextImg.attr("src", "");
-				} else {
+				} else if (imgSrc.indexOf("data:image/") == 0) {
+					// log.debug("setInlineImagesBeforeWrite is data:image");
 
 					// save as asset data:image/png;base64,...
-					let fileType = nextImg.attr("src").substring(5, 14); // image/png
+					let fileType = imgSrc.substring(5, 14); // image/png
 					let fileName = "img.png";
-					let filePathOrBase64 = nextImg.attr("src").substring(22);
-					let fileTransferType = nextImg.attr("src").substring(15, 21); // base64
+					let filePathOrBase64 = imgSrc.substring(22);
+					let fileTransferType = imgSrc.substring(15, 21); // base64
 					let asset = await this.addAsset(fileType, fileName, filePathOrBase64, fileTransferType);
 					// log.debug("write back img?", asset);
 					nextImg.attr("src", "");
 					nextImg.attr("data-n3asset-key", asset.key);
 
+				} else if (imgSrc.indexOf("file://") == 0) {
+					// log.debug("setInlineImagesBeforeWrite is file://");
+
+					let filePath = imgSrc.substring("file://".length);
+					// log.debug("setInlineImagesBeforeWrite filePath", filePath);
+
+					let asset = await this.addAsset(null, path.basename(filePath), filePath, "path");
+
+					nextImg.attr("src", "");
+					nextImg.attr("data-n3asset-key", asset.key);
+
 				}
+
 			}
 		}
 

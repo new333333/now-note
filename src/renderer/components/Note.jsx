@@ -122,7 +122,7 @@ class Note extends React.Component {
                 // TODO: download by assetKey, don't set HREF any more by loading description
                 this.props.dataSource.downloadAttachment(e.srcElement.href);
             } else if (e.srcElement.tagName == "IMG") {
-                console.log("TODO: download image");
+                // console.log("TODO: download image");
             }
             
         }
@@ -146,6 +146,19 @@ class Note extends React.Component {
     setupTinyMce(editor) {
 
         let self = this;
+
+        editor.on("drop", function(event, a, b, c) {
+            console.log("drop", event, a, b, c);
+        });
+
+        editor.on("SetContent", function(event, a, b, c) {
+            // console.log("SetContent, event, getContent", event, self.inputRefTinyMCE.current ? self.inputRefTinyMCE.current.getContent() : undefined);
+
+            if (event.paste) {
+                self.props.handleChangeDescription(self.props.note.key, self.inputRefTinyMCE.current.getContent());
+            }
+
+        });
 
         editor.ui.registry.addAutocompleter("specialchars", {
             ch: '#',
@@ -275,7 +288,7 @@ class Note extends React.Component {
     }
 
     async addNote(key) {
-        console.log("addNote, key=", key);
+        // console.log("addNote, key=", key);
         let newNote = await this.props.addNote(key);
         this.props.activateNote(newNote.key);
     }
@@ -375,11 +388,8 @@ class Note extends React.Component {
                                 init={{
                                     setup: this.setupTinyMce,
                                     skin: false,
-                                    // inline: true,
                                     content_css: false,
                                     content_style: [contentCss, contentUiCss, " .nn-link {color: blue; } "].join('\n'),
-                                    //toolbar_sticky: true,
-                                    //toolbar_sticky_offset: 42,
                                     height: "100%",
                                     inline_boundaries: false,
                                     powerpaste_word_import: "clean",
