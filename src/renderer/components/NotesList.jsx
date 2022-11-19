@@ -127,7 +127,7 @@ class NotesList extends React.Component {
                     <div>
 
                         <List
-                            
+                            locale={{emptyText: "No Children Notes"}}
                             bordered
                             size="small"
                             dataSource={this.props.notes}
