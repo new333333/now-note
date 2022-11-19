@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { Input, Space, Divider, Badge, List, InputNumber, Typography, Button, Dropdown, Menu, Modal, AutoComplete } from 'antd';
+import { Input, Space, Tooltip, Badge, List, InputNumber, Typography, Button, Dropdown, Menu, Modal, AutoComplete } from 'antd';
 import { DownOutlined, UserOutlined } from '@ant-design/icons';
 const { Search } = Input;
 import { grey } from '@ant-design/colors';
@@ -155,13 +155,18 @@ class NotesList extends React.Component {
                                             }
                                         description={
                                             <>
-                                                <div style={{marginLeft: "5px", color: "#bbb", fontSize: "12px"}}>{note.path}</div>
+                                                <div style={{color: "#bbb", fontSize: "12px", overflow: "hidden", whiteSpace: "nowrap"}}>
+                                                    <Tooltip title={note.path}>
+                                                        {note.path}
+                                                    </Tooltip>
+                                                </div>
                                                 <span style={{marginRight: "5px", fontWeight: "bold"}}>
                                                     <a href="#" onClick={(event)=> this.handleChangeType(note.key, note.type)}><strong>{this.props.getNoteTypeLabel(note.type)}</strong></a>
                                                 </span>
                                                 <span style={{whiteSpace: "nowrap"}}>
                                                     Priority:
                                                     <InputNumber 
+                                                        style={{width: "70px"}}
                                                         min={0} 
                                                         size="small"
                                                         value={note.priority} 

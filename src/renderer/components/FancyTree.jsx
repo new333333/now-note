@@ -8,9 +8,11 @@ const dayjs = require('dayjs')
 import {createTree} from 'jquery.fancytree';
 
 import 'jquery.fancytree/dist/skin-win8/ui.fancytree.min.css';  // CSS or LESS
-import 'jquery.fancytree/dist/modules/jquery.fancytree.table';
+
 import 'jquery.fancytree/dist/modules/jquery.fancytree.dnd5';
-import 'jquery.fancytree/dist/modules/jquery.fancytree.filter';
+import 'jquery-contextmenu/dist/jquery.contextMenu.min.css';
+import 'jquery-contextmenu/dist/jquery.contextMenu.min.js';
+import '../js/jquery.fancytree.contextMenu';
 
 
 class FancyTree extends React.Component {
@@ -199,28 +201,6 @@ class FancyTree extends React.Component {
 			console.log("openNotes", detailsNoteParents);
 			
 		}
-
-/*
-		return new Promise(function(resolve) {
-			let noteToOpen = detailsNoteParents.shift();
-
-			console.log("openNotes, noteToOpen.key=", noteToOpen.key);
-			let node = self.fancytree.getNodeByKey(noteToOpen.key);
-			console.log("openNotes, node=", node);
-
-			return node.setExpanded().then(function() {
-				return node.makeVisible().then(function() {
-					console.log("openNotes", detailsNoteParents);
-					if (detailsNoteParents.length > 0) {
-						return self.openNotes(detailsNoteParents);
-					} else{
-						console.log("openNotes ready");
-						resolve();
-					}
-				});
-			});
-		});
-		*/
 	}
 
     init() {
@@ -229,26 +209,13 @@ class FancyTree extends React.Component {
         let self = this;
 
         $domNode.fancytree({
-            extensions: ["dnd5", "filter"],
+            extensions: ["dnd5", "contextMenu"],
 			checkbox: true,
 			icon: false,
 			escapeTitles: true,
             nodata: false,
             source: this.props.loadTree,
             lazyLoad: this.props.loadTree,
-            filter: {
-				autoApply: true,   // Re-apply last filter if lazy data is loaded
-				autoExpand: false, // Expand all branches that contain matches while filtered
-				counter: false,     // Show a badge with number of matching child nodes near parent icons
-				fuzzy: false,      // Match single characters in order, e.g. 'fb' will match 'FooBar'
-				hideExpandedCounter: true,  // Hide counter badge if parent is expanded
-				hideExpanders: true,       // Hide expanders if all child nodes are hidden by filter
-				highlight: false,   // Highlight matches by wrapping inside <mark> tags
-				leavesOnly: false, // Match end nodes only
-				nodata: true,      // Display a 'no data' status node if result is empty
-				mode: "hide"       // Grayout unmatched nodes (pass "hide" to remove unmatched node instead)
-			},
-
             // Load all lazy/unloaded child nodes
 			// (which will trigger `loadChildren` recursively)
             loadChildren: function(event, data) {
@@ -298,6 +265,24 @@ class FancyTree extends React.Component {
 				}
 
 			},
+
+			contextMenu: {
+				zIndex: 100,
+				menu: {
+					"open": { "name": "Open" },
+					"add": { "name": "Add" },
+				  
+				},
+				actions: function(node, action, options) {
+					console.log("FancyTree contextMenu node, action, options", node, action, options);
+
+					if (action == "open") {
+						self.props.activateNote(node.key);
+					} else if (action == "add") {
+						self.addNote(node.key);
+					}
+				}
+			  },
 
             dnd5: {
 				// autoExpandMS: 400,
