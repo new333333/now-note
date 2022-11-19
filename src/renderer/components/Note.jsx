@@ -295,15 +295,15 @@ class Note extends React.Component {
         let activeFiltersCount = 0;
 
         return (
-            <>
+            <div style={{backgroundColor: "#fafafa", padding: "5px", display: "flex", flexDirection: "column", height: "100%"}}>
                 {!this.props.note && 
-                    <div style={{padding: "5px"}}>
+                    <>
                         no note selected
-                    </div>
+                    </>
                 }
 
                 {this.props.note && 
-                    <div style={{padding: "5px", display: "flex", flexDirection: "column", height: "100%"}}>
+                    <>
                         <div>
                             <NoteBreadCrumbCollapse parents={this.props.note.parents} openNoteDetails={this.props.activateNote} />
                         </div>
@@ -346,9 +346,8 @@ class Note extends React.Component {
                                     onBlur={(event)=> this.handleChangeTitle(event)} />
                             </div>
                         </div>
-                        <div>
+                        <div style={{padding: "5px 0"}}>
                                 <span style={{marginRight: "5px"}}>
-                                    This&nbsp;is&nbsp;a&nbsp;
                                     <Tooltip title={"Change to " + this.props.getOtherNoteTypeLabel(this.props.note.type)}><a href="#" onClick={(event)=> this.handleChangeType()}><strong>{this.props.getNoteTypeLabel(this.props.note.type)}</strong></a></Tooltip>
                                 </span>
                                 <NotePriority 
@@ -407,9 +406,9 @@ class Note extends React.Component {
                             />
                         </div>
 
-                    </div>
+                    </>
                 }
-            </>
+            </div>
         );
     }
 }

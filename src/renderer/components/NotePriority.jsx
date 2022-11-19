@@ -67,7 +67,7 @@ class NotePriority extends React.Component {
           );
 
         return (
-            <>
+            <span style={{marginRight: "5px"}}>
                 Priority:
                 <Dropdown overlay={priorityMenu}>
                     <InputNumber 
@@ -77,7 +77,7 @@ class NotePriority extends React.Component {
                         onChange={(event)=> this.handleChangePriority(event)} 
                         /> 
                 </Dropdown>
-            </>
+            </span>
         );
     }
 }

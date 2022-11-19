@@ -604,7 +604,7 @@ class App extends React.Component {
         this.setState((previousState) => {
             if (previousState.detailsNote) {
                 let note = JSON.parse(JSON.stringify(previousState.detailsNote));
-                detailsNote.tags = tags;
+                note.tags = tags;
                 return {
                     detailsNote: note,
                 };
