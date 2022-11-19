@@ -103,7 +103,7 @@ const createWindow = () => {
           }
        ]
     },
-    
+    */
     {
        label: 'View',
        submenu: [
@@ -133,6 +133,7 @@ const createWindow = () => {
           }
        ]
     },
+    /*
     {
        role: 'window',
        submenu: [

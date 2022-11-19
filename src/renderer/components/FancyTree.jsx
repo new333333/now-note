@@ -186,6 +186,21 @@ class FancyTree extends React.Component {
 
 	async openNotes(detailsNoteParents) {
 		let self = this;
+
+		for (let i = 0; i < detailsNoteParents.length; i++) {
+			let noteToOpen = detailsNoteParents[i];
+
+			console.log("openNotes, noteToOpen.key=", noteToOpen.key);
+			let node = self.fancytree.getNodeByKey(noteToOpen.key);
+			console.log("openNotes, node=", node);
+
+			await node.setExpanded();
+			await node.makeVisible();
+			console.log("openNotes", detailsNoteParents);
+			
+		}
+
+/*
 		return new Promise(function(resolve) {
 			let noteToOpen = detailsNoteParents.shift();
 
@@ -193,16 +208,19 @@ class FancyTree extends React.Component {
 			let node = self.fancytree.getNodeByKey(noteToOpen.key);
 			console.log("openNotes, node=", node);
 
-			node.setExpanded().then(function() {
-				node.makeVisible().then(function() {
+			return node.setExpanded().then(function() {
+				return node.makeVisible().then(function() {
+					console.log("openNotes", detailsNoteParents);
 					if (detailsNoteParents.length > 0) {
-						self.openNotes(detailsNoteParents);
+						return self.openNotes(detailsNoteParents);
 					} else{
+						console.log("openNotes ready");
 						resolve();
 					}
 				});
 			});
 		});
+		*/
 	}
 
     init() {

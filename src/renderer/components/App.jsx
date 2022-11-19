@@ -327,9 +327,11 @@ class App extends React.Component {
 
         console.log("openNoteInTree, detailsNoteParents=", detailsNoteParents);
 
-        this.fancyTreeDomRef.current.openNotes(detailsNoteParents);
+        await this.fancyTreeDomRef.current.openNotes(detailsNoteParents);
+        console.log(">>>>>>>>>>>>>>>> openNoteInTree NOW  activateNote");
 
         this.activateNote(key);
+
     }
 
 
@@ -795,7 +797,7 @@ class App extends React.Component {
                             handleChangePriority={this.handleChangePriority}
 
                             openNoteDetails={this.openNoteDetails} 
-                            
+                            activateNote={this.activateNote} 
 
                             setFilterOnlyTasks={this.setFilterOnlyTasks}
                             filterOnlyTasks={this.state.filterOnlyTasks}

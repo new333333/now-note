@@ -6,7 +6,7 @@ const { Search } = Input;
 import { grey } from '@ant-design/colors';
 import {ModalFilterByParentNotes} from './ModalFilterByParentNotes.jsx';
 import { Checkbox } from 'pretty-checkbox-react';
-import {NoteBreadCrumb} from './NoteBreadCrumb.jsx';
+import {NoteBreadCrumbCollapse} from './NoteBreadCrumbCollapse.jsx';
 
 class NotesList extends React.Component {
 
@@ -116,12 +116,12 @@ class NotesList extends React.Component {
                         </Button>
                     </Space>
                 </div>
-                <div style={{padding: "5px", overflow: "auto", height: "100vh"}}>
+                <div style={{padding: "5px", overflow: "auto"}}>
 
                     <div>
                         {
                             this.props.note &&
-                            <NoteBreadCrumb parents={this.props.note.parents} />}
+                            <NoteBreadCrumbCollapse parents={this.props.note.parents} openNoteDetails={this.props.activateNote} />}
                     </div>
 
                     <div>
