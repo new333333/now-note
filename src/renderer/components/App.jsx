@@ -760,7 +760,7 @@ class App extends React.Component {
                     <div>
                         <Button
                             onClick={(event)=> this.chooseRepositoryFolder()}
-                        >Choose Repository Folder</Button>
+                        >Add Repository Folder</Button>
                     </div>
                 </div> 
                 :
