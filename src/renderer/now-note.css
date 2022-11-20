@@ -245,7 +245,7 @@ body {
 
 .n3-tree {
 	overflow: auto;
-	/* height: 100vh; */
+	flex: 1;
 	background-color: #efefef;
 }
 
