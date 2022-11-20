@@ -21,6 +21,7 @@ const { threadId } = require('worker_threads');
 class RepositorySQLite  {
 
 	#assetsFolderName
+	#settingsFileName
 
 
 // ============================================
@@ -59,6 +60,7 @@ class RepositorySQLite  {
 		this.directory = directory;
 		this.isDefault = isDefault;
 		this.#assetsFolderName = "assets";
+		this.#settingsFileName = "now-note-repository-settings.json";
 		this.userName = userName;
 	};
 
@@ -66,6 +68,33 @@ class RepositorySQLite  {
 	getDirectory() {
 		return this.directory;
 	}
+
+	async setRepositorySettings(newSettings) {
+        let settings = await this.getRepositorySettings();
+		log.info("setRepositorySettings settings=", settings);
+
+        settings = {...settings, ...newSettings};
+
+		log.info("setRepositorySettings merged settings=", settings);
+
+		let settingsFilePath = path.join(this.directory, this.#settingsFileName);
+        await fs.writeFile(settingsFilePath, JSON.stringify(settings, null, 2));
+    }
+
+    async getRepositorySettings() {
+		let settingsText = "{}";
+		let settingsFilePath = path.join(this.directory, this.#settingsFileName);
+		log.info("getRepositorySettings settingsFilePath=", settingsFilePath);
+        try {
+            settingsText = await fs.readFile(settingsFilePath, "utf-8");
+        } catch (error) {
+            log.warn("Cannot load repository settings from " + settingsFilePath);
+        }
+        let settings = JSON.parse(settingsText);
+		log.info("getRepositorySettings settings=", settings);
+		return settings;
+    }
+
 
 	async open() {
 		// local variable required by init

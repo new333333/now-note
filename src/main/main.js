@@ -13,7 +13,7 @@ try {
   require('electron-reloader')(module)
 } catch (_) {}
 
-log.info("Start NOW-Note app...");
+// log.info("Start NOW-Note app...");
 
 
 const createWindow = () => {
@@ -210,15 +210,14 @@ app.whenReady().then(() => {
               resolve(true);
             });
           }).catch(function(error) {
-              
+            log.error(error);
+            resolve(false);
           });
         });
 
-
       } else {
-        
         console.log("TODO: no repository choosed");
-
+        resolve(false);
       }
 
     });    
@@ -233,25 +232,31 @@ app.whenReady().then(() => {
   });
 
   ipcMain.handle("app:setRepositorySettings", function(event, settings) {
-    // log.info("app:setRepositorySettings", settings, n3.repository);
-    n3.userSettings.setRepositorySettings(n3.repository.directory, settings);
+    log.info("app:setRepositorySettings", settings, n3.repository);
+    if (n3.repository) {
+      n3.repository.setRepositorySettings(settings);
+    } else {
+      log.error("Cannot set settings of not opened repository.");
+    }
   });
 
   ipcMain.handle("app:getRepositorySettings", function(event) {
     log.info("app:getRepositorySettings", n3.repository);
     if (n3.repository) {
-      return n3.userSettings.getRepositorySettings(n3.repository.directory);
+      return n3.repository.getRepositorySettings();
     } else {
-      return {};
+      return false;
     }
   });
 
   ipcMain.handle("app:closeRepository", function(event) {
     log.info("app:closeRepository");
-    return n3.repository.closeRepository().then(function() {
-      log.info("closeRepository done");
-      n3.repository = undefined;
-    });
+    if (n3.repository) {
+      return n3.repository.closeRepository().then(function() {
+        log.info("closeRepository done");
+        n3.repository = undefined;
+      });
+    }
   });
 
   ipcMain.handle("app:isRepositoryInitialized", function() {

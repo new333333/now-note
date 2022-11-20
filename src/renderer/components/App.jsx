@@ -99,20 +99,14 @@ class App extends React.Component {
         });
 
         let isRepositoryInitialized = await this.dataSource.isRepositoryInitialized();
-        console.log("isRepositoryInitialized", isRepositoryInitialized);
+        // console.log("isRepositoryInitialized", isRepositoryInitialized);
 
         this.setState({
             isRepositoryInitialized: isRepositoryInitialized
         });
 
         if (isRepositoryInitialized) {
-            let repositorySettings = await this.dataSource.getRepositorySettings();
-            console.log("repositorySettings", repositorySettings);
-
-            if (repositorySettings) {
-                this.setState(repositorySettings);
-            }
-
+            await this.loadRepositorySettings();
         }
 
         let repositories = this.dataSource.getRepositories();
@@ -121,37 +115,57 @@ class App extends React.Component {
         });
     }
 
+    async loadRepositorySettings() {
+        let repositorySettings = await this.dataSource.getRepositorySettings();
+        console.log("repositorySettings", repositorySettings);
+
+        this.setState({
+            filterOnlyNotes: false,
+            filterOnlyTasks: false,
+            filterOnlyDone: false,
+            filterOnlyNotDone: false,        
+        });
+
+        if(repositorySettings && Object.keys(repositorySettings).length) {
+            this.setState(repositorySettings);
+        }
+    }
+
     async setRepositorySettings(settings) {
-        console.log("setRepositorySettings", settings);
+        // console.log("setRepositorySettings", settings);
 
         this.dataSource.setRepositorySettings(settings);
     }
 
 
     async chooseRepositoryFolder() {
-        let self = this;
-        this.dataSource.chooseRepositoryFolder().then(function(repository) {
-            console.log("chooseRepositoryFolder", repository);
+        let repositoryChoosenOK = await this.dataSource.chooseRepositoryFolder();
+        console.log("chooseRepositoryFolder", repositoryChoosenOK);
 
-            self.setState({
-                isRepositoryInitialized: repository !== undefined,
-            });
+        this.setState({
+            isRepositoryInitialized: repositoryChoosenOK,
         });
+
+        if (repositoryChoosenOK) {
+            await this.loadRepositorySettings();
+        }
     }
 
     async handleClickRepository(repositoryFolder) {
-        let self = this;
-        this.dataSource.changeRepository(repositoryFolder).then(function(repositoryChanged) {
-            console.log("chooseRepositoryFolder", repositoryChanged);
+        let repositoryChanged = await this.dataSource.changeRepository(repositoryFolder);
+        console.log("handleClickRepository", repositoryChanged);
 
-            self.setState({
-                isRepositoryInitialized: repositoryChanged,
-                childNotes: undefined,
-                detailsNote: undefined,
-                activeNoteKey: undefined,
-                activeNote: undefined,
-            });
+        this.setState({
+            isRepositoryInitialized: repositoryChanged,
+            childNotes: undefined,
+            detailsNote: undefined,
+            activeNoteKey: undefined,
+            activeNote: undefined,
         });
+
+        if (repositoryChanged) {
+            await this.loadRepositorySettings();
+        }
     }
 
 
@@ -724,7 +738,7 @@ class App extends React.Component {
                 !this.state.isRepositoryInitialized ? 
                 <div className='nn-center-screen'>
                     <div style={{margin: "10px 100px"}}>
-                        <List
+                        {this.state.repositories && <List
                             bordered
                             locale={{emptyText: "No repositories"}}
                             dataSource={this.state.repositories}
@@ -740,7 +754,7 @@ class App extends React.Component {
                                     />
                                 </List.Item>
                             )}
-                        />
+                        />}
                     </div>
                     <div className="nn-flex-break"></div>
                     <div>
