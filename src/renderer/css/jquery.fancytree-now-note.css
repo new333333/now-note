@@ -1,0 +1,22 @@
+
+
+.fancytree-plain span.fancytree-selected span.fancytree-title {
+    background-color: inherit !important;
+    border-color: transparent !important;
+}
+
+.fancytree-plain.fancytree-container.fancytree-treefocus span.fancytree-selected span.fancytree-title {
+    background-color: inherit !important;
+    border-color: transparent !important;
+}
+
+
+.fancytree-plain span.fancytree-active span.fancytree-title {
+    background-color: #cbe8f6 !important;
+    border-color: #26a0da !important;
+}
+
+.fancytree-plain.fancytree-container.fancytree-treefocus span.fancytree-active span.fancytree-title {
+    background-color: #cbe8f6 !important;
+    border-color: #26a0da !important;
+}

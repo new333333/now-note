@@ -8,6 +8,7 @@ const dayjs = require('dayjs')
 import {createTree} from 'jquery.fancytree';
 
 import 'jquery.fancytree/dist/skin-win8/ui.fancytree.min.css';  // CSS or LESS
+import '../css/jquery.fancytree-now-note.css';
 
 import 'jquery.fancytree/dist/modules/jquery.fancytree.dnd5';
 import 'jquery-contextmenu/dist/jquery.contextMenu.min.css';
