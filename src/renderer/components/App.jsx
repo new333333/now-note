@@ -72,31 +72,12 @@ class App extends React.Component {
         this.simpleListDomRef = React.createRef();
 
         let self = this;
-        this.dataSource.getPriorityStat().then(function(priorityStat) {
-            self.setState({
-                priorityStat: priorityStat
-            });
-        });
-
-        this.dataSource.isRepositoryInitialized().then(function(isRepositoryInitialized) {
-            console.log("isRepositoryInitialized", isRepositoryInitialized);
-
-            self.setState({
-                isRepositoryInitialized: isRepositoryInitialized
-            });
-        });
-
-        this.dataSource.getRepositories().then(function(repositories) {
-            self.setState({
-                repositories: repositories
-            });
-        });
 
         this.dataSource.onChangeRepository((_event, value) => {
-            console.log("onChangeRepository", _event, value);
+            // console.log("onChangeRepository", _event, value);
 
             self.dataSource.closeRepository().then(function() {
-                console.log("closeRepository done");
+                // console.log("closeRepository done");
 
                 self.dataSource.getRepositories().then(function(repositories) {
                     self.setState({
@@ -107,7 +88,43 @@ class App extends React.Component {
             });
         });
 
-        
+        this.initialRepository();
+    }
+
+    async initialRepository() {
+
+        let priorityStat = await this.dataSource.getPriorityStat();
+        this.setState({
+            priorityStat: priorityStat
+        });
+
+        let isRepositoryInitialized = await this.dataSource.isRepositoryInitialized();
+        console.log("isRepositoryInitialized", isRepositoryInitialized);
+
+        this.setState({
+            isRepositoryInitialized: isRepositoryInitialized
+        });
+
+        if (isRepositoryInitialized) {
+            let repositorySettings = await this.dataSource.getRepositorySettings();
+            console.log("repositorySettings", repositorySettings);
+
+            if (repositorySettings) {
+                this.setState(repositorySettings);
+            }
+
+        }
+
+        let repositories = this.dataSource.getRepositories();
+        this.setState({
+            repositories: repositories
+        });
+    }
+
+    async setRepositorySettings(settings) {
+        console.log("setRepositorySettings", settings);
+
+        this.dataSource.setRepositorySettings(settings);
     }
 
 
@@ -187,6 +204,11 @@ class App extends React.Component {
             }
         });
         await this.reloadChildNotes(this.state.activeNoteKey, true, false);
+
+        this.setRepositorySettings({
+            filterOnlyNotes: this.state.filterOnlyNotes,
+            filterOnlyTasks: this.state.filterOnlyTasks,
+        });
     }
 
     async setFilterOnlyNotes() {
@@ -200,6 +222,11 @@ class App extends React.Component {
         });
 
         await this.reloadChildNotes(this.state.activeNoteKey,false, true);
+
+        this.setRepositorySettings({
+            filterOnlyNotes: this.state.filterOnlyNotes,
+            filterOnlyTasks: this.state.filterOnlyTasks
+        });
     }
 
     async setFilterOnlyDone() {
@@ -212,6 +239,11 @@ class App extends React.Component {
             }
         });
         await this.reloadChildNotes(this.state.activeNoteKey,false, false, true, false);
+
+        this.setRepositorySettings({
+            filterOnlyDone: this.state.filterOnlyDone,
+            filterOnlyNotDone: this.state.filterOnlyNotDone
+        });
     }
 
     async setFilterOnlyNotDone() {
@@ -224,6 +256,10 @@ class App extends React.Component {
             }
         });
         await this.reloadChildNotes(this.state.activeNoteKey,false, false, false, true);
+        this.setRepositorySettings({
+            filterOnlyDone: this.state.filterOnlyDone,
+            filterOnlyNotDone: this.state.filterOnlyNotDone
+        });
     }
 
     loadTree(key, data) {
@@ -234,7 +270,7 @@ class App extends React.Component {
             return this.dataSource.getChildren().then(function(rootNodes) {
                 rootNodes = self.mapToTreeData(rootNodes);
 
-                console.log("loadTree, rootNodes=", rootNodes);
+                // console.log("loadTree, rootNodes=", rootNodes);
 
 
                 return rootNodes;
@@ -313,7 +349,7 @@ class App extends React.Component {
     }
 
     async addNote(key) {
-        console.log("addNote");
+        // console.log("addNote");
         key = key || this.state.activeNoteKey;
         let newNote = await this.fancyTreeDomRef.current.addNote(key);
         this.activateNote(newNote.key);
@@ -321,14 +357,14 @@ class App extends React.Component {
     }
 
     async openNoteInTree(key) {
-        console.log("openNoteInTree", key);
+        // console.log("openNoteInTree", key);
 
         let detailsNoteParents = await this.dataSource.getParents(key);
 
-        console.log("openNoteInTree, detailsNoteParents=", detailsNoteParents);
+        // console.log("openNoteInTree, detailsNoteParents=", detailsNoteParents);
 
         await this.fancyTreeDomRef.current.openNotes(detailsNoteParents);
-        console.log(">>>>>>>>>>>>>>>> openNoteInTree NOW  activateNote");
+        // console.log(">>>>>>>>>>>>>>>> openNoteInTree NOW  activateNote");
 
         this.activateNote(key);
 
@@ -397,13 +433,13 @@ class App extends React.Component {
     }
 
     async handleChangeDescription(noteKey, description) {
-        console.log("handleChangeDescription noteKey=, description=", noteKey, description);
+        // console.log("handleChangeDescription noteKey=, description=", noteKey, description);
         let modifiedNote = await this.dataSource.modifyNote({
             key: noteKey, 
             description: description	
         });
         
-        console.log("handleChangeDescription modifiedNote=", modifiedNote);
+        // console.log("handleChangeDescription modifiedNote=", modifiedNote);
         this.setState((previousState) => {
             if (previousState.detailsNote) {
                 let newState = {}

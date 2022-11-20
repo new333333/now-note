@@ -59,7 +59,7 @@ class UserSettings {
         }
 
         let repositoryByPath = this.settings.repositories.find(function(repository) {
-            log.info("connectRepository ", repositoryFolder, repository.path, repository.path == repositoryFolder);
+            log.info("repository ", repositoryFolder, repository.path, repository.path == repositoryFolder);
             return repository.path == repositoryFolder;
         });
 
@@ -68,6 +68,22 @@ class UserSettings {
 
         repositoryByPath.settings = mergedSettings;
         this.save();
+    }
+
+    async getRepositorySettings(repositoryFolder) {
+        if (!this.settings) {
+            try {
+                await this.#load();
+            } catch (error) {
+            }
+        }
+
+        let repositoryByPath = this.settings.repositories.find(function(repository) {
+            log.info("repository ", repositoryFolder, repository.path, repository.path == repositoryFolder);
+            return repository.path == repositoryFolder;
+        });
+
+        return repositoryByPath.settings;
     }
 
     async #load() {

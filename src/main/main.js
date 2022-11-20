@@ -233,11 +233,17 @@ app.whenReady().then(() => {
   });
 
   ipcMain.handle("app:setRepositorySettings", function(event, settings) {
-    log.info("app:setRepositorySettings", settings);
-    return n3.userSettings.connectRepository(repositoryFolder).then(function(repository) {
-      n3.repository = repository;
-      return n3.repository !== undefined;
-    });
+    // log.info("app:setRepositorySettings", settings, n3.repository);
+    n3.userSettings.setRepositorySettings(n3.repository.directory, settings);
+  });
+
+  ipcMain.handle("app:getRepositorySettings", function(event) {
+    log.info("app:getRepositorySettings", n3.repository);
+    if (n3.repository) {
+      return n3.userSettings.getRepositorySettings(n3.repository.directory);
+    } else {
+      return {};
+    }
   });
 
   ipcMain.handle("app:closeRepository", function(event) {
