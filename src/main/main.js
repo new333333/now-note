@@ -216,7 +216,6 @@ app.whenReady().then(() => {
         });
 
       } else {
-        console.log("TODO: no repository choosed");
         resolve(false);
       }
 
@@ -224,7 +223,7 @@ app.whenReady().then(() => {
   });
 
   ipcMain.handle("app:changeRepository", function(event, repositoryFolder) {
-    log.info("app:changeRepository", repositoryFolder);
+    // log.info("app:changeRepository", repositoryFolder);
     return n3.userSettings.connectRepository(repositoryFolder).then(function(repository) {
       n3.repository = repository;
       return n3.repository !== undefined;
@@ -232,7 +231,7 @@ app.whenReady().then(() => {
   });
 
   ipcMain.handle("app:setRepositorySettings", function(event, settings) {
-    log.info("app:setRepositorySettings", settings, n3.repository);
+    // log.info("app:setRepositorySettings", settings, n3.repository);
     if (n3.repository) {
       n3.repository.setRepositorySettings(settings);
     } else {
@@ -241,7 +240,7 @@ app.whenReady().then(() => {
   });
 
   ipcMain.handle("app:getRepositorySettings", function(event) {
-    log.info("app:getRepositorySettings", n3.repository);
+    // log.info("app:getRepositorySettings", n3.repository);
     if (n3.repository) {
       return n3.repository.getRepositorySettings();
     } else {
@@ -250,7 +249,7 @@ app.whenReady().then(() => {
   });
 
   ipcMain.handle("app:closeRepository", function(event) {
-    log.info("app:closeRepository");
+    // log.info("app:closeRepository");
     if (n3.repository) {
       return n3.repository.closeRepository().then(function() {
         log.info("closeRepository done");
@@ -291,9 +290,9 @@ app.whenReady().then(() => {
     });
   });
   
-  ipcMain.handle("store:getChildren", function(event, key) {
+  ipcMain.handle("store:getChildren", function(event, key, trash) {
     if (n3.repository) {
-      return n3.repository.getChildren(key);
+      return n3.repository.getChildren(key, trash);
     }
   });
 
@@ -330,8 +329,12 @@ app.whenReady().then(() => {
     return n3.repository.moveNote(key, from, to, hitMode, relativTo);
   });
 
-  ipcMain.handle("store:moveNoteToTrash", function(event, key, parent) {
-    return n3.repository.moveNoteToTrash(key, parent);
+  ipcMain.handle("store:moveNoteToTrash", function(event, key) {
+    return n3.repository.moveNoteToTrash(key);
+  });
+
+  ipcMain.handle("store:deletePermanently", function(event, key) {
+    return n3.repository.deletePermanently(key);
   });
 
   ipcMain.handle("store:isTrash", function(event, key) {

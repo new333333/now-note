@@ -2,6 +2,8 @@ import React from 'react';
 
 import { ApartmentOutlined, UserOutlined , BarsOutlin1ed, NodeExpandOutlined, PlusOutlined, ThunderboltFilled } from '@ant-design/icons';
 import { Input, Space, Button, List, AutoComplete } from 'antd';
+import {DeleteFilled } from '@ant-design/icons';
+
 const { Search } = Input;
 
 import {
@@ -16,6 +18,7 @@ import {NotesList} from './NotesList.jsx';
 import {Note} from './Note.jsx';
 import {SearchNotes} from './SearchNotes.jsx';
 import {NoteBreadCrumb} from './NoteBreadCrumb.jsx';
+import { isThisQuarter } from 'date-fns/esm';
 
 let noteTypes = [
     {
@@ -38,6 +41,7 @@ class App extends React.Component {
         this.dataSource = window.electronAPI;
 
         this.state = {
+            trash: false,
             activeNoteKey: undefined,
             activeNote: undefined,
             detailsNote: undefined,
@@ -61,6 +65,8 @@ class App extends React.Component {
         this.getNoteTypeLabel = this.getNoteTypeLabel.bind(this);
         this.getOtherNoteTypeLabel = this.getOtherNoteTypeLabel.bind(this);
         this.addNote = this.addNote.bind(this);
+        this.openTrash = this.openTrash.bind(this);
+        this.delete = this.delete.bind(this); 
 
         this.setFilterOnlyTasks = this.setFilterOnlyTasks.bind(this);
         this.setFilterOnlyNotes = this.setFilterOnlyNotes.bind(this);
@@ -278,10 +284,11 @@ class App extends React.Component {
 
     loadTree(key, data) {
         let self = this;
-
+        console.log("loadTree, key=, this.state.trash=", key, this.state.trash);
+        
         if (key.type == 'source') {
 
-            return this.dataSource.getChildren().then(function(rootNodes) {
+            return this.dataSource.getChildren(null, this.state.trash).then(function(rootNodes) {
                 rootNodes = self.mapToTreeData(rootNodes);
 
                 // console.log("loadTree, rootNodes=", rootNodes);
@@ -293,7 +300,7 @@ class App extends React.Component {
 
         } else if (data.node) {
 
-            data.result = this.dataSource.getChildren(data.node.key).then(function(children) {
+            data.result = this.dataSource.getChildren(data.node.key, this.state.trash).then(function(children) {
                 children = self.mapToTreeData(children);
                 return children;
             });
@@ -607,7 +614,7 @@ class App extends React.Component {
                         if (note.key === noteKey) {
                             note = JSON.parse(JSON.stringify(note));
                             note.priority = priority;
-                        }
+                        }reloadChildNotes
                         return note;
                     });
                     newState.childNotes = newChildNotes;
@@ -678,6 +685,47 @@ class App extends React.Component {
             return noteType.key !== type;
         });
         return otherType.label;
+    }
+
+    async delete(key) {
+        console.log("delete, key=", key);
+        // await delete(key);
+
+        let note = await this.dataSource.getNote(key);
+        console.log("delete, note=", note);
+
+        if (note && note.trash) {
+            console.log("TODO: in trash remove permanently");
+        } else {
+            await this.dataSource.moveNoteToTrash(key);
+            this.fancyTreeDomRef.current.remove(key);
+
+            this.setState({
+                childNotes: undefined,
+                detailsNote: undefined,
+                activeNoteKey: undefined,
+                activeNote: undefined,
+            });
+        }
+    }
+
+    async openTrash() {
+        console.log("openTrash", this.state.trash);
+
+        this.setState((previousState) => {
+            console.log("openTrash previousState", previousState);
+            return {
+                trash: !previousState.trash,
+                childNotes: undefined,
+                detailsNote: undefined,
+                activeNoteKey: undefined,
+                activeNote: undefined,
+            };
+        }, () => { 
+            console.log("openTrash new state", this.state.trash);
+            this.fancyTreeDomRef.current.reload();
+        });
+        
     }
     
 
@@ -780,13 +828,30 @@ class App extends React.Component {
                             </div>
                             <FancyTree
                                 ref={this.fancyTreeDomRef}
-                                name="new333" 
                                 loadTree={this.loadTree} 
+                                delete={this.delete}
                                 activateNote={this.activateNote}
                                 expandNote={this.expandNote}
                                 handleChangeDone={this.handleChangeDone} 
                                 dataSource={this.dataSource}
                                 />
+                            <div style={{backgroundColor: "#efefef"}}>
+                                {
+                                    !this.state.trash && 
+                                    <Button size="small" type="text" icon={<DeleteFilled />}
+                                        onClick={(event)=> this.openTrash()}>
+                                        Trash
+                                    </Button>
+                                }
+                                                                {
+                                    this.state.trash && 
+                                    <Button size="small" type="text" danger icon={<DeleteFilled />}
+                                        onClick={(event)=> this.openTrash()}>
+                                        Close Trash
+                                    </Button>
+                                }
+
+                            </div>
                         </div>
                     </ReflexElement>
 
@@ -828,6 +893,7 @@ class App extends React.Component {
                                 openNoteDetails={this.openNoteDetails}
                                 activateNote={this.activateNote} 
                                 openNoteInTree={this.openNoteInTree}
+                                delete={this.delete}
                             />
                         </div>
                     </ReflexElement>

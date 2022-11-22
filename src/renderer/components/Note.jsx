@@ -293,9 +293,14 @@ class Note extends React.Component {
         this.props.activateNote(newNote.key);
     }
 
+    async delete(key) {
+        console.log("delete, key=", key);
+        this.props.delete(key);
+    }
+
     render() {
 
-        if (this.inputRefTinyMCE.current) {
+        if (this.inputRefTinyMCE.current && this.props.note) {
             this.inputRefTinyMCE.current.setContent(this.props.note.description);
         }
 
@@ -328,12 +333,9 @@ class Note extends React.Component {
                                 <Tooltip placement="bottom" title={"Add note"}>
                                     <PlusSquareOutlined onClick={(event) => this.addNote(this.props.note.key)} />
                                 </Tooltip>
-                                
-                                {/* 
-                                    <Tooltip title={"Move to Trash"}>
-                                        <DeleteFilled onClick={(event) => this.moveToTrash(this.props.note.key)} />
-                                    </Tooltip>
-                                */}
+                                <Tooltip placement="bottom" title={this.props.note.trash ? "Delete Permanently" : "Move To Trash"}>
+                                    <DeleteFilled onClick={(event) => this.delete(this.props.note.key)} />
+                                </Tooltip>
                             </Space>
                         </div>
                         <div style={{display: "flex", alignItems: "center" }}>

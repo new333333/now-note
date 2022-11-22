@@ -133,6 +133,11 @@ class FancyTree extends React.Component {
         });
     }
 
+	async delete(key) {
+        console.log("delete, key=", key);
+        this.props.delete(key);
+    }
+
     async addNote(key) {
         console.log("addNote key", key);
 
@@ -204,6 +209,15 @@ class FancyTree extends React.Component {
 		}
 	}
 
+	async remove(key) {
+		let node = this.fancytree.getNodeByKey(key);
+		node.remove();
+	}
+
+	async reload() {
+		await this.fancytree.reload();
+	}
+
     init() {
         const $domNode = $(this.domRef.current);
 
@@ -272,6 +286,7 @@ class FancyTree extends React.Component {
 				menu: {
 					"open": { "name": "Open" },
 					"add": { "name": "Add" },
+					"delete": { "name": "Delete" },
 				  
 				},
 				actions: function(node, action, options) {
@@ -281,6 +296,8 @@ class FancyTree extends React.Component {
 						self.props.activateNote(node.key);
 					} else if (action == "add") {
 						self.addNote(node.key);
+					} else if (action == "delete") {
+						self.delete(node.key);
 					}
 				}
 			  },
