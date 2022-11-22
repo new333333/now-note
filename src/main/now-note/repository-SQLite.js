@@ -883,73 +883,78 @@ class RepositorySQLite  {
 	async #setInlineImagesBeforeWrite(htmltext) {
 		// log.debug("setInlineImagesBeforeWrite htmltext", htmltext);
 
-		if (!htmltext) {
-			return htmltext;
-		}
-			
-		let $description = cheerio.load(htmltext, null, false);
-		let imgs = $description("img");
+		try {
+			if (!htmltext) {
+				return htmltext;
+			}
+				
+			let $description = cheerio.load(htmltext, null, false);
+			let imgs = $description("img");
 
-		for (let i = 0; i < imgs.length; i++) {
-			let nextImg = imgs.eq(i);
+			for (let i = 0; i < imgs.length; i++) {
+				let nextImg = imgs.eq(i);
 
-			// log.debug("setInlineImagesBeforeWrite nextImg", nextImg);
-			// log.debug("setInlineImagesBeforeWrite nextImg.attr(src)", nextImg.attr("src"));
+				// log.debug("setInlineImagesBeforeWrite nextImg", nextImg);
+				// log.debug("setInlineImagesBeforeWrite nextImg.attr(src)", nextImg.attr("src"));
 
-			// log.debug("setInlineImagesBeforeWrite indexOf", nextImg.attr("src").indexOf("file://"));
-			// log.debug("setInlineImagesBeforeWrite if", (nextImg.attr("src") && nextImg.attr("src").indexOf("file://") == 0));
+				// log.debug("setInlineImagesBeforeWrite indexOf", nextImg.attr("src").indexOf("file://"));
+				// log.debug("setInlineImagesBeforeWrite if", (nextImg.attr("src") && nextImg.attr("src").indexOf("file://") == 0));
 
-			let imgSrc = nextImg.attr("src");
-			// log.debug("setInlineImagesBeforeWrite imgSrc", imgSrc);
+				let imgSrc = nextImg.attr("src");
+				// log.debug("setInlineImagesBeforeWrite imgSrc", imgSrc);
 
-			if (imgSrc) {
-				// log.debug("setInlineImagesBeforeWrite has imgSrc", imgSrc);
+				if (imgSrc) {
+					// log.debug("setInlineImagesBeforeWrite has imgSrc", imgSrc);
 
-				if (nextImg.attr("data-n3asset-key")) {
-					// log.debug("setInlineImagesBeforeWrite has n3asset-key");
+					if (nextImg.attr("data-n3asset-key")) {
+						// log.debug("setInlineImagesBeforeWrite has n3asset-key");
 
-					nextImg.attr("src", "");
-				} else if (imgSrc.indexOf("data:image/") == 0) {
-					// log.debug("setInlineImagesBeforeWrite is data:image");
+						nextImg.attr("src", "");
+					} else if (imgSrc.indexOf("data:image/") == 0) {
+						// log.debug("setInlineImagesBeforeWrite is data:image");
 
-					// save as asset data:image/png;base64,...
-					let fileType = imgSrc.substring(5, 14); // image/png
-					let fileName = "img.png";
-					let filePathOrBase64 = imgSrc.substring(22);
-					let fileTransferType = imgSrc.substring(15, 21); // base64
-					let asset = await this.addAsset(fileType, fileName, filePathOrBase64, fileTransferType);
-					// log.debug("write back img?", asset);
-					nextImg.attr("src", "");
-					nextImg.attr("data-n3asset-key", asset.key);
+						// save as asset data:image/png;base64,...
+						let fileType = imgSrc.substring(5, 14); // image/png
+						let fileName = "img.png";
+						let filePathOrBase64 = imgSrc.substring(22);
+						let fileTransferType = imgSrc.substring(15, 21); // base64
+						let asset = await this.addAsset(fileType, fileName, filePathOrBase64, fileTransferType);
+						// log.debug("write back img?", asset);
+						nextImg.attr("src", "");
+						nextImg.attr("data-n3asset-key", asset.key);
 
-				} else if (imgSrc.indexOf("file:///") == 0) {
-					// log.debug("setInlineImagesBeforeWrite is file:///");
+					} else if (imgSrc.indexOf("file:///") == 0) {
+						// log.debug("setInlineImagesBeforeWrite is file:///");
 
-					let filePath = imgSrc.substring("file:///".length);
-					// log.debug("setInlineImagesBeforeWrite filePath", filePath);
+						let filePath = imgSrc.substring("file:///".length);
+						// log.debug("setInlineImagesBeforeWrite filePath", filePath);
 
-					let asset = await this.addAsset(null, path.basename(filePath), filePath, "path");
+						let asset = await this.addAsset(null, path.basename(filePath), filePath, "path");
 
-					nextImg.attr("src", "");
-					nextImg.attr("data-n3asset-key", asset.key);
+						nextImg.attr("src", "");
+						nextImg.attr("data-n3asset-key", asset.key);
 
-				} else if (imgSrc.indexOf("file://") == 0) {
-					// log.debug("setInlineImagesBeforeWrite is file://");
+					} else if (imgSrc.indexOf("file://") == 0) {
+						// log.debug("setInlineImagesBeforeWrite is file://");
 
-					let filePath = imgSrc.substring("file://".length);
-					// log.debug("setInlineImagesBeforeWrite filePath", filePath);
+						let filePath = imgSrc.substring("file://".length);
+						// log.debug("setInlineImagesBeforeWrite filePath", filePath);
 
-					let asset = await this.addAsset(null, path.basename(filePath), filePath, "path");
+						let asset = await this.addAsset(null, path.basename(filePath), filePath, "path");
 
-					nextImg.attr("src", "");
-					nextImg.attr("data-n3asset-key", asset.key);
+						nextImg.attr("src", "");
+						nextImg.attr("data-n3asset-key", asset.key);
+
+					}
 
 				}
-
 			}
-		}
 
-		return $description.html();
+			return $description.html();
+		} catch (e) {
+			log.error(e);
+			return htmltext;
+		}
 	}
 
 	// return {src: fileSource, key: assetKey}
