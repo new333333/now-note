@@ -922,6 +922,17 @@ class RepositorySQLite  {
 					nextImg.attr("src", "");
 					nextImg.attr("data-n3asset-key", asset.key);
 
+				} else if (imgSrc.indexOf("file:///") == 0) {
+					// log.debug("setInlineImagesBeforeWrite is file:///");
+
+					let filePath = imgSrc.substring("file:///".length);
+					// log.debug("setInlineImagesBeforeWrite filePath", filePath);
+
+					let asset = await this.addAsset(null, path.basename(filePath), filePath, "path");
+
+					nextImg.attr("src", "");
+					nextImg.attr("data-n3asset-key", asset.key);
+
 				} else if (imgSrc.indexOf("file://") == 0) {
 					// log.debug("setInlineImagesBeforeWrite is file://");
 
@@ -1208,6 +1219,7 @@ class RepositorySQLite  {
 	// load root nodes, if key undefined
 	// load children notes if key defined
 	async getChildren(key, trash = false) {
+		log.info("getChildren, key, trash", key, trash);
 		let notes = await nnNote.Note.findAll({
 			where: {
 				parent: !key ? null : key,
@@ -1389,7 +1401,7 @@ class RepositorySQLite  {
 	}
 
 	// links/backlinks are not checked
-	async moveNoteToTrash(key, parent) {
+	async moveNoteToTrash(key) {
 		
 		if (!key) {
 			return;
@@ -1419,6 +1431,7 @@ class RepositorySQLite  {
 
 		modifyNote.position = max == null ? 0 : max + 1; 
 		modifyNote.trash = true;
+		modifyNote.parent = null;
 		modifyNote.save();
 
 		let trash = true;
@@ -1430,6 +1443,10 @@ class RepositorySQLite  {
 		let parents = await this.getParents(modifyNote.key);
 		parents.pop();
 		await this.#modifyNoteIndex(modifyNote, reindexTree, this.#notesArrayToPath(parents), this.#notesArrayToKeys(parents), onlyPath);
+	}
+
+	async deletePermanently(key) {
+		log.info("TODO deletePermanently not implemented yet", key);
 	}
 
 	async #modifyTrashFlag(key, trash) {
