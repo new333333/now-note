@@ -1,21 +1,20 @@
-Start
-=====
-
-* npm start
-
-Build
-=====
-
-1. Install electron-builder globally:
-
-* npm i -g electron-builder
+# NOW Note
 
 
-2. Call: 
+## Start for development
 
-* npm start
-* npm run postinstall
-* npm run make
-* npm run dist
+- npm start
 
-Folder 'dist'
+
+
+## Build realease
+
+- Install electron-builder globally:
+    - npm i -g electron-builder
+- Call
+    - npm start
+    - npm run postinstall
+    - npm run make
+    - npm run dist
+
+The ditribution in folder 'dist'
