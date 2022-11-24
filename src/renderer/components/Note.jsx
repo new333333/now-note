@@ -344,6 +344,7 @@ class Note extends React.Component {
                                     <div style={{width: "27px", margin: "0 8px"}}>
                                         <Tooltip placement="bottom" title={"Mark as" + (this.props.note.done ? " NOT" : "") + " Done"}>
                                             <Checkbox shape="round"  
+                                                disabled={this.props.note.trash}
                                                 color="success" 
                                                 style={{ 
                                                     display: "inline-block",

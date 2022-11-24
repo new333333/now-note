@@ -21,6 +21,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   findTag: (tag) => ipcRenderer.invoke("store:findTag", tag),
   moveNote: (key, from, to, hitMode, relativTo) => ipcRenderer.invoke("store:moveNote", key, from, to, hitMode, relativTo),
   moveNoteToTrash: (key) => ipcRenderer.invoke("store:moveNoteToTrash", key),
+  restore: (key) => ipcRenderer.invoke("store:restore", key),
   deletePermanently: (key) => ipcRenderer.invoke("store:deletePermanently", key),
   search: (searchText, limit, trash, options) => ipcRenderer.invoke("search:search", searchText, limit, trash, options),
   getNote: (key) => ipcRenderer.invoke("store:getNote", key),

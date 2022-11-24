@@ -317,43 +317,11 @@ span.fancytree-title {
 .n3-tree .n3-mouseover .n3-node-background, .n3-tree .fancytree-active .n3-node-background {
 	display: inline;
 }
-/*
-.n3-tree .fancytree-plain span.fancytree-active span.fancytree-title, 
-.n3-tree .fancytree-plain span.fancytree-selected span.fancytree-title,
-.n3-tree .fancytree-plain.fancytree-container.fancytree-treefocus span.fancytree-active span.fancytree-title,
-.n3-tree .fancytree-plain.fancytree-container.fancytree-treefocus span.fancytree-selected span.fancytree-title {
-    background-color: transparent;
-    border-color: transparent;
-}
-*/
+
 .ui.transparent {
 	background: transparent;
 }
 
-.n3-tree .n3-task-priority {
-	position: absolute;
-    right: 0;
-    border-right-width: 4px;
-	border-right-style: solid;
-    z-index: 20;
-    display: inline-block;
-    width: 4px;
-    height: 20px;
+.nn-trash-background-color {
+	background-color: red;
 }
-
-.n3-tree .n3-task-priority-0 {
-	border-right-color: #efefef;
-}
-
-.n3-tree .n3-task-priority-1 {
-	border-right-color: mediumblue;
-}
-
-.n3-tree .n3-task-priority-2 {
-	border-right-color: coral;
-}
-
-.n3-tree .n3-task-priority-3 {
-	border-right-color: red;
-}
-

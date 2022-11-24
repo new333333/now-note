@@ -333,6 +333,10 @@ app.whenReady().then(() => {
     return n3.repository.moveNoteToTrash(key);
   });
 
+  ipcMain.handle("store:restore", function(event, key) {
+    return n3.repository.restore(key);
+  });
+
   ipcMain.handle("store:deletePermanently", function(event, key) {
     return n3.repository.deletePermanently(key);
   });

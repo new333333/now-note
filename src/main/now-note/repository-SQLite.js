@@ -164,7 +164,11 @@ class RepositorySQLite  {
 				type: DataTypes.BOOLEAN,
 				defaultValue: false,
 				allowNull: false
-			}
+			},
+			restoreKey: {
+				type: DataTypes.UUID,
+				allowNull: true
+			},
 		}, { sequelize });
 
 		nnTitle.Title.init({
@@ -241,9 +245,10 @@ class RepositorySQLite  {
 
 
 	async #setupSQLite() {
-		let [results, metadata] = await this.sequelize.query(`SELECT name FROM sqlite_master WHERE type='table' AND name='Notes'`);
+		await this.sequelize.sync({ alter: true });
+
+		let [results, metadata] = await this.sequelize.query(`SELECT name FROM sqlite_master WHERE type='table' AND name='Notes_index'`);
 		if (results.length == 0) {
-			await this.sequelize.sync({ alter: true });
 			let [results, metadata] = await this.sequelize.query(`CREATE VIRTUAL TABLE Notes_index USING FTS5(key UNINDEXED, path, parents, title, descriptionAsText, tags, type, done, priority, trash, prefix='1 2 3')`);
 		}
 	}
@@ -1405,7 +1410,6 @@ class RepositorySQLite  {
 		await this.#modifyNoteIndex(modifyNote, reindexTree, this.#notesArrayToPath(parents), this.#notesArrayToKeys(parents), onlyPath);
 	}
 
-	// links/backlinks are not checked
 	async moveNoteToTrash(key) {
 		
 		if (!key) {
@@ -1426,7 +1430,6 @@ class RepositorySQLite  {
 			type: QueryTypes.SELECT
 		});
 
-		modifyNote.parent = null;
 		let max = await nnNote.Note.max("position", { 
 			where:  {
 				parent: null,
@@ -1434,9 +1437,10 @@ class RepositorySQLite  {
 			} 
 		}); 
 
+		modifyNote.restoreKey = modifyNote.parent;
+		modifyNote.parent = null;
 		modifyNote.position = max == null ? 0 : max + 1; 
 		modifyNote.trash = true;
-		modifyNote.parent = null;
 		modifyNote.save();
 
 		let trash = true;
@@ -1444,14 +1448,124 @@ class RepositorySQLite  {
 				
 
 		let reindexTree = true;
-		let onlyPath = true;
+		let onlyPath = false;
 		let parents = await this.getParents(modifyNote.key);
 		parents.pop();
 		await this.#modifyNoteIndex(modifyNote, reindexTree, this.#notesArrayToPath(parents), this.#notesArrayToKeys(parents), onlyPath);
 	}
 
-	async deletePermanently(key) {
-		log.info("TODO deletePermanently not implemented yet", key);
+	async restore(key) {
+		log.info("restore, key=", key);
+		if (!key) {
+			return;
+		}
+
+		const modifyNote = await nnNote.Note.findByPk(key);
+		if (modifyNote === null) {
+			throw new nnNote.NoteNotFoundByKey(key);
+		}
+		log.info("restore, modifyNote=", modifyNote);
+		let parentKey = modifyNote.parent;
+		log.info("restore, parentKey=", parentKey);
+
+		let [results, metadata] = await this.sequelize.query("UPDATE Notes SET position = position - 1 where " + (modifyNote.parent == null ? "parent is NULL" : "parent = :parent") + " and trash = :trash and position > :position", {
+			replacements: {
+				parent: modifyNote.parent,
+				position: modifyNote.position,
+				trash: true
+			},
+			type: QueryTypes.SELECT
+		});
+		let max = await nnNote.Note.max("position", { 
+			where:  {
+				parent: modifyNote.parent,
+				trash: false
+			} 
+		}); 
+		modifyNote.position = max == null ? 0 : max + 1; 
+
+		modifyNote.parent = modifyNote.restoreKey;
+		modifyNote.restoreKey = null;
+		modifyNote.trash = false;
+		modifyNote.save();
+
+		let trash = false;
+		await this.#modifyTrashFlag(key, trash);
+				
+
+		let reindexTree = true;
+		let onlyPath = false;
+		let parents = await this.getParents(modifyNote.key);
+		parents.pop();
+		await this.#modifyNoteIndex(modifyNote, reindexTree, this.#notesArrayToPath(parents), this.#notesArrayToKeys(parents), onlyPath);
+	}
+
+	async deletePermanently(key, skipUpdatePosition) {
+		log.info("deletePermanently, key=", key);
+
+		if (!key) {
+			return;
+		}
+
+		const deleteNote = await nnNote.Note.findByPk(key);
+		if (deleteNote === null) {
+			throw new nnNote.NoteNotFoundByKey(key);
+		}
+
+		let children = await nnNote.Note.findAll({
+			where: {
+				parent: key,
+				trash: true
+			}
+		});
+
+		for (let i = 0; i < children.length; i++) {
+			await this.deletePermanently(children[i].key, true);
+		}
+
+		if (!skipUpdatePosition) {
+			let [results, metadata] = await this.sequelize.query("UPDATE Notes SET position = position - 1 where " + (deleteNote.parent == null ? "parent is NULL" : "parent = :parent") + " and trash = :trash and position > :position", {
+				replacements: {
+					parent: deleteNote.parent,
+					position: deleteNote.position,
+					trash: true
+				},
+				type: QueryTypes.SELECT
+			});
+		}
+
+		const [results, metadata] = await this.sequelize.query("DELETE FROM Notes_index where key = :key and trash = :trash", {
+			replacements: {
+				key: key,
+				trash: true
+			},
+		});
+
+		await nnDescription.Description.destroy({
+			where: {
+				key: key,
+			},
+		});
+
+		await nnLink.Link.destroy({
+			where: {
+				from: key,
+			},
+		});
+
+		await nnTag.Tag.destroy({
+			where: {
+				key: key,
+			},
+		});
+
+		await nnTitle.Title.destroy({
+			where: {
+				key: key,
+			},
+		});
+
+		deleteNote.destroy();
 	}
 
 	async #modifyTrashFlag(key, trash) {

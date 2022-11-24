@@ -138,11 +138,14 @@ class FancyTree extends React.Component {
         this.props.delete(key);
     }
 
+	async restore(key) {
+        console.log("restore, key=", key);
+        this.props.restore(key);
+    }
+
     async addNote(key) {
         console.log("addNote key", key);
-
 		let self = this;
-
 		return new Promise(function(resolve) {
 
 			let newNoteData = {
@@ -177,11 +180,15 @@ class FancyTree extends React.Component {
 			}, "firstChild", relativeToKey).then(function(newNoteData) {
 				if (node.key.startsWith("root_")) {
 					self.fancytree.reload().then(function() {
+						let newNode = self.fancytree.getNodeByKey(newNoteData.key);
+						newNode.setActive();
 						resolve(newNoteData);
 					});
 				} else {
 					node.resetLazy();
 					node.setExpanded(true).then(function() {
+						let newNode = self.fancytree.getNodeByKey(newNoteData.key);
+						newNode.setActive();
 						resolve(newNoteData);
 					});
 				}
@@ -214,8 +221,26 @@ class FancyTree extends React.Component {
 		node.remove();
 	}
 
-	async reload() {
-		await this.fancytree.reload();
+	async reload(key) {
+		if (!key) {
+			await this.fancytree.reload();
+		} else {
+			let self = this;
+
+			return new Promise(function(resolve) {
+	
+				let node = self.fancytree.getNodeByKey(key);
+				if (!node) {
+					resolve();
+				}
+	
+				let resetLazyResult = node.resetLazy();
+				console.log("reload, resetLazyResult=", resetLazyResult);
+				node.setExpanded(true).then(function() {
+					resolve();
+				});
+			});
+		}
 	}
 
     init() {
@@ -283,11 +308,18 @@ class FancyTree extends React.Component {
 
 			contextMenu: {
 				zIndex: 100,
-				menu: {
-					"open": { "name": "Open" },
-					"add": { "name": "Add" },
-					"delete": { "name": "Delete" },
-				  
+				menu: function(node) {
+
+					let menu = {};
+
+					menu["add"] = { "name": "Add" };
+					menu["open"] = { "name": "Open" };
+					menu["delete"] = { "name": "Delete" };
+
+					if (self.props.trash) {
+						menu["restore"] = { "name": "Restore" };
+					}
+					return menu;
 				},
 				actions: function(node, action, options) {
 					console.log("FancyTree contextMenu node, action, options", node, action, options);
@@ -298,6 +330,8 @@ class FancyTree extends React.Component {
 						self.addNote(node.key);
 					} else if (action == "delete") {
 						self.delete(node.key);
+					} else if (action == "restore") {
+						self.restore(node.key);
 					}
 				}
 			  },

@@ -97,7 +97,7 @@ class NotesList extends React.Component {
 
         return (
             <div className='n3-bar-vertical'>
-                <div className="nn-header">
+                <div className={`nn-header ${this.props.trash ? "nn-trash-background-color" : ""}`}>
                     <Space>
                         <Dropdown overlay={filterMenu}>
                             <Button>
