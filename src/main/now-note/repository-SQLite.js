@@ -672,7 +672,7 @@ class RepositorySQLite  {
 
 		let sql = `SELECT * FROM Notes_index 
 			WHERE 
-				${searchText ? "title MATCH :searchText or descriptionAsText MATCH :searchText and" : ""} 
+				${searchText ? "(title MATCH :searchText or descriptionAsText MATCH :searchText) and" : ""} 
 				${options.parentNotesKey && options.parentNotesKey.length > 0 ? " (" + options.parentNotesKey.map((key, index) => " parents like '%," + key + ",%' " + (index < options.parentNotesKey.length - 1 ? " or " : " ")).join(" ") + ") and" : ""}
 				${options.types ? "  type in (" + options.types.join(", ") + ") and" : ""}
 				${options.dones ? "  done in (" + options.dones.join(", ") + ") and" : ""}

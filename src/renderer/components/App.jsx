@@ -981,6 +981,7 @@ class App extends React.Component {
                             <div className='n3-bar-vertical'>
                                 <div className={`nn-header ${this.state.trash ? "nn-trash-background-color" : ""}`}>
                                     <SearchNotes  
+                                        trash={this.state.trash}
                                         dataSource={this.dataSource}
                                         openNoteInTree={this.openNoteInTree}
                                     />
