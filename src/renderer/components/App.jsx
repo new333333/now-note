@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { ApartmentOutlined, UserOutlined , BarsOutlin1ed, NodeExpandOutlined, PlusOutlined, ThunderboltFilled } from '@ant-design/icons';
-import { Input, Space, Button, List, Modal, Alert, message } from 'antd';
+import { Input, Space, Button, List, Modal, Alert, message, Spin } from 'antd';
 import {DeleteFilled } from '@ant-design/icons';
 
 const { Search } = Input;
@@ -31,24 +31,34 @@ let noteTypes = [
     }
 ];
 
-
+let defaultRepositorySettings ={
+    filterOnlyNotes: false,
+    filterOnlyTasks: false,
+    filterOnlyDone: false,
+    filterOnlyNotDone: false, 
+}
 
 
 class App extends React.Component {
 
     constructor() {
         super();
+
+        console.log("App starten");
+
         this.dataSource = window.electronAPI;
 
         this.state = {
+            longOperationProcessing: false,
             trash: false,
+            
             activeNoteKey: undefined,
             activeNote: undefined,
             detailsNote: undefined,
-            filterByParentNotesKey: [],
-            filterOnlyTasks: false,
-            filterOnlyNotes: false,
             childNotes: undefined,
+
+            repositorySettings: defaultRepositorySettings,
+            
 
             showDeleteNoteConfirmationModal: false,
         };
@@ -100,52 +110,47 @@ class App extends React.Component {
         });
 
         this.initialRepository();
+
+        console.log("App ready");
     }
 
     async initialRepository() {
-
-        let priorityStat = await this.dataSource.getPriorityStat();
-        this.setState({
-            priorityStat: priorityStat
-        });
-
+        console.log("initialRepository start");
         let isRepositoryInitialized = await this.dataSource.isRepositoryInitialized();
-        // console.log("isRepositoryInitialized", isRepositoryInitialized);
+        let repositories = await this.dataSource.getRepositories();
 
-        this.setState({
-            isRepositoryInitialized: isRepositoryInitialized
-        });
+        let priorityStat = undefined;
+        let repositorySettings = {};
 
         if (isRepositoryInitialized) {
-            await this.loadRepositorySettings();
+            repositorySettings = await this.getRepositorySettings();
+            priorityStat = await this.dataSource.getPriorityStat();
         }
-
-        let repositories = this.dataSource.getRepositories();
+        
+        console.log("initialRepository repositorySettings=", repositorySettings);
         this.setState({
-            repositories: repositories
+            isRepositoryInitialized: isRepositoryInitialized,
+            repositories: repositories,
+            priorityStat: priorityStat,
+            repositorySettings: repositorySettings,
         });
     }
 
-    async loadRepositorySettings() {
+    async getRepositorySettings() {
         let repositorySettings = await this.dataSource.getRepositorySettings();
-        console.log("repositorySettings", repositorySettings);
+        console.log("repositorySettings loaded", repositorySettings);
 
-        this.setState({
-            filterOnlyNotes: false,
-            filterOnlyTasks: false,
-            filterOnlyDone: false,
-            filterOnlyNotDone: false,        
-        });
+        repositorySettings = {...defaultRepositorySettings, ...repositorySettings};
 
-        if(repositorySettings && Object.keys(repositorySettings).length) {
-            this.setState(repositorySettings);
-        }
+        console.log("repositorySettings merged", repositorySettings);
+
+        return repositorySettings;
     }
 
-    async setRepositorySettings(settings) {
-        // console.log("setRepositorySettings", settings);
+    async saveRepositorySettings() {
+        console.log("saveRepositorySettings", this.state.repositorySettings);
 
-        this.dataSource.setRepositorySettings(settings);
+        this.dataSource.setRepositorySettings(this.state.repositorySettings);
     }
 
 
@@ -153,59 +158,62 @@ class App extends React.Component {
         let repositoryChoosenOK = await this.dataSource.chooseRepositoryFolder();
         console.log("chooseRepositoryFolder", repositoryChoosenOK);
 
+        let repositorySettings = {};
+        if (repositoryChoosenOK) {
+            repositorySettings = await this.getRepositorySettings();
+        }
+
         this.setState({
             isRepositoryInitialized: repositoryChoosenOK,
+            repositorySettings: repositorySettings,
         });
-
-        if (repositoryChoosenOK) {
-            await this.loadRepositorySettings();
-        }
     }
 
     async handleClickRepository(repositoryFolder) {
         let repositoryChanged = await this.dataSource.changeRepository(repositoryFolder);
         console.log("handleClickRepository", repositoryChanged);
 
+        let repositorySettings = {};
+        if (repositoryChanged) {
+            repositorySettings = await this.getRepositorySettings();
+        }
+
         this.setState({
             isRepositoryInitialized: repositoryChanged,
+            repositorySettings: repositorySettings,
             childNotes: undefined,
             detailsNote: undefined,
             activeNoteKey: undefined,
             activeNote: undefined,
         });
-
-        if (repositoryChanged) {
-            await this.loadRepositorySettings();
-        }
     }
 
 
 
     async reloadChildNotes(key, setTaskOnly, setNoteOnly, setDone, setNotDone) {
         let types = [];
-        if (!this.state.filterOnlyTasks && setTaskOnly) {
+        if (!this.state.repositorySettings.filterOnlyTasks && setTaskOnly) {
             types.push("'task'");
-        } else if (this.state.filterOnlyTasks && !setTaskOnly && !setNoteOnly) {
+        } else if (this.state.repositorySettings.filterOnlyTasks && !setTaskOnly && !setNoteOnly) {
             types.push("'task'");
-        } else if (!this.state.filterOnlyNotes && setNoteOnly) {
+        } else if (!this.state.repositorySettings.filterOnlyNotes && setNoteOnly) {
             types.push("'note'");
-        } else if (this.state.filterOnlyNotes && !setNoteOnly && !setTaskOnly) {
+        } else if (this.state.repositorySettings.filterOnlyNotes && !setNoteOnly && !setTaskOnly) {
             types.push("'note'");
         }
 
 
         let dones = [];
-        if (!this.state.filterOnlyDone && setDone) {
+        if (!this.state.repositorySettings.filterOnlyDone && setDone) {
             dones.push(1);
-        } else if (this.state.filterOnlyDone && !setDone && !setNotDone) {
+        } else if (this.state.repositorySettings.filterOnlyDone && !setDone && !setNotDone) {
             dones.push(1);
-        } else if (!this.state.filterOnlyNotDone && setNotDone) {
+        } else if (!this.state.repositorySettings.filterOnlyNotDone && setNotDone) {
             dones.push(0);
-        } else if (this.state.filterOnlyNotDone && !setNotDone && !setDone) {
+        } else if (this.state.repositorySettings.filterOnlyNotDone && !setNotDone && !setDone) {
             dones.push(0);
         }
-
-        let childNotes = await this.dataSource.search("", -1, false, {
+        let childNotes = await this.dataSource.search("", -1, this.state.trash, {
             parentNotesKey: [key],
             types: types.length == 0 ? ["'note'", "'task'"] : types,
             dones: dones.length == 0 ? [0, 1] : dones,
@@ -221,70 +229,90 @@ class App extends React.Component {
 
     async setFilterOnlyTasks() {
         this.setState((previousState) => {
-            return {
-                filterOnlyTasks: (!previousState.filterOnlyTasks && !previousState.filterOnlyNotes) ? true : (
-                                    (previousState.filterOnlyTasks && !previousState.filterOnlyNotes) ? false : (
-                                        (!previousState.filterOnlyTasks && previousState.filterOnlyNotes) ? true : false)), 
+
+            let prevFilterOnlyTasks = previousState.repositorySettings.filterOnlyTasks;
+            let prevFilterOnlyNotes = previousState.repositorySettings.filterOnlyNotes;
+
+            let repositorySettings = {...previousState.repositorySettings, ...{
+                filterOnlyTasks: (!prevFilterOnlyTasks && !prevFilterOnlyNotes) ? true : (
+                                    (prevFilterOnlyTasks && !prevFilterOnlyNotes) ? false : (
+                                        (!prevFilterOnlyTasks && prevFilterOnlyNotes) ? true : false)), 
                 filterOnlyNotes: false, 
+            }};
+
+            return {
+                repositorySettings: repositorySettings
             }
         });
         await this.reloadChildNotes(this.state.activeNoteKey, true, false);
 
-        this.setRepositorySettings({
-            filterOnlyNotes: this.state.filterOnlyNotes,
-            filterOnlyTasks: this.state.filterOnlyTasks,
-        });
+        this.saveRepositorySettings();
     }
 
     async setFilterOnlyNotes() {
         this.setState((previousState) => {
-            return {
+
+            let prevFilterOnlyTasks = previousState.repositorySettings.filterOnlyTasks;
+            let prevFilterOnlyNotes = previousState.repositorySettings.filterOnlyNotes;
+
+            let repositorySettings = {...previousState.repositorySettings, ...{
                 filterOnlyTasks: false, 
-                filterOnlyNotes: (!previousState.filterOnlyTasks && !previousState.filterOnlyNotes) ? true : (
-                    (previousState.filterOnlyTasks && !previousState.filterOnlyNotes) ? true : (
-                        (!previousState.filterOnlyTasks && previousState.filterOnlyNotes) ? false : false)),    
+                filterOnlyNotes: (!prevFilterOnlyTasks && !prevFilterOnlyNotes) ? true : (
+                    (prevFilterOnlyTasks && !prevFilterOnlyNotes) ? true : (
+                        (!prevFilterOnlyTasks && prevFilterOnlyNotes) ? false : false)),    
+            }};
+
+            return {
+                repositorySettings: repositorySettings
             }
         });
 
         await this.reloadChildNotes(this.state.activeNoteKey,false, true);
 
-        this.setRepositorySettings({
-            filterOnlyNotes: this.state.filterOnlyNotes,
-            filterOnlyTasks: this.state.filterOnlyTasks
-        });
+        this.saveRepositorySettings();
     }
 
     async setFilterOnlyDone() {
         this.setState((previousState) => {
-            return {
-                filterOnlyDone: (!previousState.filterOnlyDone && !previousState.filterOnlyNotDone) ? true : (
-                                    (previousState.filterOnlyDone && !previousState.filterOnlyNotDone) ? false : (
-                                        (!previousState.filterOnlyDone && previousState.filterOnlyNotDone) ? true : false)), 
+
+            let prevFilterOnlyDone = previousState.repositorySettings.filterOnlyDone;
+            let prevFilterOnlyNotDone = previousState.repositorySettings.filterOnlyNotDone;
+
+            let repositorySettings = {...previousState.repositorySettings, ...{
+                filterOnlyDone: (!prevFilterOnlyDone && !prevFilterOnlyNotDone) ? true : (
+                                    (prevFilterOnlyDone && !prevFilterOnlyNotDone) ? false : (
+                                        (!prevFilterOnlyDone && prevFilterOnlyNotDone) ? true : false)), 
                 filterOnlyNotDone: false, 
+            }};
+
+            return {
+                repositorySettings: repositorySettings
             }
         });
         await this.reloadChildNotes(this.state.activeNoteKey,false, false, true, false);
 
-        this.setRepositorySettings({
-            filterOnlyDone: this.state.filterOnlyDone,
-            filterOnlyNotDone: this.state.filterOnlyNotDone
-        });
+        this.saveRepositorySettings();
     }
 
     async setFilterOnlyNotDone() {
         this.setState((previousState) => {
-            return {
+
+            let prevFilterOnlyDone = previousState.repositorySettings.filterOnlyDone;
+            let prevFilterOnlyNotDone = previousState.repositorySettings.filterOnlyNotDone;
+
+            let repositorySettings = {...previousState.repositorySettings, ...{
                 filterOnlyDone: false, 
-                filterOnlyNotDone: (!previousState.filterOnlyDone && !previousState.filterOnlyNotDone) ? true : (
-                    (previousState.filterOnlyDone && !previousState.filterOnlyNotDone) ? true : (
-                        (!previousState.filterOnlyDone && previousState.filterOnlyNotDone) ? false : false)),    
+                filterOnlyNotDone: (!prevFilterOnlyDone && !prevFilterOnlyNotDone) ? true : (
+                    (prevFilterOnlyDone && !prevFilterOnlyNotDone) ? true : (
+                        (!prevFilterOnlyDone && prevFilterOnlyNotDone) ? false : false)),    
+            }};
+
+            return {
+                repositorySettings: repositorySettings
             }
         });
         await this.reloadChildNotes(this.state.activeNoteKey,false, false, false, true);
-        this.setRepositorySettings({
-            filterOnlyDone: this.state.filterOnlyDone,
-            filterOnlyNotDone: this.state.filterOnlyNotDone
-        });
+        this.saveRepositorySettings();
     }
 
     loadTree(key, data) {
@@ -719,13 +747,25 @@ class App extends React.Component {
 
         } else {
             this.setState({
+                longOperationProcessing: true,
+            });
+            
+            console.log("moveNoteToTrash start");
+
+
+
+
+            await this.dataSource.moveNoteToTrash(key);
+            console.log("moveNoteToTrash done");
+
+            this.setState({
+                longOperationProcessing: false,
+                
                 childNotes: undefined,
                 detailsNote: undefined,
                 activeNoteKey: undefined,
                 activeNote: undefined,
             });
-            
-            await this.dataSource.moveNoteToTrash(key);
 
             await this.fancyTreeDomRef.current.reload(note.parent);
 
@@ -751,9 +791,17 @@ class App extends React.Component {
             return;
         }
 
+        this.setState({
+            longOperationProcessing: true,
+        });
+
+        console.log("restore start");
         await this.dataSource.restore(key);
+        console.log("restore done");
+
 
         this.setState({
+            longOperationProcessing: false,
             childNotes: undefined,
             detailsNote: undefined,
             activeNoteKey: undefined,
@@ -761,7 +809,43 @@ class App extends React.Component {
         }, () => { 
             this.fancyTreeDomRef.current.reload(note.parent);
         });
+    }
 
+    async deletePermanently() {
+        console.log("deletePermanently, key=", this.state.deleteNoteKey);
+
+        if (!this.state.deleteNoteKey) {
+            console.log("Note to delete permanently cannot be undefined, this.state.deleteNoteKey=", this.state.deleteNoteKey);
+            return;
+        }
+
+        let note = await this.dataSource.getNote(this.state.deleteNoteKey);
+        console.log("deletePermanently, note=", note);
+
+        if (!note) {
+            console.log("Note to delete permanently not exists, this.state.deleteNoteKey=", this.state.deleteNoteKey);
+            return;
+        }
+
+        this.setState({
+            longOperationProcessing: true,
+            showDeleteNoteConfirmationModal: false,
+        });
+
+        await this.dataSource.deletePermanently(this.state.deleteNoteKey);
+
+        this.setState({
+            longOperationProcessing: false,
+            deleteNoteKey: undefined,
+
+            childNotes: undefined,
+            detailsNote: undefined,
+            activeNoteKey: undefined,
+            activeNote: undefined,
+        }, () => { 
+            console.log("openTrash new state", this.state.trash);
+            this.fancyTreeDomRef.current.reload(note.parent);
+        });
         
     }
 
@@ -793,91 +877,19 @@ class App extends React.Component {
         });
     }
 
-    async deletePermanently() {
-        console.log("deletePermanently, key=", this.state.deleteNoteKey);
-
-        if (!this.state.deleteNoteKey) {
-            console.log("Note to delete permanently cannot be undefined, this.state.deleteNoteKey=", this.state.deleteNoteKey);
-            return;
-        }
-
-        let note = await this.dataSource.getNote(this.state.deleteNoteKey);
-        console.log("deletePermanently, note=", note);
-
-        if (!note) {
-            console.log("Note to delete permanently not exists, this.state.deleteNoteKey=", this.state.deleteNoteKey);
-            return;
-        }
-
-        await this.dataSource.deletePermanently(this.state.deleteNoteKey);
-
-        this.setState({
-            showDeleteNoteConfirmationModal: false,
-            deleteNoteKey: undefined,
-
-            childNotes: undefined,
-            detailsNote: undefined,
-            activeNoteKey: undefined,
-            activeNote: undefined,
-        }, () => { 
-            console.log("openTrash new state", this.state.trash);
-            this.fancyTreeDomRef.current.reload(note.parent);
-        });
-        
-    }
+  
 
     render() {
 
-        const renderTitle = (title) => (
-            <span>
-              {title}
-              <a
-                style={{
-                  float: 'right',
-                }}
-                href="https://www.google.com/search?q=antd"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                more
-              </a>
-            </span>
-          );
-          const renderItem = (title, count) => ({
-            value: title,
-            label: (
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                }}
-              >
-                {title}
-                <span>
-                  <UserOutlined /> {count}
-                </span>
-              </div>
-            ),
-          });
-          const options = [
-            {
-              label: renderTitle('Libraries'),
-              options: [renderItem('AntDesign', 10000), renderItem('AntDesign UI', 10600)],
-            },
-            {
-              label: renderTitle('Solutions'),
-              options: [renderItem('AntDesign UI FAQ', 60100), renderItem('AntDesign FAQ', 30010)],
-            },
-            {
-              label: renderTitle('Articles'),
-              options: [renderItem('AntDesign design language', 100000)],
-            },
-          ];
 
+        console.log("App render start");
+        console.log("App render this.state.repositories=", this.state.repositories);
+        console.log("App render this.state.isRepositoryInitialized=", this.state.isRepositoryInitialized);
+        
 
         return (
 
-            <>
+            <Spin wrapperClassName="nn-spin-full-screen" spinning={this.state.longOperationProcessing}>
                 {
                 
                     !this.state.isRepositoryInitialized ? 
@@ -1026,14 +1038,12 @@ class App extends React.Component {
                                 activateNote={this.activateNote} 
 
                                 setFilterOnlyTasks={this.setFilterOnlyTasks}
-                                filterOnlyTasks={this.state.filterOnlyTasks}
                                 setFilterOnlyNotes={this.setFilterOnlyNotes}
-                                filterOnlyNotes={this.state.filterOnlyNotes}
 
                                 setFilterOnlyDone={this.setFilterOnlyDone}
-                                filterOnlyDone={this.state.filterOnlyDone}
                                 setFilterOnlyNotDone={this.setFilterOnlyNotDone}
-                                filterOnlyNotDone={this.state.filterOnlyNotDone}
+
+                                repositorySettings={this.state.repositorySettings}
 
                                 
                                 getNoteTypeLabel={this.getNoteTypeLabel}
@@ -1056,7 +1066,7 @@ class App extends React.Component {
                     <Alert message="It can not be recover anymore!" type="warning" />
                     <p>The files and images will be NOT removed.</p>
                 </Modal>
-            </>
+            </Spin>
         )
     }
 }

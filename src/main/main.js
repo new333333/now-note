@@ -60,7 +60,7 @@ const createWindow = () => {
           });
 
         } else {
-          console.log("No repository choosed");
+          log.info("No repository choosed");
         }
 
         
@@ -166,23 +166,61 @@ app.whenReady().then(() => {
   const username = os.userInfo().username;
   n3.userSettings = new nnUserSettings.UserSettings(userDataPath, os.userInfo().username);
 
+  openDefaultRepo(userDataPath, n3).then(function() {
 
+    log.debug("Start with default repository: ", n3.repository);
 
-  log.debug("Start with default repository: " + n3.repository);
+    let mainWindow = createWindow();
 
-  let mainWindow = createWindow();
+    log.debug("mainWindow=", mainWindow);
+  
+    n3.mainWindow = mainWindow;
+  
+    const menu = Menu.buildFromTemplate(template)
+    // Menu.setApplicationMenu(menu)
+    mainWindow.setMenu(menu);
 
-  n3.mainWindow = mainWindow;
+    log.debug("Menu ready");
+  
+    app.on('activate', () => {
+      if (BrowserWindow.getAllWindows().length === 0) createWindow()
+    });
+  
+    log.debug("initIpcMainHandle now");
+    initIpcMainHandle(ipcMain);
 
-  const menu = Menu.buildFromTemplate(template)
-  // Menu.setApplicationMenu(menu)
-  mainWindow.setMenu(menu);
-
-  app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow()
+    log.debug("initIpcMainHandle ready");
   });
 
 
+
+});
+
+app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') app.quit()
+});
+
+
+
+function openDefaultRepo(userDataPath, n3) {
+  return new Promise(function(resolve, reject) {
+
+    // n3.userSettings = new nnUserSettings.UserSettings(userDataPath);
+    log.info("initNowNoteApplication", userDataPath, n3);
+    n3.userSettings.connectDefaultRepository().then(function(repository) {
+      if (repository) {
+        n3.repository = repository;
+      }
+
+      resolve();
+    });
+
+  });  
+}
+
+function initIpcMainHandle(ipcMain) {
+
+  log.debug("initIpcMainHandle start...");
   ipcMain.handle("app:chooseRepositoryFolder", function() {
 
     return new Promise(function(resolve, err) {
@@ -402,33 +440,9 @@ app.whenReady().then(() => {
         });
       }
     });
-  });
-
-  openDefaultRepo(userDataPath, n3).then(function() {
 
   });
 
+  log.debug("initIpcMainHandle end...");
 
-});
-
-
-
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') app.quit()
-});
-
-function openDefaultRepo(userDataPath, n3) {
-  return new Promise(function(resolve, reject) {
-
-    // n3.userSettings = new nnUserSettings.UserSettings(userDataPath);
-    console.log("initNowNoteApplication", userDataPath, n3);
-    n3.userSettings.connectDefaultRepository().then(function(repository) {
-      n3.repository = repository;
-      resolve();
-    }).catch(function(error) {
-      log.info("No default Repository found");
-    });
-  });  
 }
-
-

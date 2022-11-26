@@ -112,7 +112,7 @@ class NoteTags extends React.Component {
                         <Tag
                             className="nn-edit-tag"
                             key={tag}
-                            closable={true}
+                            closable={!this.props.trash}
                             onClose={(event)=> this.handleCloseTag(tag)}
                         >
                             <span>
@@ -130,27 +130,32 @@ class NoteTags extends React.Component {
                         );
                 })}
 
-                {this.state.inputAutoCompleteVisible && (
-                    <AutoComplete
-                        ref={this.inputRefAutoComplete}
-                        defaultActiveFirstOption={true}
-                        value={this.state.valueAutoComplete}
-                        options={this.state.optionsAutoComplete}
-                        style={{ width: 200 }}
-                        onSelect={this.onSelectAutoComplete}
-                        onBlur={this.onBlurAutoComplete}
-                        onKeyDown={this.onKeyDownAutoComplete}
-                        onSearch={this.onSearchAutoComplete}
-                        onChange={this.onChangeAutoComplete}
-                    >
-                        <Input.Search size="small" placeholder="" />
-                    </AutoComplete>
-                )}
-                {!this.state.inputAutoCompleteVisible && (
-                    <Tag className="nn-site-tag-plus" onClick={this.showInputAutoComplete}>
-                        <PlusOutlined /> New Tag
-                    </Tag>
-                )}
+                {
+                    !this.props.trash && 
+                    <>
+                        {this.state.inputAutoCompleteVisible && (
+                            <AutoComplete
+                                ref={this.inputRefAutoComplete}
+                                defaultActiveFirstOption={true}
+                                value={this.state.valueAutoComplete}
+                                options={this.state.optionsAutoComplete}
+                                style={{ width: 200 }}
+                                onSelect={this.onSelectAutoComplete}
+                                onBlur={this.onBlurAutoComplete}
+                                onKeyDown={this.onKeyDownAutoComplete}
+                                onSearch={this.onSearchAutoComplete}
+                                onChange={this.onChangeAutoComplete}
+                            >
+                                <Input.Search size="small" placeholder="" />
+                            </AutoComplete>
+                        )}
+                        {!this.state.inputAutoCompleteVisible && (
+                            <Tag className="nn-site-tag-plus" onClick={this.showInputAutoComplete}>
+                                <PlusOutlined /> New Tag
+                            </Tag>
+                        )}
+                    </>
+                }
             </>
         );
     }

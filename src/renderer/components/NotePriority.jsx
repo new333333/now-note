@@ -1,8 +1,9 @@
 import React from 'react';
-import { Breadcrumb, Dropdown, Menu, Space, Input, InputNumber, Button, Select } from 'antd';
+import { Breadcrumb, Dropdown, Menu, Space, Input, InputNumber, Typography, Select } from 'antd';
 import { HomeOutlined, DownOutlined } from '@ant-design/icons';
 import { Checkbox } from 'pretty-checkbox-react';
 import '@djthoms/pretty-checkbox';
+const { Text, Link } = Typography;
 
 class NotePriority extends React.Component {
 
@@ -68,15 +69,23 @@ class NotePriority extends React.Component {
 
         return (
             <span style={{marginRight: "5px"}}>
-                Priority:
-                <Dropdown overlay={priorityMenu}>
-                    <InputNumber 
-                        min={0} 
-                        size="small"
-                        value={this.props.priority} 
-                        onChange={(event)=> this.handleChangePriority(event)} 
-                        /> 
-                </Dropdown>
+                Priority:&nbsp;
+                {
+                    !this.props.trash && 
+                    <Dropdown overlay={priorityMenu}>
+                        <InputNumber 
+                            disabled={true}
+                            min={0} 
+                            size="small"
+                            value={this.props.priority} 
+                            onChange={(event)=> this.handleChangePriority(event)} 
+                            /> 
+                    </Dropdown>
+                } 
+                {
+                    this.props.trash && 
+                    <Text strong>{this.props.priority}</Text>
+                }
             </span>
         );
     }

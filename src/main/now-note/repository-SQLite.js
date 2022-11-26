@@ -99,7 +99,7 @@ class RepositorySQLite  {
 	async open() {
 		// local variable required by init
 		let sequelize = new Sequelize({
-			logging: false, // Disables logging
+			logging: true,
 			dialect: 'sqlite',
 			storage: path.join(this.directory, "db.sqlite3")
 		});
@@ -165,9 +165,10 @@ class RepositorySQLite  {
 				defaultValue: false,
 				allowNull: false
 			},
-			restoreKey: {
+			restoreParentKey: {
 				type: DataTypes.UUID,
-				allowNull: true
+				allowNull: true,
+				unique: false
 			},
 		}, { sequelize });
 
@@ -245,12 +246,55 @@ class RepositorySQLite  {
 
 
 	async #setupSQLite() {
-		await this.sequelize.sync({ alter: true });
 
-		let [results, metadata] = await this.sequelize.query(`SELECT name FROM sqlite_master WHERE type='table' AND name='Notes_index'`);
+		let [results, metadata] = await this.sequelize.query(`SELECT name FROM sqlite_master WHERE type='table' AND name='Notes'`);
 		if (results.length == 0) {
-			let [results, metadata] = await this.sequelize.query(`CREATE VIRTUAL TABLE Notes_index USING FTS5(key UNINDEXED, path, parents, title, descriptionAsText, tags, type, done, priority, trash, prefix='1 2 3')`);
+			log.info("SQLite repository: initialize new database.");
+			await this.sequelize.sync({ alter: true });
 		}
+
+		[results, metadata] = await this.sequelize.query(`SELECT name FROM sqlite_master WHERE type='table' AND name='Notes_index'`);
+		if (results.length == 0) {
+			log.info("SQLite repository: add Notes_index table.");
+			await this.sequelize.query(`CREATE VIRTUAL TABLE Notes_index USING FTS5(key UNINDEXED, path, parents, title, descriptionAsText, tags, type, done, priority, trash, prefix='1 2 3')`);
+		}
+
+
+		[results, metadata] = await this.sequelize.query(`PRAGMA table_info(Notes)`);
+		log.info("results=", results);
+
+		let restoreParentKeyColumn = results.find(function(column) {
+            if (column.name == "restoreParentKey") {
+                return column;
+            }
+        });
+		log.info("restoreParentKeyColumn=", restoreParentKeyColumn);
+
+		if (!restoreParentKeyColumn) {
+
+			log.info("SQLite repository: Add Column Notes.restoreParentKey");
+
+			const queryInterface = this.sequelize.getQueryInterface();
+			let transaction = await this.sequelize.transaction();
+			try {
+
+				
+
+				await queryInterface.addColumn('Notes', 'restoreParentKey', {
+					type: DataTypes.UUID,
+					allowNull: true,
+					unique: false
+				}, {transaction} ); 
+
+				await transaction.commit();
+			} catch (err) {
+				log.error(err);
+				await transaction.rollback();
+			}
+
+		}
+
+
 	}
 
 	async import(importFolder) {
@@ -1411,7 +1455,7 @@ class RepositorySQLite  {
 	}
 
 	async moveNoteToTrash(key) {
-		
+		log.info("moveNoteToTrash, key=", key);
 		if (!key) {
 			return;
 		}
@@ -1437,7 +1481,7 @@ class RepositorySQLite  {
 			} 
 		}); 
 
-		modifyNote.restoreKey = modifyNote.parent;
+		modifyNote.restoreParentKey = modifyNote.parent;
 		modifyNote.parent = null;
 		modifyNote.position = max == null ? 0 : max + 1; 
 		modifyNote.trash = true;
@@ -1484,8 +1528,8 @@ class RepositorySQLite  {
 		}); 
 		modifyNote.position = max == null ? 0 : max + 1; 
 
-		modifyNote.parent = modifyNote.restoreKey;
-		modifyNote.restoreKey = null;
+		modifyNote.parent = modifyNote.restoreParentKey;
+		modifyNote.restoreParentKey = null;
 		modifyNote.trash = false;
 		modifyNote.save();
 
@@ -1569,6 +1613,8 @@ class RepositorySQLite  {
 	}
 
 	async #modifyTrashFlag(key, trash) {
+		log.info("#modifyTrashFlag, key=", key);
+
 		await nnNote.Note.update(
 			{
 				trash: trash

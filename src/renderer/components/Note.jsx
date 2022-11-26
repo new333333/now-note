@@ -1,5 +1,5 @@
 import React from 'react';
-import { Menu, Space, Input, Tooltip, Collapse } from 'antd';
+import { Menu, Space, Input, Tooltip, Collapse, Typography } from 'antd';
 import Icon, { PlusSquareOutlined, DeleteFilled } from '@ant-design/icons';
 import { Checkbox } from 'pretty-checkbox-react';
 import '@djthoms/pretty-checkbox';
@@ -9,6 +9,7 @@ import {NoteTags} from './NoteTags.jsx';
 import { Editor } from '@tinymce/tinymce-react';
 import {NoteBreadCrumbCollapse} from './NoteBreadCrumbCollapse.jsx';
 const { Panel } = Collapse;
+const { Text, Link } = Typography;
 
 import tinymce from 'tinymce/tinymce';
 
@@ -131,7 +132,7 @@ class Note extends React.Component {
 
     componentWillUnmount() {
         // console.log("componentWillUnmount(value, editor)", value);
-        if (this.inputRefTinyMCE.current) {
+        if (this.inputRefTinyMCE.current && this.props.note) {
             // TODO: check dirty?
             this.props.handleChangeDescription(this.props.note.key, this.inputRefTinyMCE.current.getContent());
         }
@@ -330,9 +331,12 @@ class Note extends React.Component {
                                 <Tooltip placement="bottom" title={"Show in tree"}>
                                     <TreeIcon onClick={(event) => this.props.openNoteInTree(this.props.note.key)} />
                                 </Tooltip>
-                                <Tooltip placement="bottom" title={"Add note"}>
-                                    <PlusSquareOutlined onClick={(event) => this.addNote(this.props.note.key)} />
-                                </Tooltip>
+                                {
+                                    !this.props.note.trash &&
+                                    <Tooltip placement="bottom" title={"Add note"}>
+                                        <PlusSquareOutlined onClick={(event) => this.addNote(this.props.note.key)} />
+                                    </Tooltip>
+                                }
                                 <Tooltip placement="bottom" title={this.props.note.trash ? "Delete Permanently" : "Move To Trash"}>
                                     <DeleteFilled onClick={(event) => this.delete(this.props.note.key)} />
                                 </Tooltip>
@@ -356,6 +360,7 @@ class Note extends React.Component {
                             }
                             <div style={{flexBasis: "100%" }}>
                                 <Input 
+                                    disabled={this.props.note.trash}
                                     size="large" 
                                     value={this.props.note.title} 
                                     onChange={(event)=> this.handleChangeTitle(event)} 
@@ -364,15 +369,28 @@ class Note extends React.Component {
                         </div>
                         <div style={{padding: "5px 0"}}>
                                 <span style={{marginRight: "5px"}}>
-                                    <Tooltip placement="bottom" title={"Change to " + this.props.getOtherNoteTypeLabel(this.props.note.type)}><a href="#" onClick={(event)=> this.handleChangeType()}><strong>{this.props.getNoteTypeLabel(this.props.note.type)}</strong></a></Tooltip>
+                                    {
+                                        !this.props.note.trash &&
+                                        <Tooltip placement="bottom" title={"Change to " + this.props.getOtherNoteTypeLabel(this.props.note.type)}>
+                                            <Link strong onClick={(event)=> this.handleChangeType()}>
+                                                {this.props.getNoteTypeLabel(this.props.note.type)}
+                                            </Link>
+                                        </Tooltip>
+                                    }
+                                    {
+                                        this.props.note.trash &&
+                                        <Text strong>{this.props.getNoteTypeLabel(this.props.note.type)}</Text>
+                                    }
                                 </span>
                                 <NotePriority 
+                                    trash={this.props.note.trash}
                                     noteKey={this.props.note.key}
                                     priority={this.props.note.priority}
                                     handleChangePriority={this.props.handleChangePriority} 
                                     priorityStat={this.props.priorityStat}
                                     />
                                 <NoteTags 
+                                    trash={this.props.note.trash}
                                     dataSource={this.props.dataSource}
 
                                     noteKey={this.props.note.key}
@@ -388,6 +406,7 @@ class Note extends React.Component {
                                 initialValue={this.props.note.description}
                                 onBlur={this.onBlurEditor}
                                 onClick={this.onClickEditor}
+                                disabled={this.props.note.trash}
                                 init={{
                                     setup: this.setupTinyMce,
                                     skin: false,
@@ -408,6 +427,7 @@ class Note extends React.Component {
                                         "bold italic underline strikethrough  backcolor | alignleft aligncenter " +
                                         "alignright alignjustify | bullist numlist outdent indent | " +
                                         "removeformat | code",
+                                    toolbar_mode: 'sliding'
                                 }}
                             />
                         </div>

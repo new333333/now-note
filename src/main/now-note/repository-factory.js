@@ -31,7 +31,17 @@ class RepositoryFactory {
             throw new Error("No repositories defined.");
         }
 
-        let defaultRepository = this.repositories.find((element) => element.default);
+        log.info("connectDefaultRepository, this.repositories=", this.repositories);
+
+        let defaultRepository = this.repositories.find(function(element) {
+            log.info("connectDefaultRepository, element=, default=", element, element.default === true);
+            if (element.default) {
+                return element;
+            }
+        });
+
+        log.info("connectDefaultRepository, defaultRepository=, nicht gefunden?=", defaultRepository, !defaultRepository );
+
         if (!defaultRepository) {
             throw new Error("No default repository found.");
         }

@@ -19,6 +19,13 @@ body {
 	width: 100%;
 }
 
+.nn-spin-full-screen,
+.nn-spin-full-screen .ant-spin-container {
+	display: block;
+	height: 100%;
+	width: 100%;
+}
+
 .nn-center-screen {
 	display: flex;
 	justify-content: center;
