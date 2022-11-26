@@ -66,18 +66,25 @@ const TreeIcon = (props) => <Icon component={TreeSvg} {...props} />;
 
 class Note extends React.Component {
 
-    constructor() {
-        super();
+    constructor(props) {
+        super(props);
         
-        this.inputRefTinyMCE = React.createRef();
-        this.modalFilterByParentNotesRef = React.createRef();
+        this.tinyMCEDomRef = React.createRef();
+        this.titleDomRef = React.createRef();
 
         this.handleChangeType = this.handleChangeType.bind(this);
         this.onBlurEditor = this.onBlurEditor.bind(this);
         this.onClickEditor = this.onClickEditor.bind(this);
         this.setupTinyMce = this.setupTinyMce.bind(this);
-        this.handleSetFilter = this.handleSetFilter.bind(this);
-        this.addParentNotesFilter = this.addParentNotesFilter.bind(this);
+    }
+
+    async saveChanges() {
+        if (this.tinyMCEDomRef.current) {
+            await this.props.handleChangeDescription(this.props.note.key, this.tinyMCEDomRef.current.getContent());
+        }
+        if (this.titleDomRef.current) {
+            await this.props.saveTitle(this.props.note.key, this.titleDomRef.current.input.value);
+        }
     }
 
     handleChangeDone(event) {
@@ -98,11 +105,18 @@ class Note extends React.Component {
         this.props.handleChangeTitle(this.props.note.key, title);
     }
 
-    onBlurEditor(value, editor) {
+
+    async saveTitle(event) {
+        console.log(">>>>>>>>>>>> saveTitle on blur ");
+        let title = event.target.value;
+        title = title.replaceAll("/", "");
+        await this.props.saveTitle(this.props.note.key, title);
+    }
+    
+    async onBlurEditor(value, editor) {
         // console.log("onBlurEditor(value, editor)", value);
-        if (this.inputRefTinyMCE.current) {
-            // TODO: check dirty?
-            this.props.handleChangeDescription(this.props.note.key, this.inputRefTinyMCE.current.getContent());
+        if (this.tinyMCEDomRef.current) {
+            await this.props.handleChangeDescription(this.props.note.key, this.tinyMCEDomRef.current.getContent());
         }
     }
 
@@ -112,13 +126,13 @@ class Note extends React.Component {
         if (e.srcElement &&  e.srcElement.dataset && e.srcElement.dataset.gotoNote) {
             // console.log("activateNode", e.srcElement.dataset.gotoNote);
             // TODO: check dirty?
-            await this.props.handleChangeDescription(this.props.note.key, this.inputRefTinyMCE.current.getContent());
+            await this.props.handleChangeDescription(this.props.note.key, this.tinyMCEDomRef.current.getContent());
             await this.props.openNoteDetails(e.srcElement.dataset.gotoNote);
         }
         
         if (e.srcElement &&  e.srcElement.dataset && e.srcElement.dataset.n3assetKey) {
             // TODO: check dirty?
-            this.props.handleChangeDescription(this.props.note.key, this.inputRefTinyMCE.current.getContent());
+            this.props.handleChangeDescription(this.props.note.key, this.tinyMCEDomRef.current.getContent());
             if (e.srcElement.tagName == "A") {
                 // TODO: download by assetKey, don't set HREF any more by loading description
                 this.props.dataSource.downloadAttachment(e.srcElement.href);
@@ -132,15 +146,9 @@ class Note extends React.Component {
 
     componentWillUnmount() {
         // console.log("componentWillUnmount(value, editor)", value);
-        if (this.inputRefTinyMCE.current && this.props.note) {
+        if (this.tinyMCEDomRef.current && this.props.note) {
             // TODO: check dirty?
-            this.props.handleChangeDescription(this.props.note.key, this.inputRefTinyMCE.current.getContent());
-        }
-    }
-
-    handleSetFilter(event) {
-        if (event.key == "filterByParentNote") {
-            this.modalFilterByParentNotesRef.current.open();
+            this.props.handleChangeDescription(this.props.note.key, this.tinyMCEDomRef.current.getContent());
         }
     }
 
@@ -153,10 +161,10 @@ class Note extends React.Component {
         });
 
         editor.on("SetContent", function(event, a, b, c) {
-            // console.log("SetContent, event, getContent", event, self.inputRefTinyMCE.current ? self.inputRefTinyMCE.current.getContent() : undefined);
+            // console.log("SetContent, event, getContent", event, self.tinyMCEDomRef.current ? self.tinyMCEDomRef.current.getContent() : undefined);
 
             if (event.paste) {
-                self.props.handleChangeDescription(self.props.note.key, self.inputRefTinyMCE.current.getContent());
+                self.props.handleChangeDescription(self.props.note.key, self.tinyMCEDomRef.current.getContent());
             }
 
         });
@@ -274,20 +282,6 @@ class Note extends React.Component {
         return menuItems;
     }
 
-    addParentNotesFilter(keys) {
-        // console.log("addParentNotesFilter, keys", keys);
-        let self = this;
-
-        this.props.setFilterByParentNotesKey(keys);
-        
-        this.props.dataSource.search("", -1, false, {parentNotesKey: keys}).then(function(searchResults) {
-            self.setState({
-                notes: searchResults,
-            });
-        });
-
-    }
-
     async addNote(key) {
         // console.log("addNote, key=", key);
         let newNote = await this.props.addNote(key);
@@ -301,27 +295,19 @@ class Note extends React.Component {
 
     render() {
 
-        if (this.inputRefTinyMCE.current && this.props.note) {
-            this.inputRefTinyMCE.current.setContent(this.props.note.description);
+        if (this.tinyMCEDomRef.current && this.props.note) {
+            this.tinyMCEDomRef.current.setContent(this.props.note.description);
         }
-
-        const filterMenu = (
-            <Menu
-                onClick={(event)=> this.handleSetFilter(event)} 
-                items={this.getFilterMenuItems()}
-            />
-        );
-        let activeFiltersCount = 0;
 
         return (
             <div style={{backgroundColor: "#fafafa", padding: "5px", display: "flex", flexDirection: "column", height: "100%"}}>
-                {!this.props.note && 
-                    <>
-                        no note selected
-                    </>
+                {   
+                    !this.props.note && 
+                    <Text type="secondary">No note selected.</Text>
                 }
 
-                {this.props.note && 
+                {
+                    this.props.note && 
                     <>
                         <div>
                             <NoteBreadCrumbCollapse parents={this.props.note.parents} openNoteDetails={this.props.activateNote} />
@@ -347,7 +333,7 @@ class Note extends React.Component {
                                 this.props.note.type == "task" &&
                                     <div style={{width: "27px", margin: "0 8px"}}>
                                         <Tooltip placement="bottom" title={"Mark as" + (this.props.note.done ? " NOT" : "") + " Done"}>
-                                            <Checkbox shape="round"  
+                                            <Checkbox  
                                                 disabled={this.props.note.trash}
                                                 color="success" 
                                                 style={{ 
@@ -360,11 +346,12 @@ class Note extends React.Component {
                             }
                             <div style={{flexBasis: "100%" }}>
                                 <Input 
+                                    ref={this.titleDomRef}
                                     disabled={this.props.note.trash}
                                     size="large" 
                                     value={this.props.note.title} 
                                     onChange={(event)=> this.handleChangeTitle(event)} 
-                                    onBlur={(event)=> this.handleChangeTitle(event)} />
+                                    onBlur={(event)=> this.saveTitle(event)} />
                             </div>
                         </div>
                         <div style={{padding: "5px 0"}}>
@@ -402,7 +389,7 @@ class Note extends React.Component {
                         </div>
                         <div style={{flex: 1}}>
                             <Editor
-                                onInit={(evt, editor) => this.inputRefTinyMCE.current = editor}
+                                onInit={(evt, editor) => this.tinyMCEDomRef.current = editor}
                                 initialValue={this.props.note.description}
                                 onBlur={this.onBlurEditor}
                                 onClick={this.onClickEditor}

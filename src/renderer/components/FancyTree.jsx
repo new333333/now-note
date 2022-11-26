@@ -18,10 +18,9 @@ import '../js/jquery.fancytree.contextMenu';
 
 class FancyTree extends React.Component {
 
-    constructor() {
-        super();
+	constructor(props) {
+        super(props);
         this.domRef = React.createRef();
-        this.onSearch = this.onSearch.bind(this);
 
     }
 
@@ -103,36 +102,6 @@ class FancyTree extends React.Component {
         return node;
     }
 
-    onSearch(event) {
-        let self = this;
-
-        let searchText = event.target.value;
-        this.props.dataSource.search(searchText, -1, false).then(function(searchResults) {
-
-            let foundNoteKeys = [];
-
-			if (searchResults.length > 0) {
-				foundNoteKeys = searchResults.map(function(searchResult) {
-					return searchResult.key;
-				});
-			}
-
-            self.fancytree.filterNodes(function(node) {
-                let show = true;
-
-                console.log("filterNodes", node);
-
-                if (searchText.trim().length > 0) {
-					show = show && foundNoteKeys.includes(node.key);
-				}
-
-                return show;
-
-            });
-
-        });
-    }
-
 	async delete(key) {
         console.log("delete, key=", key);
         this.props.delete(key);
@@ -142,6 +111,11 @@ class FancyTree extends React.Component {
         console.log("restore, key=", key);
         this.props.restore(key);
     }
+
+	async loadList(key) {
+		console.log("loadList, key=", key);
+        this.props.loadList(key);
+	}
 
     async addNote(key) {
         console.log("addNote key", key);
@@ -313,7 +287,8 @@ class FancyTree extends React.Component {
 					let menu = {};
 
 					menu["add"] = { "name": "Add" };
-					menu["open"] = { "name": "Open" };
+					menu["open"] = { "name": "Open Details" };
+					menu["openlist"] = { "name": "Open List" };
 					menu["delete"] = { "name": "Delete" };
 
 					if (self.props.trash) {
@@ -332,6 +307,8 @@ class FancyTree extends React.Component {
 						self.delete(node.key);
 					} else if (action == "restore") {
 						self.restore(node.key);
+					} else if (action == "openlist") {
+						self.loadList(node.key);
 					}
 				}
 			  },

@@ -1,18 +1,33 @@
 import React from 'react';
 
-import { Input, Space, Tooltip, Badge, List, InputNumber, Typography, Button, Dropdown, Menu, Modal, AutoComplete } from 'antd';
-import { DownOutlined, UserOutlined } from '@ant-design/icons';
+import { Input, Space, Tooltip, Badge, List, InputNumber, Typography, Button, Dropdown, Menu, Spin, Skeleton, Divider } from 'antd';
+import { DownOutlined, RotateRightOutlined, UserOutlined } from '@ant-design/icons';
 import { Checkbox } from 'pretty-checkbox-react';
 import {NoteBreadCrumbCollapse} from './NoteBreadCrumbCollapse.jsx';
+import InfiniteScroll from 'react-infinite-scroll-component';
+
 const { Text, Link } = Typography;
 
 class NotesList extends React.Component {
 
-    constructor() {
-        super();
+    constructor(props) {
+        super(props);
         this.handleChangeType = this.handleChangeType.bind(this);
         this.handleClickNote = this.handleClickNote.bind(this);
         this.handleSetFilter = this.handleSetFilter.bind(this);
+
+        this.setFilterOnlyTasks = this.setFilterOnlyTasks.bind(this);
+        this.setFilterOnlyNotes = this.setFilterOnlyNotes.bind(this);
+
+        this.setFilterOnlyDone = this.setFilterOnlyDone.bind(this);
+        this.setFilterOnlyNotDone = this.setFilterOnlyNotDone.bind(this);
+
+        this.loadMoreData = this.loadMoreData.bind(this);
+        
+    }
+
+    async loadMoreData() {
+        this.props.loadListMore();
     }
 
     handleChangeType(key, type) {
@@ -29,27 +44,89 @@ class NotesList extends React.Component {
 
     handleSetFilter(event) {
         if (event.key == "filterOnlyTasks") {
-            this.props.setFilterOnlyTasks();
+            this.setFilterOnlyTasks();
         } else if (event.key == "filterOnlyNotes") {
-            this.props.setFilterOnlyNotes();
+            this.setFilterOnlyNotes();
         } else if (event.key == "filterOnlyDone") {
-            this.props.setFilterOnlyDone();
+            this.setFilterOnlyDone();
         } else if (event.key == "filterOnlyNotDone") {
-            this.props.setFilterOnlyNotDone();
+            this.setFilterOnlyNotDone();
         }
+    }
+
+    
+
+    async setFilterOnlyTasks() {
+
+        let prevFilterOnlyTasks = this.props.filter.onlyTasks;
+        let prevFilterOnlyNotes = this.props.filter.onlyNotes;
+
+        let filter = {...this.props.filter, ...{
+            onlyTasks: (!prevFilterOnlyTasks && !prevFilterOnlyNotes) ? true : (
+                                (prevFilterOnlyTasks && !prevFilterOnlyNotes) ? false : (
+                                    (!prevFilterOnlyTasks && prevFilterOnlyNotes) ? true : false)), 
+            onlyNotes: false, 
+        }};
+
+
+        this.props.setFilter(filter);
+    }
+
+    async setFilterOnlyNotes() {
+
+        let prevFilterOnlyTasks = this.props.filter.onlyTasks;
+        let prevFilterOnlyNotes = this.props.filter.onlyNotes;
+
+        let filter = {...this.props.filter, ...{
+            onlyTasks: false, 
+            onlyNotes: (!prevFilterOnlyTasks && !prevFilterOnlyNotes) ? true : (
+                (prevFilterOnlyTasks && !prevFilterOnlyNotes) ? true : (
+                    (!prevFilterOnlyTasks && prevFilterOnlyNotes) ? false : false)),    
+        }};
+
+
+        this.props.setFilter(filter);
+    }
+
+    async setFilterOnlyDone() {
+        let prevFilterOnlyDone = this.props.filter.onlyDone;
+        let prevFilterOnlyNotDone = this.props.filter.onlyNotDone;
+
+        let filter = {...this.props.filter, ...{
+            onlyDone: (!prevFilterOnlyDone && !prevFilterOnlyNotDone) ? true : (
+                                (prevFilterOnlyDone && !prevFilterOnlyNotDone) ? false : (
+                                    (!prevFilterOnlyDone && prevFilterOnlyNotDone) ? true : false)), 
+            onlyNotDone: false, 
+        }};
+
+        this.props.setFilter(filter);
+    }
+
+    async setFilterOnlyNotDone() {
+        let prevFilterOnlyDone = this.props.filter.onlyDone;
+        let prevFilterOnlyNotDone = this.props.filter.onlyNotDone;
+
+        let filter = {...this.props.filter, ...{
+            onlyDone: false, 
+            onlyNotDone: (!prevFilterOnlyDone && !prevFilterOnlyNotDone) ? true : (
+                (prevFilterOnlyDone && !prevFilterOnlyNotDone) ? true : (
+                    (!prevFilterOnlyDone && prevFilterOnlyNotDone) ? false : false)),    
+        }};
+
+        this.props.setFilter(filter);
     }
 
     getFilterMenuItems() {
         let menuItems = [
             {
                 label:  <>
-                            {this.props.repositorySettings.filterOnlyTasks ? <Typography.Text mark>Only Tasks</Typography.Text> : <>Only Tasks</>}
+                            {this.props.filter.onlyTasks ? <Typography.Text mark>Only Tasks</Typography.Text> : <>Only Tasks</>}
                         </>,
                 key: 'filterOnlyTasks',
             },
             {
                 label:  <>
-                            {this.props.repositorySettings.filterOnlyNotes ? <Typography.Text mark>Only Notes</Typography.Text> : <>Only Notes</>}
+                            {this.props.filter.onlyNotes ? <Typography.Text mark>Only Notes</Typography.Text> : <>Only Notes</>}
                         </>,
                 key: 'filterOnlyNotes',
             },
@@ -58,13 +135,13 @@ class NotesList extends React.Component {
             },
             {
                 label:  <>
-                            {this.props.repositorySettings.filterOnlyDone ? <Typography.Text mark>Only Done</Typography.Text> : <>Only Done</>}
+                            {this.props.filter.onlyDone ? <Typography.Text mark>Only Done</Typography.Text> : <>Only Done</>}
                         </>,
                 key: 'filterOnlyDone',
             },
             {
                 label:  <>
-                            {this.props.repositorySettings.filterOnlyNotDone ? <Typography.Text mark>Only NOT Done</Typography.Text> : <>Only NOT Done</>}
+                            {this.props.filter.onlyNotDone ? <Typography.Text mark>Only NOT Done</Typography.Text> : <>Only NOT Done</>}
                         </>,
                 key: 'filterOnlyNotDone',
             },
@@ -80,7 +157,7 @@ class NotesList extends React.Component {
     render() {
 
         console.log("NotesList render start");
-        console.log("this.props.notes", this.props.notes);
+        console.log("NotesList render this.props.filter=", this.props.filter);
 
         const filterMenu = (
             <Menu
@@ -90,12 +167,15 @@ class NotesList extends React.Component {
         );
 
         let activeFiltersCount = 0;
-        if (this.props.repositorySettings.filterOnlyNotes || this.props.repositorySettings.filterOnlyTasks) {
+        if (this.props.filter.onlyNotes || this.props.filter.onlyTasks) {
             activeFiltersCount++;
         }
-        if (this.props.repositorySettings.filterOnlyDone || this.props.repositorySettings.filterOnlyNotDone) {
+        if (this.props.filter.onlyDone || this.props.filter.onlyNotDone) {
             activeFiltersCount++;
         }
+
+
+        let loading = this.props.loading != undefined && this.props.loading && true;
 
         return (
             <div className='n3-bar-vertical'>
@@ -118,91 +198,114 @@ class NotesList extends React.Component {
                         </Button>
                     </Space>
                 </div>
-                <div style={{backgroundColor: "#fafafa", padding: "5px", overflow: "auto", height: "100%"}}>
+                <div id="scrollableDiv" style={{backgroundColor: "#fafafa", padding: "5px", overflow: "auto", height: "100%"}}>
 
-                    <div>
-                        {
-                            this.props.note &&
-                            <NoteBreadCrumbCollapse parents={this.props.note.parents} openNoteDetails={this.props.activateNote} />}
-                    </div>
+                    <Spin spinning={loading}>
 
-                    <div>
+                        <div>
+                            {
+                                this.props.note &&
+                                <NoteBreadCrumbCollapse parents={this.props.note.parents} openNoteDetails={this.props.activateNote} />}
+                        </div>
 
-                        <List
-                            locale={{emptyText: "No Children Notes"}}
-                            bordered
-                            size="small"
-                            dataSource={this.props.notes}
-                            renderItem={note => (
-                                <List.Item 
-                                    
+                        <div>
+                            {
+                                !this.props.note && 
+                                <Text type="secondary">No note selected.</Text>
+                            }
+                            {
+                                this.props.note &&
+                                <InfiniteScroll
+                                    dataLength={this.props.note.filteredSiblings.length}
+                                    next={this.loadMoreData}
+                                    hasMore={this.props.note.filteredSiblingsHasMore}
+                                    loader={<Spin />}
+                                    endMessage={<></>}
+                                    scrollableTarget="scrollableDiv"
                                 >
-                                    <List.Item.Meta
-                                        title={
-                                                <>
-                                                    {
-                                                        note.type == "task" &&
-                                                            <Checkbox shape="round" 
-                                                                disabled={this.props.trash} 
-                                                                color="success" 
-                                                                style={{ 
-                                                                    display: "inline-block",
-                                                                    fontSize: 14  }} 
-                                                                checked={note.done} 
-                                                                onChange={(event)=> this.handleChangeDone(note.key, event)} />
+                                    <List
+                                        header={<Text strong>Found {this.props.note.filteredSiblingsMaxResults} Notes</Text>}
+                                        locale={{emptyText: "No Children Notes"}}
+                                        bordered
+                                        size="small"
+                                        dataSource={this.props.note.filteredSiblings}
+                                        renderItem={(note, index) => (
+                                            <List.Item 
+                                                
+                                            >
+                                                <List.Item.Meta
+                                                    title={
+                                                            <>
+                                                                <Text strong type="secondary" style={{paddingRight: "3px"}}>{index + 1}.</Text>
+                                                                {
+                                                                    note.type == "task" &&
+                                                                        <Checkbox 
+                                                                            disabled={this.props.trash} 
+                                                                            color="success" 
+                                                                            style={{ 
+                                                                                display: "inline-block",
+                                                                                fontSize: 14  }} 
+                                                                            checked={note.done} 
+                                                                            onChange={(event)=> this.handleChangeDone(note.key, event)} />
+                                                                }
+                                                                <a style={{fontWeight: "bold"}}
+                                                                onClick={(event)=> this.handleClickNote(note.key, event)}>{note.title}</a>
+                                                                
+                                                            </>
+                                                        }
+                                                    description={
+                                                        <>
+                                                            <div style={{color: "#bbb", fontSize: "12px", overflow: "hidden", whiteSpace: "nowrap"}}>
+                                                                <Tooltip title={note.path}>
+                                                                    {note.path}
+                                                                </Tooltip>
+                                                            </div>
+                                                            <span style={{marginRight: "5px", fontWeight: "bold"}}>
+                                                                {
+                                                                    !this.props.trash &&
+                                                                    <Link strong onClick={(event)=> this.handleChangeType(note.key, note.type)}>
+                                                                        {this.props.getNoteTypeLabel(note.type)}
+                                                                    </Link>
+                                                                }
+                                                                {
+                                                                    this.props.trash &&
+                                                                    <Text strong>{this.props.getNoteTypeLabel(note.type)}</Text>
+                                                                }
+                                                            </span>
+                                                            <span style={{whiteSpace: "nowrap"}}>
+                                                                Priority:&nbsp;
+                                                                {
+                                                                    this.props.trash &&
+                                                                    <Text strong>{note.priority}</Text>
+                                                                }
+                                                                {
+                                                                    !this.props.trash &&
+                                                                    <InputNumber 
+                                                                        disabled={this.props.trash}
+                                                                        style={{width: "70px"}}
+                                                                        min={0} 
+                                                                        size="small"
+                                                                        value={note.priority} 
+                                                                        onChange={(event)=> this.props.handleChangePriority(note.key, event)} 
+                                                                    />
+                                                                }
+                                                            </span>
+                                                        </>
                                                     }
-                                                    <a style={{fontWeight: "bold"}}
-                                                    onClick={(event)=> this.handleClickNote(note.key, event)}>{note.title}</a>
-                                                    
-                                                </>
-                                            }
-                                        description={
-                                            <>
-                                                <div style={{color: "#bbb", fontSize: "12px", overflow: "hidden", whiteSpace: "nowrap"}}>
-                                                    <Tooltip title={note.path}>
-                                                        {note.path}
-                                                    </Tooltip>
-                                                </div>
-                                                <span style={{marginRight: "5px", fontWeight: "bold"}}>
-                                                    {
-                                                        !this.props.trash &&
-                                                        <Link strong onClick={(event)=> this.handleChangeType(note.key, note.type)}>
-                                                            {this.props.getNoteTypeLabel(note.type)}
-                                                        </Link>
-                                                    }
-                                                    {
-                                                        this.props.trash &&
-                                                        <Text strong>{this.props.getNoteTypeLabel(note.type)}</Text>
-                                                    }
-                                                </span>
-                                                <span style={{whiteSpace: "nowrap"}}>
-                                                    Priority:&nbsp;
-                                                    {
-                                                        this.props.trash &&
-                                                        <Text strong>{note.priority}</Text>
-                                                    }
-                                                    {
-                                                        !this.props.trash &&
-                                                        <InputNumber 
-                                                            disabled={this.props.trash}
-                                                            style={{width: "70px"}}
-                                                            min={0} 
-                                                            size="small"
-                                                            value={note.priority} 
-                                                            onChange={(event)=> this.props.handleChangePriority(note.key, event)} 
-                                                        />
-                                                    }
-                                                </span>
-                                            </>
-                                        }
+                                                />
+                                            </List.Item>
+                                        )}
                                     />
-                                </List.Item>
-                            )}
-                        />
+                                </InfiniteScroll>
+                            }
 
-                    </div>
+                        </div>
+                    </Spin> 
                 </div>
+                
             </div>
+            
+            
         );
     }
 }

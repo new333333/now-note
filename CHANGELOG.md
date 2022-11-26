@@ -14,6 +14,7 @@
 - filter props gruppped in repositorySettings prop
 - spin added on delete, restore
 - save description on exit fixed
+- load list on scroll
 
 
 ## 0.0.4-alpha

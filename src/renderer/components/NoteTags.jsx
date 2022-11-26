@@ -5,8 +5,8 @@ import React from 'react';
 
 class NoteTags extends React.Component {
 
-    constructor() {
-        super();
+    constructor(props) {
+        super(props);
 
         this.inputRefAutoComplete = React.createRef();
 

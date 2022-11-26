@@ -664,14 +664,17 @@ class RepositorySQLite  {
 
 	async search(searchText, limit, trash, options) {
 
+		let searchResult = {};
+
 		trash = trash || false;
 		trash = trash ? 1 : 0;
 		options = options || {};
 
 		// console.log("search - options", options);
 
-		let sql = `SELECT * FROM Notes_index 
-			WHERE 
+		let select = `SELECT * FROM Notes_index `;
+		let selectCount = `SELECT count(*) FROM Notes_index `;
+		let where = ` WHERE 
 				${searchText ? "(title MATCH :searchText or descriptionAsText MATCH :searchText) and" : ""} 
 				${options.parentNotesKey && options.parentNotesKey.length > 0 ? " (" + options.parentNotesKey.map((key, index) => " parents like '%," + key + ",%' " + (index < options.parentNotesKey.length - 1 ? " or " : " ")).join(" ") + ") and" : ""}
 				${options.types ? "  type in (" + options.types.join(", ") + ") and" : ""}
@@ -680,24 +683,43 @@ class RepositorySQLite  {
 			${options.sortBy ? " ORDER BY " + options.sortBy : " ORDER BY rank"}
 			`;
 
+		let limitWhere = " ";
 		if (limit > -1) {
-			sql += " LIMIT :limit";
+			limitWhere = " LIMIT :limit OFFSET :offset ";
 		}
 
-		// console.log("search - sql", sql);
-
-		let results = await this.sequelize.query(
-			sql, {
+		let selectResults = await this.sequelize.query(
+			select + where + limitWhere, {
 				replacements: {
 					searchText: (searchText + "*") || "*",
-					limit: limit
+					limit: limit,
+					offset: options.offset || 0,
 				},
 				raw: true,
 				type: QueryTypes.SELECT
 			}
 		);
 
-		return results;
+		let countResults = await this.sequelize.query(
+			selectCount + where, {
+				replacements: {
+					searchText: (searchText + "*") || "*",
+				},
+				raw: true,
+				type: QueryTypes.SELECT
+			}
+		);
+
+		console.log("countResults=", countResults);
+
+		searchResult = {
+			offset: options.offset || 0,
+			limit: limit,
+			results: selectResults,
+			maxResults: countResults[0]['count(*)'],
+		};
+
+		return searchResult;
 	}
 
 	async reindexAll() {

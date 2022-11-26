@@ -5,8 +5,8 @@ import React from 'react';
 
 class SearchNotes extends React.Component {
 
-    constructor() {
-        super();
+    constructor(props) {
+        super(props);
 
         this.onSelectAutoComplete = this.onSelectAutoComplete.bind(this);
         this.onSearchAutoComplete = this.onSearchAutoComplete.bind(this);

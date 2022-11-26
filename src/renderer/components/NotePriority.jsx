@@ -7,8 +7,8 @@ const { Text, Link } = Typography;
 
 class NotePriority extends React.Component {
 
-    constructor() {
-        super();
+    constructor(props) {
+        super(props);
         this.handleChangePriority = this.handleChangePriority.bind(this);
     }
 

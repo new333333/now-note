@@ -6,8 +6,8 @@ const { Panel } = Collapse;
 class NoteBreadCrumbCollapse extends React.Component {
 
 
-    constructor() {
-        super();
+    constructor(props) {
+        super(props);
     }
 
     openNoteDetails(noteKey) {
@@ -19,39 +19,44 @@ class NoteBreadCrumbCollapse extends React.Component {
     render() {
 
         return (
-                <Collapse bordered={false} ghost style={{overflow: "hidden", whiteSpace: "nowrap"}}>
-                    
-                    <Panel header={
-                        <Tooltip placement="bottomLeft" title={
-                            this.props.parents.map((parent, index) => {
-
-                                return (
-                                    <span key={parent.key}>
-                                    {parent.title} { index < this.props.parents.length - 1 ? <>&nbsp;/&nbsp;</> : <></> }
-                                    </span>
-                                )
-
-
-                            })
-                        }>
-                            {
+                <>
+                {
+                    this.props.parents && 
+                    <Collapse bordered={false} ghost style={{overflow: "hidden", whiteSpace: "nowrap"}}>
+                        
+                        <Panel header={
+                            <Tooltip placement="bottomLeft" title={
                                 this.props.parents.map((parent, index) => {
 
                                     return (
                                         <span key={parent.key}>
-                                        {parent.title} { index < this.props.parents.length - 1 ? <span style={{padding: "0 5px"}}>/</span> : <></> }
+                                        {parent.title} { index < this.props.parents.length - 1 ? <>&nbsp;/&nbsp;</> : <></> }
                                         </span>
                                     )
 
 
                                 })
+                            }>
+                                {
+                                    this.props.parents.map((parent, index) => {
+
+                                        return (
+                                            <span key={parent.key}>
+                                            {parent.title} { index < this.props.parents.length - 1 ? <span style={{padding: "0 5px"}}>/</span> : <></> }
+                                            </span>
+                                        )
+
+
+                                    })
+                                }
+                            </Tooltip>
                             }
-                        </Tooltip>
-                        }
-                        >
-                        <NoteBreadCrumb parents={this.props.parents} openNoteDetails={this.props.openNoteDetails} />
-                    </Panel>
-                </Collapse>
+                            >
+                            <NoteBreadCrumb parents={this.props.parents} openNoteDetails={this.props.openNoteDetails} />
+                        </Panel>
+                    </Collapse>
+                }
+                </>
         );
     }
 }

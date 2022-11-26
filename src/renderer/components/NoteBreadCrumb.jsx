@@ -5,8 +5,8 @@ import { HomeOutlined } from '@ant-design/icons';
 class NoteBreadCrumb extends React.Component {
 
 
-    constructor() {
-        super();
+    constructor(props) {
+        super(props);
     }
 
     openNoteDetails(noteKey) {

@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { ApartmentOutlined, UserOutlined , BarsOutlin1ed, NodeExpandOutlined, PlusOutlined, ThunderboltFilled } from '@ant-design/icons';
+import { ApartmentOutlined, UserOutlined , BarsOutlin1ed, NodeExpandOutlined, PlusOutlined, ThunderboltFilled, RetweetOutlined } from '@ant-design/icons';
 import { Input, Space, Button, List, Modal, Alert, message, Spin } from 'antd';
 import {DeleteFilled } from '@ant-design/icons';
 
@@ -31,18 +31,17 @@ let noteTypes = [
     }
 ];
 
-let defaultRepositorySettings ={
-    filterOnlyNotes: false,
-    filterOnlyTasks: false,
-    filterOnlyDone: false,
-    filterOnlyNotDone: false, 
+let defaultFilter = {
+    onlyNotes: false,
+    onlyTasks: false,
+    onlyDone: false,
+    onlyNotDone: false, 
 }
-
 
 class App extends React.Component {
 
-    constructor() {
-        super();
+    constructor(props) {
+        super(props);
 
         console.log("App starten");
 
@@ -55,10 +54,11 @@ class App extends React.Component {
             activeNoteKey: undefined,
             activeNote: undefined,
             detailsNote: undefined,
-            childNotes: undefined,
+            listParentNote: undefined,
 
-            repositorySettings: defaultRepositorySettings,
-            
+            repositorySettings: {
+                filter: defaultFilter
+            },
 
             showDeleteNoteConfirmationModal: false,
         };
@@ -71,9 +71,11 @@ class App extends React.Component {
         this.handleChangeType = this.handleChangeType.bind(this);
         this.handleChangeDescription = this.handleChangeDescription.bind(this);
         this.handleChangePriority = this.handleChangePriority.bind(this);
+        this.setFilter = this.setFilter.bind(this);
         this.addTag = this.addTag.bind(this);
         this.deleteTag = this.deleteTag.bind(this);
         this.handleChangeTitle = this.handleChangeTitle.bind(this);
+        this.saveTitle = this.saveTitle.bind(this);
         this.getNoteTypeLabel = this.getNoteTypeLabel.bind(this);
         this.getOtherNoteTypeLabel = this.getOtherNoteTypeLabel.bind(this);
         this.addNote = this.addNote.bind(this);
@@ -82,28 +84,29 @@ class App extends React.Component {
         this.restore = this.restore.bind(this); 
         this.hideModalDeleteNoteConfirmation = this.hideModalDeleteNoteConfirmation.bind(this);
         this.deletePermanently = this.deletePermanently.bind(this);
-
-        this.setFilterOnlyTasks = this.setFilterOnlyTasks.bind(this);
-        this.setFilterOnlyNotes = this.setFilterOnlyNotes.bind(this);
-
-        this.setFilterOnlyDone = this.setFilterOnlyDone.bind(this);
-        this.setFilterOnlyNotDone = this.setFilterOnlyNotDone.bind(this);
+        this.saveRepositorySettings = this.saveRepositorySettings.bind(this);
+        this.loadList = this.loadList.bind(this);
+        this.loadListMore = this.loadListMore.bind(this);
 
         this.fancyTreeDomRef = React.createRef();
         this.simpleListDomRef = React.createRef();
+        this.noteDomRef = React.createRef();
 
         let self = this;
 
         this.dataSource.onChangeRepository((_event, value) => {
             // console.log("onChangeRepository", _event, value);
 
-            self.dataSource.closeRepository().then(function() {
-                // console.log("closeRepository done");
+            self.noteDomRef.current.saveChanges().then(function() {
 
-                self.dataSource.getRepositories().then(function(repositories) {
-                    self.setState({
-                        repositories: repositories,
-                        isRepositoryInitialized: false
+                self.dataSource.closeRepository().then(function() {
+                    // console.log("closeRepository done");
+
+                    self.dataSource.getRepositories().then(function(repositories) {
+                        self.setState({
+                            repositories: repositories,
+                            isRepositoryInitialized: false
+                        });
                     });
                 });
             });
@@ -128,6 +131,7 @@ class App extends React.Component {
         }
         
         console.log("initialRepository repositorySettings=", repositorySettings);
+
         this.setState({
             isRepositoryInitialized: isRepositoryInitialized,
             repositories: repositories,
@@ -140,19 +144,37 @@ class App extends React.Component {
         let repositorySettings = await this.dataSource.getRepositorySettings();
         console.log("repositorySettings loaded", repositorySettings);
 
-        repositorySettings = {...defaultRepositorySettings, ...repositorySettings};
-
-        console.log("repositorySettings merged", repositorySettings);
+        if (!repositorySettings.filter) {
+            repositorySettings.filter = defaultFilter;
+        }
 
         return repositorySettings;
     }
 
     async saveRepositorySettings() {
-        console.log("saveRepositorySettings", this.state.repositorySettings);
+        console.log("saveRepositorySettings,this.state.repositorySettings=", this.state.repositorySettings);
 
         this.dataSource.setRepositorySettings(this.state.repositorySettings);
     }
 
+    async setFilter(filter) {
+        this.setState((previousState) => {
+
+            console.log("setFilter, filter=, previousState.repositorySettings=", filter, previousState.repositorySettings);
+
+            let newFilter = {...previousState.repositorySettings.filter, ...filter};
+            console.log("setFilter, newFilter=", newFilter);
+            let newRepositorySettings = {...previousState.repositorySettings, ...{filter: newFilter}};
+            console.log("setFilter, newRepositorySettings=", newRepositorySettings);
+
+            return {
+                repositorySettings: newRepositorySettings
+            }
+        }, () => { 
+            this.saveRepositorySettings();
+            this.loadList();
+        });
+    }
 
     async chooseRepositoryFolder() {
         let repositoryChoosenOK = await this.dataSource.chooseRepositoryFolder();
@@ -181,139 +203,13 @@ class App extends React.Component {
         this.setState({
             isRepositoryInitialized: repositoryChanged,
             repositorySettings: repositorySettings,
-            childNotes: undefined,
             detailsNote: undefined,
             activeNoteKey: undefined,
             activeNote: undefined,
+            listParentNote: undefined,
         });
     }
 
-
-
-    async reloadChildNotes(key, setTaskOnly, setNoteOnly, setDone, setNotDone) {
-        let types = [];
-        if (!this.state.repositorySettings.filterOnlyTasks && setTaskOnly) {
-            types.push("'task'");
-        } else if (this.state.repositorySettings.filterOnlyTasks && !setTaskOnly && !setNoteOnly) {
-            types.push("'task'");
-        } else if (!this.state.repositorySettings.filterOnlyNotes && setNoteOnly) {
-            types.push("'note'");
-        } else if (this.state.repositorySettings.filterOnlyNotes && !setNoteOnly && !setTaskOnly) {
-            types.push("'note'");
-        }
-
-
-        let dones = [];
-        if (!this.state.repositorySettings.filterOnlyDone && setDone) {
-            dones.push(1);
-        } else if (this.state.repositorySettings.filterOnlyDone && !setDone && !setNotDone) {
-            dones.push(1);
-        } else if (!this.state.repositorySettings.filterOnlyNotDone && setNotDone) {
-            dones.push(0);
-        } else if (this.state.repositorySettings.filterOnlyNotDone && !setNotDone && !setDone) {
-            dones.push(0);
-        }
-        let childNotes = await this.dataSource.search("", -1, this.state.trash, {
-            parentNotesKey: [key],
-            types: types.length == 0 ? ["'note'", "'task'"] : types,
-            dones: dones.length == 0 ? [0, 1] : dones,
-            sortBy: "priority desc"
-        });
-
-        this.setState((previousState) => {
-            return {
-                childNotes: childNotes,
-            }
-        });
-    }
-
-    async setFilterOnlyTasks() {
-        this.setState((previousState) => {
-
-            let prevFilterOnlyTasks = previousState.repositorySettings.filterOnlyTasks;
-            let prevFilterOnlyNotes = previousState.repositorySettings.filterOnlyNotes;
-
-            let repositorySettings = {...previousState.repositorySettings, ...{
-                filterOnlyTasks: (!prevFilterOnlyTasks && !prevFilterOnlyNotes) ? true : (
-                                    (prevFilterOnlyTasks && !prevFilterOnlyNotes) ? false : (
-                                        (!prevFilterOnlyTasks && prevFilterOnlyNotes) ? true : false)), 
-                filterOnlyNotes: false, 
-            }};
-
-            return {
-                repositorySettings: repositorySettings
-            }
-        });
-        await this.reloadChildNotes(this.state.activeNoteKey, true, false);
-
-        this.saveRepositorySettings();
-    }
-
-    async setFilterOnlyNotes() {
-        this.setState((previousState) => {
-
-            let prevFilterOnlyTasks = previousState.repositorySettings.filterOnlyTasks;
-            let prevFilterOnlyNotes = previousState.repositorySettings.filterOnlyNotes;
-
-            let repositorySettings = {...previousState.repositorySettings, ...{
-                filterOnlyTasks: false, 
-                filterOnlyNotes: (!prevFilterOnlyTasks && !prevFilterOnlyNotes) ? true : (
-                    (prevFilterOnlyTasks && !prevFilterOnlyNotes) ? true : (
-                        (!prevFilterOnlyTasks && prevFilterOnlyNotes) ? false : false)),    
-            }};
-
-            return {
-                repositorySettings: repositorySettings
-            }
-        });
-
-        await this.reloadChildNotes(this.state.activeNoteKey,false, true);
-
-        this.saveRepositorySettings();
-    }
-
-    async setFilterOnlyDone() {
-        this.setState((previousState) => {
-
-            let prevFilterOnlyDone = previousState.repositorySettings.filterOnlyDone;
-            let prevFilterOnlyNotDone = previousState.repositorySettings.filterOnlyNotDone;
-
-            let repositorySettings = {...previousState.repositorySettings, ...{
-                filterOnlyDone: (!prevFilterOnlyDone && !prevFilterOnlyNotDone) ? true : (
-                                    (prevFilterOnlyDone && !prevFilterOnlyNotDone) ? false : (
-                                        (!prevFilterOnlyDone && prevFilterOnlyNotDone) ? true : false)), 
-                filterOnlyNotDone: false, 
-            }};
-
-            return {
-                repositorySettings: repositorySettings
-            }
-        });
-        await this.reloadChildNotes(this.state.activeNoteKey,false, false, true, false);
-
-        this.saveRepositorySettings();
-    }
-
-    async setFilterOnlyNotDone() {
-        this.setState((previousState) => {
-
-            let prevFilterOnlyDone = previousState.repositorySettings.filterOnlyDone;
-            let prevFilterOnlyNotDone = previousState.repositorySettings.filterOnlyNotDone;
-
-            let repositorySettings = {...previousState.repositorySettings, ...{
-                filterOnlyDone: false, 
-                filterOnlyNotDone: (!prevFilterOnlyDone && !prevFilterOnlyNotDone) ? true : (
-                    (prevFilterOnlyDone && !prevFilterOnlyNotDone) ? true : (
-                        (!prevFilterOnlyDone && prevFilterOnlyNotDone) ? false : false)),    
-            }};
-
-            return {
-                repositorySettings: repositorySettings
-            }
-        });
-        await this.reloadChildNotes(this.state.activeNoteKey,false, false, false, true);
-        this.saveRepositorySettings();
-    }
 
     loadTree(key, data) {
         let self = this;
@@ -448,6 +344,105 @@ class App extends React.Component {
 
     }
 
+    async loadList(key) {
+
+        this.setState({
+            loadingList: true,
+        });
+
+        let note = this.state.listParentNote;
+        if (key) {
+            note = await this.dataSource.getNote(key);
+            let parents = await this.dataSource.getParents(key);
+            note.parents = parents;
+        }
+
+        let types = [];
+        if (!this.state.repositorySettings.filter.onlyTasks && !this.state.repositorySettings.filter.onlyNotes) {
+            types.push("'task'");
+            types.push("'note'");
+        } else if (this.state.repositorySettings.filter.onlyTasks) {
+            types.push("'task'");
+        } else if (!this.state.repositorySettings.filter.onlyNotes) {
+            types.push("'note'");
+        }
+
+        let dones = [];
+        if (!this.state.repositorySettings.filter.onlyDone && !this.state.repositorySettings.filter.onlyNotDone) {
+            dones.push(0);
+            dones.push(1);
+        } else if (this.state.repositorySettings.filter.onlyDone) {
+            dones.push(1);
+        } else if (this.state.repositorySettings.filter.onlyNotDone) {
+            dones.push(0);
+        }
+        
+        let searchResult = await this.dataSource.search("", 20, this.state.trash, {
+            parentNotesKey: [note.key],
+            types: types.length == 0 ? ["'note'", "'task'"] : types,
+            dones: dones.length == 0 ? [0, 1] : dones,
+            sortBy: "priority desc"
+        });
+
+        note.filteredSiblings = searchResult.results;
+        note.filteredSiblingsOffset = 20;
+        note.filteredSiblingsHasMore = searchResult.maxResults > searchResult.results.length;
+        note.filteredSiblingsMaxResults = searchResult.maxResults;
+
+        this.setState({
+            listParentNote: note,
+            loadingList: false,
+        });
+    }
+
+
+    async loadListMore() {
+
+        let types = [];
+        if (!this.state.repositorySettings.filter.onlyTasks && !this.state.repositorySettings.filter.onlyNotes) {
+            types.push("'task'");
+            types.push("'note'");
+        } else if (this.state.repositorySettings.filter.onlyTasks) {
+            types.push("'task'");
+        } else if (!this.state.repositorySettings.filter.onlyNotes) {
+            types.push("'note'");
+        }
+
+        let dones = [];
+        if (!this.state.repositorySettings.filter.onlyDone && !this.state.repositorySettings.filter.onlyNotDone) {
+            dones.push(0);
+            dones.push(1);
+        } else if (this.state.repositorySettings.filter.onlyDone) {
+            dones.push(1);
+        } else if (this.state.repositorySettings.filter.onlyNotDone) {
+            dones.push(0);
+        }
+        
+        let searchResult = await this.dataSource.search("", 20, this.state.trash, {
+            offset: this.state.listParentNote.filteredSiblingsOffset,
+            parentNotesKey: [this.state.listParentNote.key],
+            types: types.length == 0 ? ["'note'", "'task'"] : types,
+            dones: dones.length == 0 ? [0, 1] : dones,
+            sortBy: "priority desc"
+        });
+
+        // note.filteredSiblings = searchResult.results;
+
+        this.setState((previousState) => {
+            if (previousState.listParentNote) {
+                let filteredSiblings = [...previousState.listParentNote.filteredSiblings, ...searchResult.results];
+                let listParentNote = JSON.parse(JSON.stringify(previousState.listParentNote));
+                listParentNote.filteredSiblings = filteredSiblings;
+                listParentNote.filteredSiblingsOffset += 20; 
+                listParentNote.filteredSiblingsHasMore = searchResult.maxResults > listParentNote.filteredSiblings.length;
+                listParentNote.filteredSiblingsMaxResults = searchResult.maxResults;
+                return {
+                    listParentNote: listParentNote
+                };
+            }
+        });
+    }
+
     async expandNote(key, expanded) {
         let modifiedNote = await this.dataSource.modifyNote({
             key: key, 
@@ -472,7 +467,7 @@ class App extends React.Component {
                 activeNoteKey: detailsNote.key,
                 activeNote: detailsNote,
             });
-            await this.reloadChildNotes(detailsNote.key, false, false, false, false);
+            //await this.reloadChildNotes(detailsNote.key, false, false, false, false);
             
         } else {
             this.fancyTreeDomRef.current.deactiveNote();
@@ -480,7 +475,6 @@ class App extends React.Component {
                 detailsNote: undefined,
                 activeNoteKey: undefined,
                 activeNote: undefined,
-                childNotes: undefined,
             });
         }
 
@@ -512,8 +506,9 @@ class App extends React.Component {
     async handleChangeTitle(noteKey, title) {
         title = title.replaceAll("/", "");
         this.setState((previousState) => {
-            if (previousState.detailsNote || previousState.childNotes) {
-                let newState = {}
+            let newState = {}
+
+            if (previousState.detailsNote) {
                 if (previousState.detailsNote) {
                     let note = JSON.parse(JSON.stringify(previousState.detailsNote));
                     note.title = title;
@@ -522,138 +517,125 @@ class App extends React.Component {
                     }
                     newState.detailsNote = note;
                 }
-
-                if (previousState.childNotes) {
-                    const newChildNotes = previousState.childNotes.map((note) => {
-                        if (note.key === noteKey) {
-                            note = JSON.parse(JSON.stringify(note));
-                            note.title = title;
-                        }
-                        return note;
-                    });
-                    newState.childNotes = newChildNotes;
-                }
-                return newState;
             }
+
+            if (previousState.listParentNote) {
+                newState.listParentNote = JSON.parse(JSON.stringify(previousState.listParentNote));
+                newState.listParentNote.filteredSiblings.forEach((note) => {
+                    if (note.key === noteKey) {
+                        note.title = title;
+                    }
+                });
+            }
+            return newState;
+        }, () => {
+            this.fancyTreeDomRef.current.setTitle(noteKey, title);
         });
-        this.fancyTreeDomRef.current.setTitle(noteKey, title);
-        
-        let modifiedNote = await this.dataSource.modifyNote({
+    }
+
+    async saveTitle(noteKey, title) {
+        await this.dataSource.modifyNote({
             key: noteKey, 
             title: title	
         });
-
     }
 
-    // from Tree
-    async selectNote(noteKey, done) {
-        this.setState((previousState) => {
-            if (previousState.detailsNote) {
-                let note = JSON.parse(JSON.stringify(previousState.detailsNote));
-                note.done = done;
-                return {
-                    detailsNote: note,
-                };
-            }
-        });
-
+    async handleChangeDone(noteKey, done, fromTree) {
         let modifiedNote = await this.dataSource.modifyNote({
             key: noteKey, 
             done: done	
         });
-    }
-    
-    // from details or list
-    async handleChangeDone(noteKey, done, fromTree) {
+
         this.setState((previousState) => {
-            if (previousState.detailsNote || previousState.childNotes) {
-                let newState = {}
+            let newState = {}
+
+            if (previousState.detailsNote) {
                 if (previousState.detailsNote && previousState.detailsNote.key == noteKey) {
                     let note = JSON.parse(JSON.stringify(previousState.detailsNote));
                     note.done = done;
                     newState.detailsNote = note;
                 }
-/*
-                if (previousState.childNotes) {
-                    const newChildNotes = previousState.childNotes.map((note) => {
-                        if (note.key === noteKey) {
-                            note = JSON.parse(JSON.stringify(note));
-                            note.done = done;
-                        }
-                        return note;
-                    });
-                    newState.childNotes = newChildNotes;
-                }
-*/
-                return newState;
             }
+            if (previousState.listParentNote) {
+                newState.listParentNote = JSON.parse(JSON.stringify(previousState.listParentNote));
+                newState.listParentNote.filteredSiblings.forEach((note) => {
+                    if (note.key === noteKey) {
+                        note.done = done;
+                    }
+                });
+            }
+
+            return newState;
         });
 
         if (!fromTree) {
             this.fancyTreeDomRef.current.setDone(noteKey, done);
         }
-        let modifiedNote = await this.dataSource.modifyNote({
-            key: noteKey, 
-            done: done	
-        });
 
-        await this.reloadChildNotes(this.state.activeNoteKey, false, false, false, false);
     }
 
     async handleChangeType(noteKey, type) {
+        let modifiedNote = await this.dataSource.modifyNote({
+            key: noteKey, 
+            type: type	
+        });
+        
         this.setState((previousState) => {
-            if (previousState.detailsNote || previousState.childNotes) {
-                let newState = {}
+            let newState = {}
+
+            if (previousState.detailsNote) {
                 if (previousState.detailsNote && previousState.detailsNote.key == noteKey) {
                     let note = JSON.parse(JSON.stringify(previousState.detailsNote));
                     note.type = type;
                     newState.detailsNote = note;
                 }
-
-                if (previousState.childNotes) {
-                    const newChildNotes = previousState.childNotes.map((note) => {
-                        if (note.key === noteKey) {
-                            note = JSON.parse(JSON.stringify(note));
-                            note.type = type;
-                        }
-                        return note;
-                    });
-                    newState.childNotes = newChildNotes;
-                }
-                return newState;
             }
+
+            if (previousState.listParentNote) {
+                newState.listParentNote = JSON.parse(JSON.stringify(previousState.listParentNote));
+                newState.listParentNote.filteredSiblings.forEach((note) => {
+                    if (note.key === noteKey) {
+                        note.type = type;
+                    }
+                });
+            }
+
+            return newState;
         });
 
         this.fancyTreeDomRef.current.setType(noteKey, type);
-        let modifiedNote = await this.dataSource.modifyNote({
-            key: noteKey, 
-            type: type	
-        });
-        await this.reloadChildNotes(this.state.activeNoteKey,false, false, false, false);
     }
 
     async handleChangePriority(noteKey, priority) {
+        let self = this;
+        this.dataSource.getPriorityStat().then(function(priorityStat) {
+            self.setState({
+                priorityStat: priorityStat
+            });
+        });
+
+
         this.setState((previousState) => {
-            if (previousState.detailsNote || previousState.childNotes) {
-                let newState = {}
+            let newState = {}
+
+            if (previousState.detailsNote) {
                 if (previousState.detailsNote && previousState.detailsNote.key == noteKey) {
                     let note = JSON.parse(JSON.stringify(previousState.detailsNote));
                     note.priority = priority;
                     newState.detailsNote = note;
                 }
-
-                if (previousState.childNotes) {
-                    const newChildNotes = previousState.childNotes.map((note) => {
-                        if (note.key === noteKey) {
-                            note = JSON.parse(JSON.stringify(note));
-                            note.priority = priority;
-                        }
-                        return note;
-                    });
-                    newState.childNotes = newChildNotes;
-                }
-                return newState;
             }
+
+            if (previousState.listParentNote) {
+                newState.listParentNote = JSON.parse(JSON.stringify(previousState.listParentNote));
+                newState.listParentNote.filteredSiblings.forEach((note) => {
+                    if (note.key === noteKey) {
+                        note.priority = priority;
+                    }
+                });
+            }
+
+            return newState;
         });
 
         this.fancyTreeDomRef.current.setPriority(noteKey, priority);
@@ -662,13 +644,6 @@ class App extends React.Component {
             priority: priority	
         });
 
-        let self = this;
-        this.dataSource.getPriorityStat().then(function(priorityStat) {
-            self.setState({
-                priorityStat: priorityStat
-            });
-        });
-        await this.reloadChildNotes(this.state.activeNoteKey,false, false, false, false);
     }
 
     async addTag(noteKey, tag) {
@@ -761,10 +736,10 @@ class App extends React.Component {
             this.setState({
                 longOperationProcessing: false,
                 
-                childNotes: undefined,
                 detailsNote: undefined,
                 activeNoteKey: undefined,
                 activeNote: undefined,
+                listParentNote: undefined,
             });
 
             await this.fancyTreeDomRef.current.reload(note.parent);
@@ -802,7 +777,8 @@ class App extends React.Component {
 
         this.setState({
             longOperationProcessing: false,
-            childNotes: undefined,
+            
+            listParentNote: undefined,
             detailsNote: undefined,
             activeNoteKey: undefined,
             activeNote: undefined,
@@ -838,7 +814,7 @@ class App extends React.Component {
             longOperationProcessing: false,
             deleteNoteKey: undefined,
 
-            childNotes: undefined,
+            listParentNote: undefined,
             detailsNote: undefined,
             activeNoteKey: undefined,
             activeNote: undefined,
@@ -856,7 +832,7 @@ class App extends React.Component {
             console.log("openTrash previousState", previousState);
             return {
                 trash: !previousState.trash,
-                childNotes: undefined,
+                listParentNote: undefined,
                 detailsNote: undefined,
                 activeNoteKey: undefined,
                 activeNote: undefined,
@@ -950,6 +926,7 @@ class App extends React.Component {
                                     handleChangeDone={this.handleChangeDone} 
                                     dataSource={this.dataSource}
                                     trash={this.state.trash}
+                                    loadList={this.loadList}
                                     
                                     />
                                 <div style={{backgroundColor: "#efefef"}}>
@@ -989,6 +966,8 @@ class App extends React.Component {
                                 </div>
 
                                 <Note 
+                                    ref={this.noteDomRef}
+                                
                                     dataSource={this.dataSource}
 
                                     noteTypes={noteTypes}
@@ -1001,6 +980,7 @@ class App extends React.Component {
                                     handleChangeDone={this.handleChangeDone} 
                                     handleChangeType={this.handleChangeType} 
                                     handleChangeTitle={this.handleChangeTitle}
+                                    saveTitle={this.saveTitle}
                                     
                                     handleChangeDescription={this.handleChangeDescription}
                                     handleChangePriority={this.handleChangePriority}
@@ -1024,12 +1004,12 @@ class App extends React.Component {
                             <NotesList 
                                 ref={this.simpleListDomRef}
 
-                                note={this.state.activeNote} 
-                                notes={this.state.childNotes}
+                                note={this.state.listParentNote} 
+                                loading={true && this.state.loadingList}
+                                loadListMore={this.loadListMore}
 
                                 trash={this.state.trash}
 
-                                dataSource={this.dataSource}
                                 noteTypes={noteTypes}
                                 handleChangeDone={this.handleChangeDone} 
                                 handleChangeType={this.handleChangeType} 
@@ -1038,15 +1018,9 @@ class App extends React.Component {
                                 openNoteDetails={this.openNoteDetails} 
                                 activateNote={this.activateNote} 
 
-                                setFilterOnlyTasks={this.setFilterOnlyTasks}
-                                setFilterOnlyNotes={this.setFilterOnlyNotes}
+                                setFilter={this.setFilter}
+                                filter={this.state.repositorySettings ? this.state.repositorySettings.filter : defaultFilter}
 
-                                setFilterOnlyDone={this.setFilterOnlyDone}
-                                setFilterOnlyNotDone={this.setFilterOnlyNotDone}
-
-                                repositorySettings={this.state.repositorySettings}
-
-                                
                                 getNoteTypeLabel={this.getNoteTypeLabel}
                             />
                         </ReflexElement>

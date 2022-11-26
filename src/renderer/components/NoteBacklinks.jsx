@@ -8,8 +8,8 @@ import '@djthoms/pretty-checkbox';
 
 class NoteBacklinks extends React.Component {
 
-    constructor() {
-        super();
+    constructor(props) {
+        super(props);
     }
 
     render() {
