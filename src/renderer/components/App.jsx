@@ -260,6 +260,7 @@ class App extends React.Component {
                 tree[i].data.priority = tree[i].priority;
                 tree[i].data.type = tree[i].type;
                 tree[i].data.tags = tree[i].tags;
+                
     
                 delete tree[i].parent;
                 delete tree[i].modifiedOn;
@@ -292,6 +293,7 @@ class App extends React.Component {
             node.data = node.data || {};
             node.checkbox = node.data.type !== undefined && node.data.type === "task";
             node.selected = node.data.done !== undefined && node.data.done;
+            node.unselectable = node.trash;
 
             return node;
         }
@@ -504,6 +506,11 @@ class App extends React.Component {
     }
 
     async handleChangeTitle(noteKey, title) {
+        this.dataSource.modifyNote({
+            key: noteKey, 
+            title: title	
+        });
+
         title = title.replaceAll("/", "");
         this.setState((previousState) => {
             let newState = {}
@@ -992,6 +999,7 @@ class App extends React.Component {
                                     openNoteDetails={this.openNoteDetails}
                                     activateNote={this.activateNote} 
                                     openNoteInTree={this.openNoteInTree}
+                                    loadList={this.loadList}
                                     delete={this.delete}
                                     restore={this.restore}
                                 />
@@ -1020,6 +1028,8 @@ class App extends React.Component {
 
                                 setFilter={this.setFilter}
                                 filter={this.state.repositorySettings ? this.state.repositorySettings.filter : defaultFilter}
+                                openNoteInTree={this.openNoteInTree}
+                                loadList={this.loadList}
 
                                 getNoteTypeLabel={this.getNoteTypeLabel}
                             />

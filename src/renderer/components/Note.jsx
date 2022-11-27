@@ -1,15 +1,14 @@
 import React from 'react';
-import { Menu, Space, Input, Tooltip, Collapse, Typography } from 'antd';
-import Icon, { PlusSquareOutlined, DeleteFilled } from '@ant-design/icons';
-import { Checkbox } from 'pretty-checkbox-react';
-import '@djthoms/pretty-checkbox';
+import { Dropdown, Menu, Space, Checkbox, Tooltip, Collapse, Typography, Button } from 'antd';
+import Icon, { UnorderedListOutlined, PlusOutlined, DeleteFilled, EllipsisOutlined } from '@ant-design/icons';
 import {NotePriority} from './NotePriority.jsx';
 import {NoteBacklinks} from './NoteBacklinks.jsx';
 import {NoteTags} from './NoteTags.jsx';
 import { Editor } from '@tinymce/tinymce-react';
 import {NoteBreadCrumbCollapse} from './NoteBreadCrumbCollapse.jsx';
 const { Panel } = Collapse;
-const { Text, Link } = Typography;
+const { Text, Link, Paragraph } = Typography;
+
 
 import tinymce from 'tinymce/tinymce';
 
@@ -72,7 +71,10 @@ class Note extends React.Component {
         this.tinyMCEDomRef = React.createRef();
         this.titleDomRef = React.createRef();
 
+        this.handleChangeTitle = this.handleChangeTitle.bind(this);
         this.handleChangeType = this.handleChangeType.bind(this);
+        this.handleNoteMenu = this.handleNoteMenu.bind(this);
+
         this.onBlurEditor = this.onBlurEditor.bind(this);
         this.onClickEditor = this.onClickEditor.bind(this);
         this.setupTinyMce = this.setupTinyMce.bind(this);
@@ -99,10 +101,8 @@ class Note extends React.Component {
         this.props.handleChangeType(this.props.note.key, this.props.noteTypes[foundTypeIdx == 0 ? 1 : 0].key );
     }
 
-    handleChangeTitle(event) {
-        let title = event.target.value;
-        title = title.replaceAll("/", "");
-        this.props.handleChangeTitle(this.props.note.key, title);
+    handleChangeTitle(value) {
+        this.props.handleChangeTitle(this.props.note.key, value);
     }
 
 
@@ -255,32 +255,6 @@ class Note extends React.Component {
         });
     }
 
-    getFilterMenuItems() {
-        let menuItems = [
-            {
-                label:  <>
-                            Add or Edit Filter by Parent Notes
-                        </>,
-                key: 'filterByParentNote',
-            },
-        ];
-
-        if (this.props.filterByParentNotesKey && this.props.filterByParentNotesKey.length > 0) {
-            menuItems.push({
-                type: 'divider',
-            });
-
-            menuItems.push({
-                label:  <>
-                            <Typography.Text strong>Remove Filter by Parent Notes <Typography.Text mark>{this.props.filterByParentNotesKey.length}</Typography.Text></Typography.Text>
-                        </>,
-                key: 'removeFilterByParentNote',
-            });
-
-        }
-
-        return menuItems;
-    }
 
     async addNote(key) {
         // console.log("addNote, key=", key);
@@ -293,7 +267,63 @@ class Note extends React.Component {
         this.props.delete(key);
     }
 
+    async handleNoteMenu(event) {
+        console.log("handleNoteMenu, event=", event);
+
+        if (event.key == "add_note") {
+            this.addNote(this.props.note.key)
+        } else if (event.key == "open_tree") {
+            this.props.openNoteInTree(this.props.note.key);
+        } else if (event.key == "open_list") {
+            this.props.loadList(this.props.note.key);
+        } else if (event.key == "delete") {
+            this.delete(this.props.note.key);
+        } else if (event.key == "restore") {
+            this.props.restore(this.props.note.key);
+        }
+    }
+
     render() {
+
+        let noteMenu = undefined;
+        if (this.props.note) {
+            let noteMenuItems = [];
+            if (!this.props.note.trash) { 
+                noteMenuItems.push({
+                    key: 'add_note',
+                    label: "Add note",
+                    icon: <PlusOutlined />,
+                });
+            }
+            noteMenuItems.push({
+                key: 'open_tree',
+                label: "Open tree",
+                icon: <TreeIcon />,
+            });
+            noteMenuItems.push({
+                key: 'open_list',
+                label: "Open as list",
+                icon: <UnorderedListOutlined />,
+            });
+            noteMenuItems.push({
+                key: 'delete',
+                label: this.props.note.trash ? "Delete Permanently" : "Move To Trash",
+                icon: <DeleteFilled />,
+            });
+            if (this.props.note.trash) { 
+                noteMenuItems.push({
+                    key: 'restore',
+                    label: "Restore",
+                });
+            }
+
+            noteMenu = (
+                <Menu
+                    onClick={(event)=> this.handleNoteMenu(event)}
+                    items={noteMenuItems}
+                />
+            );
+        }
 
         if (this.tinyMCEDomRef.current && this.props.note) {
             this.tinyMCEDomRef.current.setContent(this.props.note.description);
@@ -312,46 +342,32 @@ class Note extends React.Component {
                         <div>
                             <NoteBreadCrumbCollapse parents={this.props.note.parents} openNoteDetails={this.props.activateNote} />
                         </div>
-                        <div>
-                            <Space direction="horizontal" style={{fontSize: "12px"}}>
-                                <Tooltip placement="bottom" title={"Show in tree"}>
-                                    <TreeIcon onClick={(event) => this.props.openNoteInTree(this.props.note.key)} />
-                                </Tooltip>
-                                {
-                                    !this.props.note.trash &&
-                                    <Tooltip placement="bottom" title={"Add note"}>
-                                        <PlusSquareOutlined onClick={(event) => this.addNote(this.props.note.key)} />
-                                    </Tooltip>
-                                }
-                                <Tooltip placement="bottom" title={this.props.note.trash ? "Delete Permanently" : "Move To Trash"}>
-                                    <DeleteFilled onClick={(event) => this.delete(this.props.note.key)} />
-                                </Tooltip>
-                            </Space>
-                        </div>
                         <div style={{display: "flex", alignItems: "center" }}>
                             {
                                 this.props.note.type == "task" &&
-                                    <div style={{width: "27px", margin: "0 8px"}}>
+                                    <div style={{margin: "0 5px"}}>
                                         <Tooltip placement="bottom" title={"Mark as" + (this.props.note.done ? " NOT" : "") + " Done"}>
                                             <Checkbox  
                                                 disabled={this.props.note.trash}
-                                                color="success" 
-                                                style={{ 
-                                                    display: "inline-block",
-                                                    fontSize: 25  }} 
                                                 checked={this.props.note.done} 
                                                 onChange={(event)=> this.handleChangeDone(event)} />
                                         </Tooltip>
                                     </div>
                             }
                             <div style={{flexBasis: "100%" }}>
-                                <Input 
-                                    ref={this.titleDomRef}
-                                    disabled={this.props.note.trash}
-                                    size="large" 
-                                    value={this.props.note.title} 
-                                    onChange={(event)=> this.handleChangeTitle(event)} 
-                                    onBlur={(event)=> this.saveTitle(event)} />
+                                <Paragraph strong style={{marginBottom: 0}}
+                                    editable={{
+                                        tooltip: "click to edit",
+                                        onChange: this.handleChangeTitle,
+                                        triggerType: ["icon", "text"],
+                                        autoSize: { maxRows: 5 }
+                                    }}
+                                >{this.props.note.title}</Paragraph>
+                            </div>
+                            <div>
+                                <Dropdown overlay={noteMenu}>
+                                    <Button shape="circle" icon={<EllipsisOutlined />} size="small" />
+                                </Dropdown>
                             </div>
                         </div>
                         <div style={{padding: "5px 0"}}>

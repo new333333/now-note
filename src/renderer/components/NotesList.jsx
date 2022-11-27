@@ -1,8 +1,7 @@
 import React from 'react';
 
-import { Input, Space, Tooltip, Badge, List, InputNumber, Typography, Button, Dropdown, Menu, Spin, Skeleton, Divider } from 'antd';
-import { DownOutlined, RotateRightOutlined, UserOutlined } from '@ant-design/icons';
-import { Checkbox } from 'pretty-checkbox-react';
+import { Input, Space, Tooltip, Badge, List, InputNumber, Typography, Button, Dropdown, Menu, Spin, Checkbox, Divider } from 'antd';
+import { DownOutlined, UnorderedListOutlined, PlusOutlined, DeleteFilled } from '@ant-design/icons';
 import {NoteBreadCrumbCollapse} from './NoteBreadCrumbCollapse.jsx';
 import InfiniteScroll from 'react-infinite-scroll-component';
 
@@ -15,6 +14,7 @@ class NotesList extends React.Component {
         this.handleChangeType = this.handleChangeType.bind(this);
         this.handleClickNote = this.handleClickNote.bind(this);
         this.handleSetFilter = this.handleSetFilter.bind(this);
+        this.handleNoteMenu = this.handleNoteMenu.bind(this);
 
         this.setFilterOnlyTasks = this.setFilterOnlyTasks.bind(this);
         this.setFilterOnlyNotes = this.setFilterOnlyNotes.bind(this);
@@ -154,6 +154,16 @@ class NotesList extends React.Component {
         this.props.handleChangeDone(key, event.target.checked);
     }
 
+    async handleNoteMenu(event) {
+        console.log("handleNoteMenu, event=", event);
+
+        if (event.key == "open_tree") {
+            this.props.openNoteInTree(this.props.note.key);
+        } else if (event.key == "open_list") {
+            this.props.loadList(this.props.note.key);
+        }
+    }
+
     render() {
 
         console.log("NotesList render start");
@@ -172,6 +182,26 @@ class NotesList extends React.Component {
         }
         if (this.props.filter.onlyDone || this.props.filter.onlyNotDone) {
             activeFiltersCount++;
+        }
+
+        let noteMenu = undefined;
+        if (this.props.note) {
+            let noteMenuItems = [];
+            noteMenuItems.push({
+                key: 'open_tree',
+                label: "Open tree",
+            });
+            noteMenuItems.push({
+                key: 'open_list',
+                label: "Open as list",
+                icon: <UnorderedListOutlined />,
+            });
+            noteMenu = (
+                <Menu
+                    onClick={(event)=> this.handleNoteMenu(event)}
+                    items={noteMenuItems}
+                />
+            );
         }
 
 
@@ -235,30 +265,30 @@ class NotesList extends React.Component {
                                             >
                                                 <List.Item.Meta
                                                     title={
-                                                            <>
-                                                                <Text strong type="secondary" style={{paddingRight: "3px"}}>{index + 1}.</Text>
-                                                                {
-                                                                    note.type == "task" &&
-                                                                        <Checkbox 
-                                                                            disabled={this.props.trash} 
-                                                                            color="success" 
-                                                                            style={{ 
-                                                                                display: "inline-block",
-                                                                                fontSize: 14  }} 
-                                                                            checked={note.done} 
-                                                                            onChange={(event)=> this.handleChangeDone(note.key, event)} />
-                                                                }
-                                                                <a style={{fontWeight: "bold"}}
-                                                                onClick={(event)=> this.handleClickNote(note.key, event)}>{note.title}</a>
-                                                                
-                                                            </>
+                                                        <div style={{color: "#bbb", fontSize: "12px", overflow: "hidden", whiteSpace: "nowrap"}}>
+                                                            <Tooltip title={note.path}>
+                                                                {note.path}
+                                                            </Tooltip>
+                                                        </div>
                                                         }
                                                     description={
                                                         <>
-                                                            <div style={{color: "#bbb", fontSize: "12px", overflow: "hidden", whiteSpace: "nowrap"}}>
-                                                                <Tooltip title={note.path}>
-                                                                    {note.path}
-                                                                </Tooltip>
+                                                            <div>
+                                                                <Space>
+                                                                    <Text strong type="secondary" style={{paddingRight: "3px"}}>{index + 1}.</Text>
+                                                                    {
+                                                                        note.type == "task" &&
+                                                                            <Checkbox 
+                                                                                disabled={this.props.trash} 
+                                                                                checked={note.done} 
+                                                                                onChange={(event)=> this.handleChangeDone(note.key, event)} />
+                                                                    }
+                                                                    {/*<Dropdown overlay={noteMenu} trigger={['contextMenu']}>*/}
+                                                                        <Link strong onClick={(event)=> this.handleClickNote(note.key, event)}>
+                                                                            {note.title}
+                                                                        </Link>
+                                                                    {/*</Dropdown>*/}
+                                                                </Space>
                                                             </div>
                                                             <span style={{marginRight: "5px", fontWeight: "bold"}}>
                                                                 {

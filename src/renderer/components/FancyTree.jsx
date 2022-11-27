@@ -286,11 +286,14 @@ class FancyTree extends React.Component {
 
 					let menu = {};
 
-					menu["add"] = { "name": "Add" };
+					if (!self.props.trash) {
+						menu["add"] = { "name": "Add" };
+					}
 					menu["open"] = { "name": "Open Details" };
 					menu["openlist"] = { "name": "Open List" };
-					menu["delete"] = { "name": "Delete" };
-
+					if (!self.props.trash) {
+						menu["delete"] = { "name": "Delete" };
+					}
 					if (self.props.trash) {
 						menu["restore"] = { "name": "Restore" };
 					}

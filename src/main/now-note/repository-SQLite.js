@@ -99,7 +99,7 @@ class RepositorySQLite  {
 	async open() {
 		// local variable required by init
 		let sequelize = new Sequelize({
-			logging: true,
+			logging: false,
 			dialect: 'sqlite',
 			storage: path.join(this.directory, "db.sqlite3")
 		});
