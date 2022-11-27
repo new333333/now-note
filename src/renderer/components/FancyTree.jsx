@@ -119,6 +119,10 @@ class FancyTree extends React.Component {
 
     async addNote(key) {
         console.log("addNote key", key);
+
+		let detailsNoteParents = await this.props.dataSource.getParents(key);
+		await this.openNotes(detailsNoteParents);
+
 		let self = this;
 		return new Promise(function(resolve) {
 
