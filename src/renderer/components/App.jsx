@@ -908,14 +908,11 @@ class App extends React.Component {
                             <div className='n3-bar-vertical'>
                                 <div className={`nn-header ${this.state.trash ? "nn-trash-background-color" : ""}`}>
 
-                                    {
-                                        !this.state.trash && 
-                                        <Space>
-                                            <Button size="small"
-                                                onClick={(event)=> this.addNote()}
-                                            ><PlusOutlined /> Add note </Button>
-                                        </Space>
-                                    }
+                                    <Space>
+                                        <Button size="small" disabled={this.state.trash}
+                                            onClick={(event)=> this.addNote()}
+                                        ><PlusOutlined /> Add note </Button>
+                                    </Space>
                                         
                                 </div>
                                 <FancyTree
