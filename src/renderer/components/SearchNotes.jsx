@@ -25,13 +25,13 @@ class SearchNotes extends React.Component {
             optionsAutoComplete: []
         });
 
-        await this.props.openNoteInTree(key);
+        await this.props.openNoteDetails(key);
     }
 
     async onSearchAutoComplete(searchText) {
         let searchResult = await this.props.dataSource.search(searchText, 20, this.props.trash);
         let notes = searchResult.results;
-        
+
         let options = notes.map(function(note) {
 			return {
                 label: (

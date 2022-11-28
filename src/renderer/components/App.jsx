@@ -961,6 +961,7 @@ class App extends React.Component {
                                         trash={this.state.trash}
                                         dataSource={this.dataSource}
                                         openNoteInTree={this.openNoteInTree}
+                                        openNoteDetails={this.openNoteDetails}
                                     />
                                     
                                 </div>
