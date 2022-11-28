@@ -4,6 +4,12 @@
 ## Comming release...
 
 
+## 0.0.6-alpha
+
+- layout changes
+- fix save description
+
+
 ## 0.0.5-alpha
 
 - in trash no editable  

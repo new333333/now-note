@@ -1711,7 +1711,7 @@ class RepositorySQLite  {
 	}
 
 	async getParents(key, parents) {
-		// log.debug("getParentsStore key, parentsObj", key, parents);
+		log.debug("getParentsStore key, parentsObj", key, parents);
 
 		parents = parents || [];
 
@@ -1719,16 +1719,18 @@ class RepositorySQLite  {
 			raw: true,
 		});
 
+		log.debug("getParentsStore noteModel", noteModel);
+
 		if (noteModel === null) {
 			throw new nnNote.NoteNotFoundByKey(key);
 		}
 		if (noteModel.parent == null) {
 			parents.unshift(noteModel);
-			// log.debug(">>>>>>>>>>>>>>>>> getParents, return 1 ", parents);
+			log.debug(">>>>>>>>>>>>>>>>> getParents, return 1 ", parents);
 			return parents;
 		} else {
 			parents.unshift(noteModel);
-			// log.debug(">>>>>>>>>>>>>>>>> getParents, return 2 ", parents);
+			log.debug(">>>>>>>>>>>>>>>>> getParents, return 2 ", parents);
 			return await this.getParents(noteModel.parent, parents);
 		}
 

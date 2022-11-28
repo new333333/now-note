@@ -29,8 +29,9 @@ class SearchNotes extends React.Component {
     }
 
     async onSearchAutoComplete(searchText) {
-        let notes = await this.props.dataSource.search(searchText, 20, this.props.trash);
-
+        let searchResult = await this.props.dataSource.search(searchText, 20, this.props.trash);
+        let notes = searchResult.results;
+        
         let options = notes.map(function(note) {
 			return {
                 label: (
@@ -70,7 +71,7 @@ class SearchNotes extends React.Component {
                     onSearch={this.onSearchAutoComplete}
                     onChange={this.onChangeAutoComplete}
                 >
-                    <Input.Search placeholder="Search" />
+                    <Input.Search size="small" placeholder="Search" />
                 </AutoComplete>
             </>
         );

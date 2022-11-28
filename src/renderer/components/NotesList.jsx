@@ -212,15 +212,15 @@ class NotesList extends React.Component {
                 <div className={`nn-header ${this.props.trash ? "nn-trash-background-color" : ""}`}>
                     <Space>
                         <Dropdown overlay={filterMenu}>
-                            <Button>
+                            <Button size="small">
                                 <Space>
-                                    Filter {activeFiltersCount > 0 ? <Badge count={activeFiltersCount} /> : ""}
+                                    Filter {activeFiltersCount > 0 ? <Badge size="small" count={activeFiltersCount} /> : ""}
                                     <DownOutlined />
                                 </Space>
                             </Button>
                         </Dropdown>
 
-                        <Button>
+                        <Button size="small">
                             <Space>
                                 Sort
                                 <DownOutlined />
@@ -265,7 +265,7 @@ class NotesList extends React.Component {
                                             >
                                                 <List.Item.Meta
                                                     title={
-                                                        <div style={{color: "#bbb", fontSize: "12px", overflow: "hidden", whiteSpace: "nowrap"}}>
+                                                        <div style={{fontWeight: 400, color: "#bbb", fontSize: "12px", overflow: "hidden", whiteSpace: "nowrap"}}>
                                                             <Tooltip title={note.path}>
                                                                 {note.path}
                                                             </Tooltip>
@@ -284,7 +284,7 @@ class NotesList extends React.Component {
                                                                                 onChange={(event)=> this.handleChangeDone(note.key, event)} />
                                                                     }
                                                                     {/*<Dropdown overlay={noteMenu} trigger={['contextMenu']}>*/}
-                                                                        <Link strong onClick={(event)=> this.handleClickNote(note.key, event)}>
+                                                                        <Link style={{color: "rgba(0, 0, 0, 0.85)"}} strong onClick={(event)=> this.handleClickNote(note.key, event)}>
                                                                             {note.title}
                                                                         </Link>
                                                                     {/*</Dropdown>*/}

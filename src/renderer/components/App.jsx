@@ -309,14 +309,14 @@ class App extends React.Component {
     }
 
     async openNoteInTree(key) {
-        // console.log("openNoteInTree", key);
+        console.log("openNoteInTree", key);
 
         let detailsNoteParents = await this.dataSource.getParents(key);
 
-        // console.log("openNoteInTree, detailsNoteParents=", detailsNoteParents);
+        console.log("openNoteInTree, detailsNoteParents=", detailsNoteParents);
 
         await this.fancyTreeDomRef.current.openNotes(detailsNoteParents);
-        // console.log(">>>>>>>>>>>>>>>> openNoteInTree NOW  activateNote");
+        console.log(">>>>>>>>>>>>>>>> openNoteInTree NOW  activateNote");
 
         this.activateNote(key);
 
@@ -493,7 +493,7 @@ class App extends React.Component {
         this.setState((previousState) => {
             if (previousState.detailsNote) {
                 let newState = {}
-                if (previousState.detailsNote) {
+                if (previousState.detailsNote && previousState.detailsNote.key == noteKey) {
                     let note = JSON.parse(JSON.stringify(previousState.detailsNote));
                     note.description = modifiedNote.description;
                     newState.detailsNote = note;
@@ -516,7 +516,7 @@ class App extends React.Component {
             let newState = {}
 
             if (previousState.detailsNote) {
-                if (previousState.detailsNote) {
+                if (previousState.detailsNote && previousState.detailsNote.key == noteKey) {
                     let note = JSON.parse(JSON.stringify(previousState.detailsNote));
                     note.title = title;
                     if (note.parents) {
@@ -590,12 +590,10 @@ class App extends React.Component {
         this.setState((previousState) => {
             let newState = {}
 
-            if (previousState.detailsNote) {
-                if (previousState.detailsNote && previousState.detailsNote.key == noteKey) {
-                    let note = JSON.parse(JSON.stringify(previousState.detailsNote));
-                    note.type = type;
-                    newState.detailsNote = note;
-                }
+            if (previousState.detailsNote && previousState.detailsNote.key == noteKey) {
+                let note = JSON.parse(JSON.stringify(previousState.detailsNote));
+                note.type = type;
+                newState.detailsNote = note;
             }
 
             if (previousState.listParentNote) {
@@ -625,12 +623,10 @@ class App extends React.Component {
         this.setState((previousState) => {
             let newState = {}
 
-            if (previousState.detailsNote) {
-                if (previousState.detailsNote && previousState.detailsNote.key == noteKey) {
-                    let note = JSON.parse(JSON.stringify(previousState.detailsNote));
-                    note.priority = priority;
-                    newState.detailsNote = note;
-                }
+            if (previousState.detailsNote && previousState.detailsNote.key == noteKey) {
+                let note = JSON.parse(JSON.stringify(previousState.detailsNote));
+                note.priority = priority;
+                newState.detailsNote = note;
             }
 
             if (previousState.listParentNote) {
@@ -898,7 +894,7 @@ class App extends React.Component {
                         </div>
                         <div className="nn-flex-break"></div>
                         <div>
-                            <Button
+                            <Button size="small"
                                 onClick={(event)=> this.chooseRepositoryFolder()}
                             >Add Repository Folder</Button>
                         </div>
@@ -915,7 +911,7 @@ class App extends React.Component {
                                     {
                                         !this.state.trash && 
                                         <Space>
-                                            <Button
+                                            <Button size="small"
                                                 onClick={(event)=> this.addNote()}
                                             ><PlusOutlined /> Add note </Button>
                                         </Space>

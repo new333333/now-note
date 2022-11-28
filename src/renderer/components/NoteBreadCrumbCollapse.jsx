@@ -37,7 +37,7 @@ class NoteBreadCrumbCollapse extends React.Component {
 
                                 })
                             }>
-                                {
+                                <span style={{color: "#bbb"}}>{
                                     this.props.parents.map((parent, index) => {
 
                                         return (
@@ -49,6 +49,7 @@ class NoteBreadCrumbCollapse extends React.Component {
 
                                     })
                                 }
+                                </span>
                             </Tooltip>
                             }
                             >

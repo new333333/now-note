@@ -1,5 +1,5 @@
 import React from 'react';
-import { Dropdown, Menu, Space, Checkbox, Tooltip, Collapse, Typography, Button } from 'antd';
+import { Dropdown, Menu, Divider, Checkbox, Tooltip, Collapse, Typography, Button } from 'antd';
 import Icon, { UnorderedListOutlined, PlusOutlined, DeleteFilled, EllipsisOutlined } from '@ant-design/icons';
 import {NotePriority} from './NotePriority.jsx';
 import {NoteBacklinks} from './NoteBacklinks.jsx';
@@ -81,7 +81,7 @@ class Note extends React.Component {
     }
 
     async saveChanges() {
-        if (this.tinyMCEDomRef.current) {
+        if (this.tinyMCEDomRef.current && this.tinyMCEDomRef.current.isDirty()) {
             await this.props.handleChangeDescription(this.props.note.key, this.tinyMCEDomRef.current.getContent());
         }
         if (this.titleDomRef.current) {
@@ -114,30 +114,38 @@ class Note extends React.Component {
     }
     
     async onBlurEditor(value, editor) {
-        // console.log("onBlurEditor(value, editor)", value);
-        if (this.tinyMCEDomRef.current) {
+        console.log("onBlurEditor(value, editor), isDirty", value, this.tinyMCEDomRef.current.isDirty());
+        if (this.tinyMCEDomRef.current && this.tinyMCEDomRef.current.isDirty()) {
             await this.props.handleChangeDescription(this.props.note.key, this.tinyMCEDomRef.current.getContent());
         }
     }
 
     async onClickEditor(e, editor) {
-        // console.log("onClickEditor(e, editor)", e, editor);
+        console.log("onClickEditor(e, editor) isDirty", e, editor, this.tinyMCEDomRef.current.isDirty());
 
         if (e.srcElement &&  e.srcElement.dataset && e.srcElement.dataset.gotoNote) {
             // console.log("activateNode", e.srcElement.dataset.gotoNote);
             // TODO: check dirty?
-            await this.props.handleChangeDescription(this.props.note.key, this.tinyMCEDomRef.current.getContent());
+            if (this.tinyMCEDomRef.current.isDirty()) {
+                await this.props.handleChangeDescription(this.props.note.key, this.tinyMCEDomRef.current.getContent());
+            }
             await this.props.openNoteDetails(e.srcElement.dataset.gotoNote);
         }
         
         if (e.srcElement &&  e.srcElement.dataset && e.srcElement.dataset.n3assetKey) {
             // TODO: check dirty?
-            this.props.handleChangeDescription(this.props.note.key, this.tinyMCEDomRef.current.getContent());
+            
             if (e.srcElement.tagName == "A") {
                 // TODO: download by assetKey, don't set HREF any more by loading description
+                if (this.tinyMCEDomRef.current.isDirty()) {
+                    this.props.handleChangeDescription(this.props.note.key, this.tinyMCEDomRef.current.getContent());
+                }
                 this.props.dataSource.downloadAttachment(e.srcElement.href);
             } else if (e.srcElement.tagName == "IMG") {
                 // console.log("TODO: download image");
+                // if (this.tinyMCEDomRef.current.isDirty()) {
+                //  this.props.handleChangeDescription(this.props.note.key, this.tinyMCEDomRef.current.getContent());
+                // }
             }
             
         }
@@ -147,8 +155,9 @@ class Note extends React.Component {
     componentWillUnmount() {
         // console.log("componentWillUnmount(value, editor)", value);
         if (this.tinyMCEDomRef.current && this.props.note) {
-            // TODO: check dirty?
-            this.props.handleChangeDescription(this.props.note.key, this.tinyMCEDomRef.current.getContent());
+            if (this.tinyMCEDomRef.current.isDirty()) {
+                this.props.handleChangeDescription(this.props.note.key, this.tinyMCEDomRef.current.getContent());
+            }
         }
     }
 
@@ -164,6 +173,7 @@ class Note extends React.Component {
             // console.log("SetContent, event, getContent", event, self.tinyMCEDomRef.current ? self.tinyMCEDomRef.current.getContent() : undefined);
 
             if (event.paste) {
+                // it's not dirty yet, save it!
                 self.props.handleChangeDescription(self.props.note.key, self.tinyMCEDomRef.current.getContent());
             }
 
@@ -342,6 +352,7 @@ class Note extends React.Component {
                         <div>
                             <NoteBreadCrumbCollapse parents={this.props.note.parents} openNoteDetails={this.props.activateNote} />
                         </div>
+                        <Divider style={{margin: "5px 0"}} />
                         <div style={{display: "flex", alignItems: "center" }}>
                             {
                                 this.props.note.type == "task" &&
@@ -355,14 +366,21 @@ class Note extends React.Component {
                                     </div>
                             }
                             <div style={{flexBasis: "100%" }}>
-                                <Paragraph strong style={{marginBottom: 0}}
-                                    editable={{
-                                        tooltip: "click to edit",
-                                        onChange: this.handleChangeTitle,
-                                        triggerType: ["icon", "text"],
-                                        autoSize: { maxRows: 5 }
-                                    }}
-                                >{this.props.note.title}</Paragraph>
+                                {
+                                    this.props.note.trash &&
+                                    <Paragraph strong style={{marginBottom: 0}}>{this.props.note.title}</Paragraph>
+                                }
+                                {
+                                    !this.props.note.trash &&
+                                    <Paragraph strong style={{marginBottom: 0}}
+                                        editable={{
+                                            tooltip: "click to edit",
+                                            onChange: this.handleChangeTitle,
+                                            triggerType: ["icon", "text"],
+                                            autoSize: { maxRows: 5 }
+                                        }}
+                                    >{this.props.note.title}</Paragraph>
+                                }
                             </div>
                             <div>
                                 <Dropdown overlay={noteMenu}>
@@ -370,6 +388,7 @@ class Note extends React.Component {
                                 </Dropdown>
                             </div>
                         </div>
+                        <Divider style={{margin: "5px 0"}} />
                         <div style={{padding: "5px 0"}}>
                                 <span style={{marginRight: "5px"}}>
                                     {
@@ -403,6 +422,7 @@ class Note extends React.Component {
                                     deleteTag={this.props.deleteTag}
                                     />
                         </div>
+                        <Divider style={{margin: "5px 0"}} />
                         <div style={{flex: 1}}>
                             <Editor
                                 onInit={(evt, editor) => this.tinyMCEDomRef.current = editor}
