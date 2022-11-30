@@ -210,7 +210,7 @@ class Note extends React.Component {
                     let searchResults = [];
 
                     self.props.dataSource.search(pattern, 20, false).then(function(searchResults) {
-                        showAutocomplete(searchResults, resolve);
+                        showAutocomplete(searchResults.results, resolve);
                     });
 
                     function showAutocomplete(searchResults, resolve) {
@@ -431,6 +431,7 @@ class Note extends React.Component {
                                 onClick={this.onClickEditor}
                                 disabled={this.props.note.trash}
                                 init={{
+                                    text_patterns: false,
                                     setup: this.setupTinyMce,
                                     skin: false,
                                     content_css: false,

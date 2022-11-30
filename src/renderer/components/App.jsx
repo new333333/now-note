@@ -305,6 +305,8 @@ class App extends React.Component {
         key = key || this.state.activeNoteKey;
         let newNote = await this.fancyTreeDomRef.current.addNote(key);
         this.activateNote(newNote.key);
+        console.log("addNote, newNote=", newNote);
+        this.openNoteDetails(newNote.key);
         return newNote;
     }
 

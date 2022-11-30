@@ -195,6 +195,7 @@ class FancyTree extends React.Component {
 		console.log("openNotes, lastKey=", lastKey);
 		let node = self.fancytree.getNodeByKey(lastKey);
 		await node.makeVisible();
+		node.setActive();
 	}
 
 	async remove(key) {
@@ -298,9 +299,7 @@ class FancyTree extends React.Component {
 					}
 					menu["open"] = { "name": "Open Details" };
 					menu["openlist"] = { "name": "Open List" };
-					if (!self.props.trash) {
-						menu["delete"] = { "name": "Delete" };
-					}
+					menu["delete"] = { "name": self.props.trash ? "Delete Permanently" : "Move To Trash" };
 					if (self.props.trash) {
 						menu["restore"] = { "name": "Restore" };
 					}
