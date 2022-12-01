@@ -3,3 +3,4 @@ plugins:
 - jekyll-remote-theme
 title: NOW Note
 description: Notes and TODOs App
+show_downloads: true
