@@ -2,6 +2,8 @@ const { contextBridge, ipcRenderer } = require('electron')
 
 
 contextBridge.exposeInMainWorld('electronAPI', {
+  
+  // Repository
   onChangeRepository: (callback) => ipcRenderer.on("changeRepository", callback),
   chooseRepositoryFolder: () => ipcRenderer.invoke("app:chooseRepositoryFolder"),
   changeRepository: (repositoryFolder) => ipcRenderer.invoke("app:changeRepository", repositoryFolder),
@@ -10,8 +12,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   closeRepository: () => ipcRenderer.invoke("app:closeRepository"),
   getRepositories: () => ipcRenderer.invoke("app:getRepositories"),
   isRepositoryInitialized: () => ipcRenderer.invoke("app:isRepositoryInitialized"),
-  getUserSettings: () => ipcRenderer.invoke("app:getUserSettings"),
+  isRepositoryInitialized: () => ipcRenderer.invoke("app:isRepositoryInitialized"),
   getRepository: () => ipcRenderer.invoke("app:getRepository"),
+
+
   shutdown: () => ipcRenderer.invoke("app:shutdown"),
   getChildren: (key, trash) => ipcRenderer.invoke("store:getChildren", key, trash),
   addNote: (parentNoteKey, note, hitMode, relativeToKey) => ipcRenderer.invoke("store:addNote", parentNoteKey, note, hitMode, relativeToKey),

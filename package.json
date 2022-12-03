@@ -1,6 +1,6 @@
 {
   "name": "now-note",
-  "version": "0.0.7-alpha",
+  "version": "0.0.8-alpha",
   "description": "Notes and tasks",
   "main": ".webpack/main",
   "scripts": {

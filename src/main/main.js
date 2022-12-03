@@ -180,6 +180,10 @@ app.whenReady().then(() => {
     // Menu.setApplicationMenu(menu)
     mainWindow.setMenu(menu);
 
+    mainWindow.webContents.on("did-finish-load", () => {
+      mainWindow.setTitle("Some custom title....");
+    });
+
     log.debug("Menu ready");
   
     app.on('activate', () => {
@@ -220,7 +224,6 @@ function openDefaultRepo(userDataPath, n3) {
 
 function initIpcMainHandle(ipcMain) {
 
-  log.debug("initIpcMainHandle start...");
   ipcMain.handle("app:chooseRepositoryFolder", function() {
 
     return new Promise(function(resolve, err) {
@@ -298,10 +301,6 @@ function initIpcMainHandle(ipcMain) {
 
   ipcMain.handle("app:isRepositoryInitialized", function() {
     return n3.repository !== undefined;
-  });
-
-  ipcMain.handle("app:getUserSettings", function() {
-    return n3.userSettings;
   });
 
   ipcMain.handle("app:getRepositories", function() {

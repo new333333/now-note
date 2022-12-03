@@ -17,8 +17,7 @@ import {FancyTree} from './FancyTree.jsx';
 import {NotesList} from './NotesList.jsx';
 import {Note} from './Note.jsx';
 import {SearchNotes} from './SearchNotes.jsx';
-import {NoteBreadCrumb} from './NoteBreadCrumb.jsx';
-import { isThisQuarter } from 'date-fns/esm';
+import {Footer} from './Footer.jsx';
 
 let noteTypes = [
     {
@@ -51,7 +50,6 @@ class App extends React.Component {
             longOperationProcessing: false,
             trash: false,
             
-            activeNoteKey: undefined,
             activeNote: undefined,
             detailsNote: undefined,
             listParentNote: undefined,
@@ -87,6 +85,7 @@ class App extends React.Component {
         this.saveRepositorySettings = this.saveRepositorySettings.bind(this);
         this.loadList = this.loadList.bind(this);
         this.loadListMore = this.loadListMore.bind(this);
+        this.changeRepository = this.changeRepository.bind(this);
 
         this.fancyTreeDomRef = React.createRef();
         this.simpleListDomRef = React.createRef();
@@ -95,26 +94,25 @@ class App extends React.Component {
         let self = this;
 
         this.dataSource.onChangeRepository((_event, value) => {
-            // console.log("onChangeRepository", _event, value);
-
-            self.noteDomRef.current.saveChanges().then(function() {
-
-                self.dataSource.closeRepository().then(function() {
-                    // console.log("closeRepository done");
-
-                    self.dataSource.getRepositories().then(function(repositories) {
-                        self.setState({
-                            repositories: repositories,
-                            isRepositoryInitialized: false
-                        });
-                    });
-                });
-            });
+            self.changeRepository();
         });
 
         this.initialRepository();
 
         console.log("App ready");
+    }
+
+    async changeRepository() {
+        await this.noteDomRef.current.saveChanges();
+        await this.dataSource.closeRepository();
+
+        let repositories = await this.dataSource.getRepositories();
+
+        this.setState({
+            repositories: repositories,
+            isRepositoryInitialized: false,
+            repository: undefined,
+        });
     }
 
     async initialRepository() {
@@ -124,19 +122,27 @@ class App extends React.Component {
 
         let priorityStat = undefined;
         let repositorySettings = {};
+        let repository = undefined;
 
         if (isRepositoryInitialized) {
             repositorySettings = await this.getRepositorySettings();
             priorityStat = await this.dataSource.getPriorityStat();
+            repository = await this.dataSource.getRepository();
         }
         
         console.log("initialRepository repositorySettings=", repositorySettings);
+        console.log("initialRepository repository=", repository);
 
         this.setState({
             isRepositoryInitialized: isRepositoryInitialized,
             repositories: repositories,
             priorityStat: priorityStat,
             repositorySettings: repositorySettings,
+            repository: repository,
+
+            detailsNote: undefined,
+            activeNote: undefined,
+            listParentNote: undefined,
         });
     }
 
@@ -178,36 +184,19 @@ class App extends React.Component {
 
     async chooseRepositoryFolder() {
         let repositoryChoosenOK = await this.dataSource.chooseRepositoryFolder();
-        console.log("chooseRepositoryFolder", repositoryChoosenOK);
 
-        let repositorySettings = {};
         if (repositoryChoosenOK) {
-            repositorySettings = await this.getRepositorySettings();
+            await this.initialRepository();
         }
-
-        this.setState({
-            isRepositoryInitialized: repositoryChoosenOK,
-            repositorySettings: repositorySettings,
-        });
     }
 
     async handleClickRepository(repositoryFolder) {
         let repositoryChanged = await this.dataSource.changeRepository(repositoryFolder);
         console.log("handleClickRepository", repositoryChanged);
 
-        let repositorySettings = {};
         if (repositoryChanged) {
-            repositorySettings = await this.getRepositorySettings();
+            await this.initialRepository();
         }
-
-        this.setState({
-            isRepositoryInitialized: repositoryChanged,
-            repositorySettings: repositorySettings,
-            detailsNote: undefined,
-            activeNoteKey: undefined,
-            activeNote: undefined,
-            listParentNote: undefined,
-        });
     }
 
 
@@ -302,7 +291,7 @@ class App extends React.Component {
 
     async addNote(key) {
         // console.log("addNote");
-        key = key || this.state.activeNoteKey;
+        key = key || this.state.activeNote.key;
         let newNote = await this.fancyTreeDomRef.current.addNote(key);
         this.activateNote(newNote.key);
         console.log("addNote, newNote=", newNote);
@@ -348,6 +337,12 @@ class App extends React.Component {
 
     }
 
+    async reloadList() {
+        if (this.state.listParentNote) {
+            await this.loadList(this.state.listParentNote.key);
+        }
+    }
+
     async loadList(key) {
 
         this.setState({
@@ -357,6 +352,14 @@ class App extends React.Component {
         let note = this.state.listParentNote;
         if (key) {
             note = await this.dataSource.getNote(key);
+            if ( (note.trash && !this.state.trash) || 
+                (!note.trash && this.state.trash)) {
+                    this.setState({
+                        listParentNote: undefined,
+                        loadingList: false,
+                    });
+                    return;
+            }
             let parents = await this.dataSource.getParents(key);
             note.parents = parents;
         }
@@ -468,7 +471,6 @@ class App extends React.Component {
 
             this.setState({
                 detailsNote: detailsNote,
-                activeNoteKey: detailsNote.key,
                 activeNote: detailsNote,
             });
             //await this.reloadChildNotes(detailsNote.key, false, false, false, false);
@@ -477,7 +479,6 @@ class App extends React.Component {
             this.fancyTreeDomRef.current.deactiveNote();
             this.setState({
                 detailsNote: undefined,
-                activeNoteKey: undefined,
                 activeNote: undefined,
             });
         }
@@ -718,7 +719,6 @@ class App extends React.Component {
         }
 
         if (note.trash) {
-            console.log("TODO: in trash remove permanently");
 
             this.setState({
                 showDeleteNoteConfirmationModal: true,
@@ -742,12 +742,11 @@ class App extends React.Component {
                 longOperationProcessing: false,
                 
                 detailsNote: undefined,
-                activeNoteKey: undefined,
                 activeNote: undefined,
-                listParentNote: undefined,
             });
 
             await this.fancyTreeDomRef.current.reload(note.parent);
+            await this.reloadList();
 
             message.warning(<Button type="link"
                             onClick={(event)=> this.restore(key)}
@@ -782,13 +781,11 @@ class App extends React.Component {
 
         this.setState({
             longOperationProcessing: false,
-            
-            listParentNote: undefined,
             detailsNote: undefined,
-            activeNoteKey: undefined,
             activeNote: undefined,
         }, () => { 
             this.fancyTreeDomRef.current.reload(note.parent);
+            this.reloadList();
         });
     }
 
@@ -819,13 +816,12 @@ class App extends React.Component {
             longOperationProcessing: false,
             deleteNoteKey: undefined,
 
-            listParentNote: undefined,
             detailsNote: undefined,
-            activeNoteKey: undefined,
             activeNote: undefined,
         }, () => { 
             console.log("openTrash new state", this.state.trash);
             this.fancyTreeDomRef.current.reload(note.parent);
+            this.reloadList();
         });
         
     }
@@ -839,7 +835,6 @@ class App extends React.Component {
                 trash: !previousState.trash,
                 listParentNote: undefined,
                 detailsNote: undefined,
-                activeNoteKey: undefined,
                 activeNote: undefined,
             };
         }, () => { 
@@ -902,136 +897,140 @@ class App extends React.Component {
                         </div>
                     </div> 
                     :
-                    <ReflexContainer orientation="vertical">
-                
-                        <ReflexElement className="left-bar"
-                            minSize="200"
-                            flex={0.25}>
-                            <div className='n3-bar-vertical'>
-                                <div className={`nn-header ${this.state.trash ? "nn-trash-background-color" : ""}`}>
+                    <>
+                        <ReflexContainer orientation="vertical">
+                    
+                            <ReflexElement className="left-bar"
+                                minSize="200"
+                                flex={0.25}>
+                                <div className='n3-bar-vertical'>
+                                    <div className={`nn-header ${this.state.trash ? "nn-trash-background-color" : ""}`}>
 
-                                    <Space>
-                                        <Button size="small" disabled={this.state.trash}
-                                            onClick={(event)=> this.addNote()}
-                                        ><PlusOutlined /> Add note </Button>
-                                    </Space>
-                                        
-                                </div>
-                                <FancyTree
-                                    ref={this.fancyTreeDomRef}
-                                    loadTree={this.loadTree} 
-                                    delete={this.delete}
-                                    restore={this.restore}
-                                    activateNote={this.activateNote}
-                                    addNote={this.addNote}
-                                    expandNote={this.expandNote}
-                                    handleChangeDone={this.handleChangeDone} 
-                                    dataSource={this.dataSource}
-                                    trash={this.state.trash}
-                                    loadList={this.loadList}
-                                    
-                                    />
-                                <div style={{backgroundColor: "#efefef"}}>
-                                    {
-                                        !this.state.trash && 
-                                        <Button size="small" type="text" icon={<DeleteFilled />}
-                                            onClick={(event)=> this.openTrash()}>
-                                            Trash
-                                        </Button>
-                                    }
-                                                                    {
-                                        this.state.trash && 
-                                        <Button size="small" type="text" danger icon={<DeleteFilled />}
-                                            onClick={(event)=> this.openTrash()}>
-                                            Close Trash
-                                        </Button>
-                                    }
-
-                                </div>
-                            </div>
-                        </ReflexElement>
-
-                
-                        <ReflexSplitter propagate={true}/>
-                
-                        <ReflexElement className="right-bar"
-                            minSize="200"
-                            flex={0.5}>
-                            <div className='n3-bar-vertical'>
-                                <div className={`nn-header ${this.state.trash ? "nn-trash-background-color" : ""}`}>
-                                    <SearchNotes  
-                                        trash={this.state.trash}
+                                        <Space>
+                                            <Button size="small" disabled={this.state.trash}
+                                                onClick={(event)=> this.addNote()}
+                                            ><PlusOutlined /> Add note </Button>
+                                        </Space>
+                                            
+                                    </div>
+                                    <FancyTree
+                                        ref={this.fancyTreeDomRef}
+                                        loadTree={this.loadTree} 
+                                        delete={this.delete}
+                                        restore={this.restore}
+                                        activateNote={this.activateNote}
+                                        addNote={this.addNote}
+                                        expandNote={this.expandNote}
+                                        handleChangeDone={this.handleChangeDone} 
                                         dataSource={this.dataSource}
-                                        openNoteInTree={this.openNoteInTree}
-                                        openNoteDetails={this.openNoteDetails}
-                                    />
-                                    
-                                </div>
+                                        trash={this.state.trash}
+                                        loadList={this.loadList}
+                                        
+                                        />
+                                    <div style={{backgroundColor: "#efefef"}}>
+                                        {
+                                            !this.state.trash && 
+                                            <Button size="small" type="text" icon={<DeleteFilled />}
+                                                onClick={(event)=> this.openTrash()}>
+                                                Trash
+                                            </Button>
+                                        }
+                                                                        {
+                                            this.state.trash && 
+                                            <Button size="small" type="text" danger icon={<DeleteFilled />}
+                                                onClick={(event)=> this.openTrash()}>
+                                                Close Trash
+                                            </Button>
+                                        }
 
-                                <Note 
-                                    ref={this.noteDomRef}
-                                
-                                    dataSource={this.dataSource}
+                                    </div>
+                                </div>
+                            </ReflexElement>
+
+                    
+                            <ReflexSplitter propagate={true}/>
+                    
+                            <ReflexElement className="right-bar"
+                                minSize="200"
+                                flex={0.5}>
+                                <div className='n3-bar-vertical'>
+                                    <div className={`nn-header ${this.state.trash ? "nn-trash-background-color" : ""}`}>
+                                        <SearchNotes  
+                                            trash={this.state.trash}
+                                            dataSource={this.dataSource}
+                                            openNoteInTree={this.openNoteInTree}
+                                            openNoteDetails={this.openNoteDetails}
+                                        />
+                                        
+                                    </div>
+
+                                    <Note 
+                                        ref={this.noteDomRef}
+                                    
+                                        dataSource={this.dataSource}
+
+                                        noteTypes={noteTypes}
+                                        getNoteTypeLabel={this.getNoteTypeLabel}
+                                        getOtherNoteTypeLabel={this.getOtherNoteTypeLabel}
+                                        priorityStat={this.state.priorityStat}
+
+                                        note={this.state.detailsNote} 
+
+                                        handleChangeDone={this.handleChangeDone} 
+                                        handleChangeType={this.handleChangeType} 
+                                        handleChangeTitle={this.handleChangeTitle}
+                                        saveTitle={this.saveTitle}
+                                        
+                                        handleChangeDescription={this.handleChangeDescription}
+                                        handleChangePriority={this.handleChangePriority}
+
+                                        
+                                        addNote={this.addNote}
+                                        addTag={this.addTag}
+                                        deleteTag={this.deleteTag}
+                                        openNoteDetails={this.openNoteDetails}
+                                        activateNote={this.activateNote} 
+                                        openNoteInTree={this.openNoteInTree}
+                                        loadList={this.loadList}
+                                        delete={this.delete}
+                                        restore={this.restore}
+                                    />
+                                </div>
+                            </ReflexElement>
+
+                            <ReflexSplitter propagate={true}/>
+
+                            <ReflexElement minSize="200" flex={0.25}>
+                                <NotesList 
+                                    ref={this.simpleListDomRef}
+
+                                    note={this.state.listParentNote} 
+                                    loading={true && this.state.loadingList}
+                                    loadListMore={this.loadListMore}
+
+                                    trash={this.state.trash}
 
                                     noteTypes={noteTypes}
-                                    getNoteTypeLabel={this.getNoteTypeLabel}
-                                    getOtherNoteTypeLabel={this.getOtherNoteTypeLabel}
-                                    priorityStat={this.state.priorityStat}
-
-                                    note={this.state.detailsNote} 
-
                                     handleChangeDone={this.handleChangeDone} 
                                     handleChangeType={this.handleChangeType} 
-                                    handleChangeTitle={this.handleChangeTitle}
-                                    saveTitle={this.saveTitle}
-                                    
-                                    handleChangeDescription={this.handleChangeDescription}
                                     handleChangePriority={this.handleChangePriority}
 
-                                    
-                                    addNote={this.addNote}
-                                    addTag={this.addTag}
-                                    deleteTag={this.deleteTag}
-                                    openNoteDetails={this.openNoteDetails}
+                                    openNoteDetails={this.openNoteDetails} 
                                     activateNote={this.activateNote} 
+
+                                    setFilter={this.setFilter}
+                                    filter={this.state.repositorySettings ? this.state.repositorySettings.filter : defaultFilter}
                                     openNoteInTree={this.openNoteInTree}
                                     loadList={this.loadList}
-                                    delete={this.delete}
-                                    restore={this.restore}
+
+                                    getNoteTypeLabel={this.getNoteTypeLabel}
                                 />
-                            </div>
-                        </ReflexElement>
+                            </ReflexElement>
+                                        
+                        </ReflexContainer>
 
-                        <ReflexSplitter propagate={true}/>
-
-                        <ReflexElement minSize="200" flex={0.25}>
-                            <NotesList 
-                                ref={this.simpleListDomRef}
-
-                                note={this.state.listParentNote} 
-                                loading={true && this.state.loadingList}
-                                loadListMore={this.loadListMore}
-
-                                trash={this.state.trash}
-
-                                noteTypes={noteTypes}
-                                handleChangeDone={this.handleChangeDone} 
-                                handleChangeType={this.handleChangeType} 
-                                handleChangePriority={this.handleChangePriority}
-
-                                openNoteDetails={this.openNoteDetails} 
-                                activateNote={this.activateNote} 
-
-                                setFilter={this.setFilter}
-                                filter={this.state.repositorySettings ? this.state.repositorySettings.filter : defaultFilter}
-                                openNoteInTree={this.openNoteInTree}
-                                loadList={this.loadList}
-
-                                getNoteTypeLabel={this.getNoteTypeLabel}
-                            />
-                        </ReflexElement>
-                                    
-                    </ReflexContainer>
+                        <Footer repository={this.state.repository} changeRepository={this.changeRepository}/>
+                    </>
                 }
 
 

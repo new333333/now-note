@@ -1,8 +1,15 @@
 # Changelog
 
 
-## Comming release...
+## 0.0.8-alpha
 
+- footer added
+- initialize repository refactored
+
+
+## 0.0.7-alpha
+
+- small bug fixes
 
 ## 0.0.6-alpha
 
