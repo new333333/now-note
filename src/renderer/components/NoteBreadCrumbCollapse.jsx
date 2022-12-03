@@ -5,15 +5,8 @@ const { Panel } = Collapse;
 
 class NoteBreadCrumbCollapse extends React.Component {
 
-
     constructor(props) {
         super(props);
-    }
-
-    openNoteDetails(noteKey) {
-        if (this.props.openNoteDetails) {
-            this.props.openNoteDetails(noteKey);
-        }
     }
 
     render() {
@@ -53,7 +46,7 @@ class NoteBreadCrumbCollapse extends React.Component {
                             </Tooltip>
                             }
                             >
-                            <NoteBreadCrumb parents={this.props.parents} openNoteDetails={this.props.openNoteDetails} />
+                            <NoteBreadCrumb parents={this.props.parents} handleClickNote={this.props.handleClickNote} />
                         </Panel>
                     </Collapse>
                 }

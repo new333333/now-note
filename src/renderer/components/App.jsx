@@ -61,9 +61,14 @@ class App extends React.Component {
             showDeleteNoteConfirmationModal: false,
         };
         this.loadTree = this.loadTree.bind(this);
+        
         this.openNoteDetails = this.openNoteDetails.bind(this);
         this.openNoteInTree = this.openNoteInTree.bind(this);
-        this.activateNote = this.activateNote.bind(this);
+        this.openNoteInTreeAndDetails = this.openNoteInTreeAndDetails.bind(this);
+        this.openNoteInList = this.openNoteInList.bind(this);
+        this.openNoteInListLoadMore = this.openNoteInListLoadMore.bind(this);
+
+
         this.expandNote = this.expandNote.bind(this);
         this.handleChangeDone = this.handleChangeDone.bind(this);
         this.handleChangeType = this.handleChangeType.bind(this);
@@ -83,8 +88,6 @@ class App extends React.Component {
         this.hideModalDeleteNoteConfirmation = this.hideModalDeleteNoteConfirmation.bind(this);
         this.deletePermanently = this.deletePermanently.bind(this);
         this.saveRepositorySettings = this.saveRepositorySettings.bind(this);
-        this.loadList = this.loadList.bind(this);
-        this.loadListMore = this.loadListMore.bind(this);
         this.changeRepository = this.changeRepository.bind(this);
 
         this.fancyTreeDomRef = React.createRef();
@@ -178,7 +181,7 @@ class App extends React.Component {
             }
         }, () => { 
             this.saveRepositorySettings();
-            this.loadList();
+            this.openNoteInList();
         });
     }
 
@@ -293,34 +296,20 @@ class App extends React.Component {
         // console.log("addNote");
         key = key || this.state.activeNote.key;
         let newNote = await this.fancyTreeDomRef.current.addNote(key);
-        this.activateNote(newNote.key);
+        this.openNoteInTreeAndDetails(newNote.key);
         console.log("addNote, newNote=", newNote);
         this.openNoteDetails(newNote.key);
         return newNote;
     }
 
-    async openNoteInTree(key) {
-        console.log("openNoteInTree", key);
 
-        let detailsNoteParents = await this.dataSource.getParents(key);
+    async openNoteDetails(key) {
+        console.log("openNoteDetails", key);
+        if (key) {
 
-        console.log("openNoteInTree, detailsNoteParents=", detailsNoteParents);
-
-        await this.fancyTreeDomRef.current.openNotes(detailsNoteParents);
-        console.log(">>>>>>>>>>>>>>>> openNoteInTree NOW  activateNote");
-
-        this.activateNote(key);
-
-    }
-
-
-    async openNoteDetails(noteKey) {
-
-        if (noteKey) {
-
-            let detailsNote = await this.dataSource.getNote(noteKey);
-            let detailsNoteParents = await this.dataSource.getParents(noteKey);
-            let detailsNoteBacklinks = await this.dataSource.getBacklinks(noteKey);
+            let detailsNote = await this.dataSource.getNote(key);
+            let detailsNoteParents = await this.dataSource.getParents(key);
+            let detailsNoteBacklinks = await this.dataSource.getBacklinks(key);
 
             detailsNote.parents = detailsNoteParents;
             detailsNote.backlinks = detailsNoteBacklinks;
@@ -337,32 +326,46 @@ class App extends React.Component {
 
     }
 
-    async reloadList() {
-        if (this.state.listParentNote) {
-            await this.loadList(this.state.listParentNote.key);
-        }
+    async openNoteInTree(key) {
+        console.log("openNoteInTree", key);
+
+        let detailsNoteParents = await this.dataSource.getParents(key);
+
+        console.log("openNoteInTree, detailsNoteParents=", detailsNoteParents);
+
+        await this.fancyTreeDomRef.current.openNotes(detailsNoteParents);
     }
 
-    async loadList(key) {
+    async openNoteInTreeAndDetails(key) {
+        console.log("openNoteInTreeAndDetails", key);
+
+        await this.openNoteInTree(key);
+        await this.openNoteDetails(key);
+    }
+
+
+    async openNoteInList(key) {
 
         this.setState({
             loadingList: true,
         });
 
-        let note = this.state.listParentNote;
-        if (key) {
-            note = await this.dataSource.getNote(key);
-            if ( (note.trash && !this.state.trash) || 
-                (!note.trash && this.state.trash)) {
-                    this.setState({
-                        listParentNote: undefined,
-                        loadingList: false,
-                    });
-                    return;
-            }
-            let parents = await this.dataSource.getParents(key);
-            note.parents = parents;
+
+        if (this.state.listParentNote) {
+            key = this.state.listParentNote.key;
         }
+
+        let note = await this.dataSource.getNote(key);
+        if ( (note.trash && !this.state.trash) || 
+            (!note.trash && this.state.trash)) {
+                this.setState({
+                    listParentNote: undefined,
+                    loadingList: false,
+                });
+                return;
+        }
+        let parents = await this.dataSource.getParents(key);
+        note.parents = parents;
 
         let types = [];
         if (!this.state.repositorySettings.filter.onlyTasks && !this.state.repositorySettings.filter.onlyNotes) {
@@ -403,7 +406,7 @@ class App extends React.Component {
     }
 
 
-    async loadListMore() {
+    async openNoteInListLoadMore() {
 
         let types = [];
         if (!this.state.repositorySettings.filter.onlyTasks && !this.state.repositorySettings.filter.onlyNotes) {
@@ -457,33 +460,6 @@ class App extends React.Component {
         });
     }
 
-    async activateNote(noteKey) {
-        if (noteKey) {
-
-            let detailsNote = await this.dataSource.getNote(noteKey);
-            this.fancyTreeDomRef.current.setNote(detailsNote);
-            this.fancyTreeDomRef.current.setActive(noteKey);
-            let detailsNoteParents = await this.dataSource.getParents(noteKey);
-            let detailsNoteBacklinks = await this.dataSource.getBacklinks(noteKey);
-            
-            detailsNote.parents = detailsNoteParents;
-            detailsNote.backlinks = detailsNoteBacklinks;
-
-            this.setState({
-                detailsNote: detailsNote,
-                activeNote: detailsNote,
-            });
-            //await this.reloadChildNotes(detailsNote.key, false, false, false, false);
-            
-        } else {
-            this.fancyTreeDomRef.current.deactiveNote();
-            this.setState({
-                detailsNote: undefined,
-                activeNote: undefined,
-            });
-        }
-
-    }
 
     async handleChangeDescription(noteKey, description) {
         // console.log("handleChangeDescription noteKey=, description=", noteKey, description);
@@ -746,7 +722,7 @@ class App extends React.Component {
             });
 
             await this.fancyTreeDomRef.current.reload(note.parent);
-            await this.reloadList();
+            await this.openNoteInList();
 
             message.warning(<Button type="link"
                             onClick={(event)=> this.restore(key)}
@@ -785,7 +761,7 @@ class App extends React.Component {
             activeNote: undefined,
         }, () => { 
             this.fancyTreeDomRef.current.reload(note.parent);
-            this.reloadList();
+            this.openNoteInList();
         });
     }
 
@@ -821,7 +797,7 @@ class App extends React.Component {
         }, () => { 
             console.log("openTrash new state", this.state.trash);
             this.fancyTreeDomRef.current.reload(note.parent);
-            this.reloadList();
+            this.openNoteInList();
         });
         
     }
@@ -918,13 +894,13 @@ class App extends React.Component {
                                         loadTree={this.loadTree} 
                                         delete={this.delete}
                                         restore={this.restore}
-                                        activateNote={this.activateNote}
+                                        openNoteDetails={this.openNoteDetails}
                                         addNote={this.addNote}
                                         expandNote={this.expandNote}
                                         handleChangeDone={this.handleChangeDone} 
                                         dataSource={this.dataSource}
                                         trash={this.state.trash}
-                                        loadList={this.loadList}
+                                        openNoteInList={this.openNoteInList}
                                         
                                         />
                                     <div style={{backgroundColor: "#efefef"}}>
@@ -960,6 +936,7 @@ class App extends React.Component {
                                             dataSource={this.dataSource}
                                             openNoteInTree={this.openNoteInTree}
                                             openNoteDetails={this.openNoteDetails}
+                                            openNoteInTreeAndDetails={this.openNoteInTreeAndDetails} 
                                         />
                                         
                                     </div>
@@ -989,9 +966,9 @@ class App extends React.Component {
                                         addTag={this.addTag}
                                         deleteTag={this.deleteTag}
                                         openNoteDetails={this.openNoteDetails}
-                                        activateNote={this.activateNote} 
+                                        openNoteInTreeAndDetails={this.openNoteInTreeAndDetails} 
                                         openNoteInTree={this.openNoteInTree}
-                                        loadList={this.loadList}
+                                        openNoteInList={this.openNoteInList}
                                         delete={this.delete}
                                         restore={this.restore}
                                     />
@@ -1006,7 +983,7 @@ class App extends React.Component {
 
                                     note={this.state.listParentNote} 
                                     loading={true && this.state.loadingList}
-                                    loadListMore={this.loadListMore}
+                                    openNoteInListLoadMore={this.openNoteInListLoadMore}
 
                                     trash={this.state.trash}
 
@@ -1016,12 +993,12 @@ class App extends React.Component {
                                     handleChangePriority={this.handleChangePriority}
 
                                     openNoteDetails={this.openNoteDetails} 
-                                    activateNote={this.activateNote} 
+                                    openNoteInTreeAndDetails={this.openNoteInTreeAndDetails} 
 
                                     setFilter={this.setFilter}
                                     filter={this.state.repositorySettings ? this.state.repositorySettings.filter : defaultFilter}
                                     openNoteInTree={this.openNoteInTree}
-                                    loadList={this.loadList}
+                                    openNoteInList={this.openNoteInList}
 
                                     getNoteTypeLabel={this.getNoteTypeLabel}
                                 />

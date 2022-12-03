@@ -36,7 +36,7 @@ class NoteBacklinks extends React.Component {
 
                                     return (
                                         <li key={backlink.key}>
-                                            <NoteBreadCrumb parents={backlink.parents} openNoteDetails={this.props.openNoteDetails} />
+                                            <NoteBreadCrumb parents={backlink.parents} handleClickNote={this.props.handleClickNote} />
                                         </li>
                                     )
 

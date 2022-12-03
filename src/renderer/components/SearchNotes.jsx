@@ -25,7 +25,7 @@ class SearchNotes extends React.Component {
             optionsAutoComplete: []
         });
 
-        await this.props.openNoteDetails(key);
+        await this.props.openNoteInTreeAndDetails(key);
     }
 
     async onSearchAutoComplete(searchText) {

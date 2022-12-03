@@ -21,13 +21,6 @@ class NotesList extends React.Component {
 
         this.setFilterOnlyDone = this.setFilterOnlyDone.bind(this);
         this.setFilterOnlyNotDone = this.setFilterOnlyNotDone.bind(this);
-
-        this.loadMoreData = this.loadMoreData.bind(this);
-        
-    }
-
-    async loadMoreData() {
-        this.props.loadListMore();
     }
 
     handleChangeType(key, type) {
@@ -160,7 +153,7 @@ class NotesList extends React.Component {
         if (event.key == "open_tree") {
             this.props.openNoteInTree(this.props.note.key);
         } else if (event.key == "open_list") {
-            this.props.loadList(this.props.note.key);
+            this.props.openNoteInList(this.props.note.key);
         }
     }
 
@@ -235,7 +228,7 @@ class NotesList extends React.Component {
                         <div>
                             {
                                 this.props.note &&
-                                <NoteBreadCrumbCollapse parents={this.props.note.parents} openNoteDetails={this.props.activateNote} />}
+                                <NoteBreadCrumbCollapse parents={this.props.note.parents} handleClickNote={this.props.openNoteInList} />}
                         </div>
 
                         <div>
@@ -247,7 +240,7 @@ class NotesList extends React.Component {
                                 this.props.note &&
                                 <InfiniteScroll
                                     dataLength={this.props.note.filteredSiblings.length}
-                                    next={this.loadMoreData}
+                                    next={this.props.openNoteInListLoadMore}
                                     hasMore={this.props.note.filteredSiblingsHasMore}
                                     loader={<Spin />}
                                     endMessage={<></>}
@@ -284,7 +277,7 @@ class NotesList extends React.Component {
                                                                                 onChange={(event)=> this.handleChangeDone(note.key, event)} />
                                                                     }
                                                                     {/*<Dropdown overlay={noteMenu} trigger={['contextMenu']}>*/}
-                                                                        <Link style={{color: "rgba(0, 0, 0, 0.85)"}} strong onClick={(event)=> this.handleClickNote(note.key, event)}>
+                                                                        <Link style={{color: "rgba(0, 0, 0, 0.85)"}} strong onClick={(event)=> this.props.openNoteInTreeAndDetails(note.key)}>
                                                                             {note.title}
                                                                         </Link>
                                                                     {/*</Dropdown>*/}

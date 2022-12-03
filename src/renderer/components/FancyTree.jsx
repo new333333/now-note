@@ -28,20 +28,6 @@ class FancyTree extends React.Component {
         this.init();
     }
 
-    setNote(note) {
-        if (!note) {
-            return;
-        }
-        let node = this.fancytree.getNodeByKey(note.key);
-        node.data.priority = note.priority;
-        node.data.done = note.done;
-        // memory... node.data.description = note.description;
-        node.setSelected(note.done);
-        node.data.type = note.type;
-        node.data.tags = note.tags;
-        node.title = note.title;
-    }
-
     setActive(key) {
         let node = this.fancytree.getNodeByKey(key);
         node.setActive();
@@ -112,9 +98,9 @@ class FancyTree extends React.Component {
         this.props.restore(key);
     }
 
-	async loadList(key) {
-		console.log("loadList, key=", key);
-        this.props.loadList(key);
+	async openNoteInList(key) {
+		console.log("openNoteInList, key=", key);
+        this.props.openNoteInList(key);
 	}
 
     async addNote(key) {
@@ -160,6 +146,7 @@ class FancyTree extends React.Component {
 					self.fancytree.reload().then(function() {
 						let newNode = self.fancytree.getNodeByKey(newNoteData.key);
 						newNode.setActive();
+						newNode.setFocus();
 						resolve(newNoteData);
 					});
 				} else {
@@ -167,6 +154,7 @@ class FancyTree extends React.Component {
 					node.setExpanded(true).then(function() {
 						let newNode = self.fancytree.getNodeByKey(newNoteData.key);
 						newNode.setActive();
+						newNode.setFocus();
 						resolve(newNoteData);
 					});
 				}
@@ -196,6 +184,7 @@ class FancyTree extends React.Component {
 		let node = self.fancytree.getNodeByKey(lastKey);
 		await node.makeVisible();
 		node.setActive();
+		node.setFocus();
 	}
 
 	async remove(key) {
@@ -249,7 +238,7 @@ class FancyTree extends React.Component {
 			},
 
             activate: function(event, data) {
-                // use click insteed self.props.activateNote(data.node.key);
+                // use click insteed self.props.openNoteDetails(data.node.key);
                 
 			},
 
@@ -271,7 +260,7 @@ class FancyTree extends React.Component {
                 // activate, expand, or select events
 
                 if (data.targetType != "checkbox" && data.targetType != "expander") {
-                    self.props.activateNote(data.node.key);
+                    self.props.openNoteDetails(data.node.key);
                 }
             },
 
@@ -309,7 +298,9 @@ class FancyTree extends React.Component {
 					console.log("FancyTree contextMenu node, action, options", node, action, options);
 
 					if (action == "open") {
-						self.props.activateNote(node.key);
+						self.props.openNoteDetails(node.key);
+						node.setActive();
+						node.setFocus();
 					} else if (action == "add") {
 						self.addNote(node.key);
 					} else if (action == "delete") {
@@ -317,7 +308,7 @@ class FancyTree extends React.Component {
 					} else if (action == "restore") {
 						self.restore(node.key);
 					} else if (action == "openlist") {
-						self.loadList(node.key);
+						self.openNoteInList(node.key);
 					}
 				}
 			  },

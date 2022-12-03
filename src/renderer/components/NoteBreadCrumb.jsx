@@ -9,18 +9,12 @@ class NoteBreadCrumb extends React.Component {
         super(props);
     }
 
-    openNoteDetails(noteKey) {
-        if (this.props.openNoteDetails) {
-            this.props.openNoteDetails(noteKey);
-        }
-    }
-
     render() {
 
         return (
             <Breadcrumb>
                 {this.props.parents &&
-                    (this.props.parents.map((parentNote, i) => <Breadcrumb.Item key={parentNote.key} href="#" onClick={(event)=> this.openNoteDetails(parentNote.key, event)}>{parentNote.title}</Breadcrumb.Item>))
+                    (this.props.parents.map((parentNote, i) => <Breadcrumb.Item key={parentNote.key} href="#" onClick={(event)=> this.props.handleClickNote(parentNote.key)}>{parentNote.title}</Breadcrumb.Item>))
                 }
             </Breadcrumb>
         );

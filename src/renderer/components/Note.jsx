@@ -129,7 +129,7 @@ class Note extends React.Component {
             if (this.tinyMCEDomRef.current.isDirty()) {
                 await this.props.handleChangeDescription(this.props.note.key, this.tinyMCEDomRef.current.getContent());
             }
-            await this.props.openNoteDetails(e.srcElement.dataset.gotoNote);
+            await this.props.openNoteInTreeAndDetails(e.srcElement.dataset.gotoNote);
         }
         
         if (e.srcElement &&  e.srcElement.dataset && e.srcElement.dataset.n3assetKey) {
@@ -269,7 +269,7 @@ class Note extends React.Component {
     async addNote(key) {
         // console.log("addNote, key=", key);
         let newNote = await this.props.addNote(key);
-        this.props.activateNote(newNote.key);
+        this.props.openNoteInTreeAndDetails(newNote.key);
     }
 
     async delete(key) {
@@ -285,7 +285,7 @@ class Note extends React.Component {
         } else if (event.key == "open_tree") {
             this.props.openNoteInTree(this.props.note.key);
         } else if (event.key == "open_list") {
-            this.props.loadList(this.props.note.key);
+            this.props.openNoteInList(this.props.note.key);
         } else if (event.key == "delete") {
             this.delete(this.props.note.key);
         } else if (event.key == "restore") {
@@ -350,7 +350,7 @@ class Note extends React.Component {
                     this.props.note && 
                     <>
                         <div>
-                            <NoteBreadCrumbCollapse parents={this.props.note.parents} openNoteDetails={this.props.activateNote} />
+                            <NoteBreadCrumbCollapse parents={this.props.note.parents} handleClickNote={this.props.openNoteInTreeAndDetails} />
                         </div>
                         <Divider style={{margin: "5px 0"}} />
                         <div style={{display: "flex", alignItems: "center" }}>
@@ -457,9 +457,9 @@ class Note extends React.Component {
                         </div>
                         <div>
                             <NoteBacklinks 
-                            noteKey={this.props.note.key}
-                            backlinks={this.props.note.backlinks}
-                            openNoteDetails={this.props.openNoteDetails}
+                                noteKey={this.props.note.key}
+                                backlinks={this.props.note.backlinks}
+                                handleClickNote={this.props.openNoteInTreeAndDetails}
                             />
                         </div>
 

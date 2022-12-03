@@ -5,6 +5,7 @@
 
 - footer added
 - initialize repository refactored
+- opening notes changes
 
 
 ## 0.0.7-alpha
