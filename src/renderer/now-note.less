@@ -1,3 +1,17 @@
+@import '~antd/es/style/themes/default.less';
+
+// Less
+@nnColor-1: #e6ffee;
+@nnColor-2: #aaf2c4;
+@nnColor-3: #7ce6a6;
+@nnColor-4: #52d98d;
+@nnColor-5: #2dcc77;
+@nnColor-6: #0bbe64;
+@nnColor-7: #029952;
+@nnColor-8: #007341;
+@nnColor-9: #004d2e;
+@nnColor-10: #002618;
+
 html {
 	height: 100%;
 	width: 100%;
@@ -17,6 +31,7 @@ body {
 	display: block;
 	height: 100%;
 	width: 100%;
+	padding-top: 40px;
 	padding-bottom: 20px;
 }
 
@@ -24,7 +39,7 @@ body {
 	position: fixed;
     bottom: 0;
     left: 0;
-    background-color: #096dd9;
+    background-color: @blue-6;
     right: 0;
     height: 20px;
     z-index: 100;
@@ -79,6 +94,13 @@ body {
 	vertical-align: top;
 }
 
+
+.nn-nodes-list {
+	background-color: @nnColor-1; 
+	padding: 5px;
+	overflow: auto;
+	height: 100%;
+}
 
 /* ************************************************* */
 
@@ -263,13 +285,13 @@ body {
 
 .nn-header {
 	padding: 5px;
-	background-color: #001529;
+	background-color: @nnColor-10;
 }
 
 .n3-tree {
 	overflow: auto;
 	flex: 1;
-	background-color: #efefef;
+	background-color: @nnColor-1;
 }
 
 .fancytree-node {
@@ -290,30 +312,14 @@ span.fancytree-title {
 }
 
 .n3-layout_sidebar, .n3-tree ul.fancytree-container, .n3-filter, .n3-search .input {
-	background-color: #efefef;
+	background-color: @nnColor-1;
 }
 
 .n3-tree .n3-node-add {
 	display: none;
 	position: absolute; 
 	right: 19px;
-	background: #efefef;
-}
-
-.n3-tree .n3-childcounter {
-	position: absolute;
-    right: 4px;
-    display: inline-block;
-    background-color: #efefef;
-    padding: 0;
-    height: 22px;
-	color: #efefef;
-	text-align: center;
-    width: 23px;
-}
-
-.n3-tree .n3-childcounter.n3-active {
-	color: #0E6EB8;
+	background: @nnColor-1;
 }
 
 .n3-tree .n3-mouseover .n3-node-add {

@@ -2,9 +2,7 @@ import React from 'react';
 import { Collapse, Badge } from 'antd';
 const { Panel } = Collapse;
 import { HomeOutlined, DownOutlined } from '@ant-design/icons';
-import { Checkbox } from 'pretty-checkbox-react';
 import {NoteBreadCrumb} from './NoteBreadCrumb.jsx';
-import '@djthoms/pretty-checkbox';
 
 class NoteBacklinks extends React.Component {
 

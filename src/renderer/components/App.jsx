@@ -346,12 +346,14 @@ class App extends React.Component {
 
     async openNoteInList(key) {
 
+        console.log("openNoteInList", key);
+
         this.setState({
             loadingList: true,
         });
 
 
-        if (this.state.listParentNote) {
+        if (!key && this.state.listParentNote) {
             key = this.state.listParentNote.key;
         }
 

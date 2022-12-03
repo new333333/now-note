@@ -221,7 +221,7 @@ class NotesList extends React.Component {
                         </Button>
                     </Space>
                 </div>
-                <div id="scrollableDiv" style={{backgroundColor: "#fafafa", padding: "5px", overflow: "auto", height: "100%"}}>
+                <div id="nn-nodes-list" className='nn-nodes-list'>
 
                     <Spin spinning={loading}>
 
@@ -244,7 +244,7 @@ class NotesList extends React.Component {
                                     hasMore={this.props.note.filteredSiblingsHasMore}
                                     loader={<Spin />}
                                     endMessage={<></>}
-                                    scrollableTarget="scrollableDiv"
+                                    scrollableTarget="nn-nodes-list"
                                 >
                                     <List
                                         header={<Text strong>Found {this.props.note.filteredSiblingsMaxResults} Notes</Text>}

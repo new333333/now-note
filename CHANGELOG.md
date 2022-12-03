@@ -6,11 +6,14 @@
 - footer added
 - initialize repository refactored
 - opening notes changes
+- new color schema
+- use Less CSS
 
 
 ## 0.0.7-alpha
 
 - small bug fixes
+
 
 ## 0.0.6-alpha
 

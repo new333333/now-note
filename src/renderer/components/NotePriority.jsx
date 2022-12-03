@@ -1,8 +1,6 @@
 import React from 'react';
 import { Breadcrumb, Dropdown, Menu, Space, Input, InputNumber, Typography, Select } from 'antd';
 import { HomeOutlined, DownOutlined } from '@ant-design/icons';
-import { Checkbox } from 'pretty-checkbox-react';
-import '@djthoms/pretty-checkbox';
 const { Text, Link } = Typography;
 
 class NotePriority extends React.Component {
