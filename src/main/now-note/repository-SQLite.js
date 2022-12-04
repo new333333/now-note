@@ -71,11 +71,11 @@ class RepositorySQLite  {
 
 	async setRepositorySettings(newSettings) {
         let settings = await this.getRepositorySettings();
-		log.info("setRepositorySettings settings=", settings);
+		// log.info("setRepositorySettings settings=", settings);
 
         settings = {...settings, ...newSettings};
 
-		log.info("setRepositorySettings merged settings=", settings);
+		// log.info("setRepositorySettings merged settings=", settings);
 
 		let settingsFilePath = path.join(this.directory, this.#settingsFileName);
         await fs.writeFile(settingsFilePath, JSON.stringify(settings, null, 2));
@@ -84,14 +84,14 @@ class RepositorySQLite  {
     async getRepositorySettings() {
 		let settingsText = "{}";
 		let settingsFilePath = path.join(this.directory, this.#settingsFileName);
-		log.info("getRepositorySettings settingsFilePath=", settingsFilePath);
+		// log.info("getRepositorySettings settingsFilePath=", settingsFilePath);
         try {
             settingsText = await fs.readFile(settingsFilePath, "utf-8");
         } catch (error) {
             log.warn("Cannot load repository settings from " + settingsFilePath);
         }
         let settings = JSON.parse(settingsText);
-		log.info("getRepositorySettings settings=", settings);
+		// log.info("getRepositorySettings settings=", settings);
 		return settings;
     }
 
@@ -249,30 +249,30 @@ class RepositorySQLite  {
 
 		let [results, metadata] = await this.sequelize.query(`SELECT name FROM sqlite_master WHERE type='table' AND name='Notes'`);
 		if (results.length == 0) {
-			log.info("SQLite repository: initialize new database.");
+			// log.info("SQLite repository: initialize new database.");
 			await this.sequelize.sync({ alter: true });
 		}
 
 		[results, metadata] = await this.sequelize.query(`SELECT name FROM sqlite_master WHERE type='table' AND name='Notes_index'`);
 		if (results.length == 0) {
-			log.info("SQLite repository: add Notes_index table.");
+			// log.info("SQLite repository: add Notes_index table.");
 			await this.sequelize.query(`CREATE VIRTUAL TABLE Notes_index USING FTS5(key UNINDEXED, path, parents, title, descriptionAsText, tags, type, done, priority, trash, prefix='1 2 3')`);
 		}
 
 
 		[results, metadata] = await this.sequelize.query(`PRAGMA table_info(Notes)`);
-		log.info("results=", results);
+		// log.info("results=", results);
 
 		let restoreParentKeyColumn = results.find(function(column) {
             if (column.name == "restoreParentKey") {
                 return column;
             }
         });
-		log.info("restoreParentKeyColumn=", restoreParentKeyColumn);
+		// log.info("restoreParentKeyColumn=", restoreParentKeyColumn);
 
 		if (!restoreParentKeyColumn) {
 
-			log.info("SQLite repository: Add Column Notes.restoreParentKey");
+			// log.info("SQLite repository: Add Column Notes.restoreParentKey");
 
 			const queryInterface = this.sequelize.getQueryInterface();
 			let transaction = await this.sequelize.transaction();
@@ -300,16 +300,16 @@ class RepositorySQLite  {
 	async import(importFolder) {
 		this.importFolder = importFolder;
 
-		log.info("import start, folder=", this.importFolder);
+		// log.info("import start, folder=", this.importFolder);
 		let self = this;
 
 		this.importMappingKeys = {};
 
 
 		this.importTree().then(function() {
-			log.info("all notes added, fix links");
+			// log.info("all notes added, fix links");
 			self.#importFixLinks().then(function() {
-				log.info("import end, folder=", self.importFolder);
+				// log.info("import end, folder=", self.importFolder);
 			});
 		});
 
@@ -354,7 +354,7 @@ class RepositorySQLite  {
 			
 
 			let note = await this.#readNote(noteFolderHandle);
-			log.info("importNotes, noteFolderHandle=, note=", noteFolderHandle, note);
+			// log.info("importNotes, noteFolderHandle=, note=", noteFolderHandle, note);
 
 			let resultNote = await this.addNote(key ? this.importMappingKeys[key] : "root_1", {
 				title: note.title,
@@ -378,7 +378,7 @@ class RepositorySQLite  {
 			note.key = childrenKeys[i];
 
 			this.importMappingKeys[childrenKeys[i]] = resultNote.key;
-			log.info("importNotes, resultNote=", resultNote);
+			// log.info("importNotes, resultNote=", resultNote);
 			
 			children.push(note);
 		}
@@ -771,7 +771,7 @@ class RepositorySQLite  {
 				} 
 			}); 
 
-			log.info("addNote parentNoteKey=, title=, max=", parentNoteKey, note.title, max);
+			// log.info("addNote parentNoteKey=, title=, max=", parentNoteKey, note.title, max);
 			note.position = max == null ? 0 : max + 1;
 
 		} else if (hitMode == "after") {
@@ -1295,7 +1295,7 @@ class RepositorySQLite  {
 	// load root nodes, if key undefined
 	// load children notes if key defined
 	async getChildren(key, trash = false) {
-		log.info("getChildren, key, trash", key, trash);
+		// log.info("getChildren, key, trash", key, trash);
 		let notes = await nnNote.Note.findAll({
 			where: {
 				parent: !key ? null : key,
@@ -1477,7 +1477,7 @@ class RepositorySQLite  {
 	}
 
 	async moveNoteToTrash(key) {
-		log.info("moveNoteToTrash, key=", key);
+		// log.info("moveNoteToTrash, key=", key);
 		if (!key) {
 			return;
 		}
@@ -1521,7 +1521,7 @@ class RepositorySQLite  {
 	}
 
 	async restore(key) {
-		log.info("restore, key=", key);
+		// log.info("restore, key=", key);
 		if (!key) {
 			return;
 		}
@@ -1530,9 +1530,9 @@ class RepositorySQLite  {
 		if (modifyNote === null) {
 			throw new nnNote.NoteNotFoundByKey(key);
 		}
-		log.info("restore, modifyNote=", modifyNote);
+		// log.info("restore, modifyNote=", modifyNote);
 		let parentKey = modifyNote.parent;
-		log.info("restore, parentKey=", parentKey);
+		// log.info("restore, parentKey=", parentKey);
 
 		let [results, metadata] = await this.sequelize.query("UPDATE Notes SET position = position - 1 where " + (modifyNote.parent == null ? "parent is NULL" : "parent = :parent") + " and trash = :trash and position > :position", {
 			replacements: {
@@ -1567,7 +1567,7 @@ class RepositorySQLite  {
 	}
 
 	async deletePermanently(key, skipUpdatePosition) {
-		log.info("deletePermanently, key=", key);
+		// log.info("deletePermanently, key=", key);
 
 		if (!key) {
 			return;
@@ -1635,7 +1635,7 @@ class RepositorySQLite  {
 	}
 
 	async #modifyTrashFlag(key, trash) {
-		log.info("#modifyTrashFlag, key=", key);
+		// log.info("#modifyTrashFlag, key=", key);
 
 		await nnNote.Note.update(
 			{

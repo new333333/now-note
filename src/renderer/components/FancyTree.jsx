@@ -106,8 +106,10 @@ class FancyTree extends React.Component {
     async addNote(key) {
         console.log("addNote key", key);
 
-		let detailsNoteParents = await this.props.dataSource.getParents(key);
-		await this.openNotes(detailsNoteParents);
+		if (key) {
+			let detailsNoteParents = await this.props.dataSource.getParents(key);
+			await this.openNotes(detailsNoteParents);
+		}
 
 		let self = this;
 		return new Promise(function(resolve) {
@@ -123,7 +125,10 @@ class FancyTree extends React.Component {
 
 			let node;
 			if (!key) {
-				node = self.fancytree.getRootNode();
+				node = self.fancytree.getActiveNode();
+				if (!node) {
+					node = self.fancytree.getRootNode();
+				}
 			} else {
 				node = self.fancytree.getNodeByKey(key);
 			}

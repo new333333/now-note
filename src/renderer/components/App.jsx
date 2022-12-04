@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { ApartmentOutlined, UserOutlined , BarsOutlin1ed, NodeExpandOutlined, PlusOutlined, ThunderboltFilled, RetweetOutlined } from '@ant-design/icons';
-import { Input, Space, Button, List, Modal, Alert, message, Spin } from 'antd';
+import { Input, Space, Button, List, Modal, Alert, message, Spin, Menu } from 'antd';
 import {DeleteFilled } from '@ant-design/icons';
 
 const { Search } = Input;
@@ -50,7 +50,6 @@ class App extends React.Component {
             longOperationProcessing: false,
             trash: false,
             
-            activeNote: undefined,
             detailsNote: undefined,
             listParentNote: undefined,
 
@@ -144,7 +143,6 @@ class App extends React.Component {
             repository: repository,
 
             detailsNote: undefined,
-            activeNote: undefined,
             listParentNote: undefined,
         });
     }
@@ -293,8 +291,7 @@ class App extends React.Component {
     }
 
     async addNote(key) {
-        // console.log("addNote");
-        key = key || this.state.activeNote.key;
+        // console.log("addNote, key=", key);
         let newNote = await this.fancyTreeDomRef.current.addNote(key);
         this.openNoteInTreeAndDetails(newNote.key);
         console.log("addNote, newNote=", newNote);
@@ -720,7 +717,6 @@ class App extends React.Component {
                 longOperationProcessing: false,
                 
                 detailsNote: undefined,
-                activeNote: undefined,
             });
 
             await this.fancyTreeDomRef.current.reload(note.parent);
@@ -760,7 +756,6 @@ class App extends React.Component {
         this.setState({
             longOperationProcessing: false,
             detailsNote: undefined,
-            activeNote: undefined,
         }, () => { 
             this.fancyTreeDomRef.current.reload(note.parent);
             this.openNoteInList();
@@ -795,7 +790,6 @@ class App extends React.Component {
             deleteNoteKey: undefined,
 
             detailsNote: undefined,
-            activeNote: undefined,
         }, () => { 
             console.log("openTrash new state", this.state.trash);
             this.fancyTreeDomRef.current.reload(note.parent);
@@ -813,7 +807,6 @@ class App extends React.Component {
                 trash: !previousState.trash,
                 listParentNote: undefined,
                 detailsNote: undefined,
-                activeNote: undefined,
             };
         }, () => { 
             console.log("openTrash new state", this.state.trash);
@@ -876,6 +869,29 @@ class App extends React.Component {
                     </div> 
                     :
                     <>
+                        {/* <div id="nn-top-menu">
+                            <Menu mode="horizontal" defaultSelectedKeys={['mail']}>
+                                <Menu.Item key="mail">
+                                Navigation One
+                                </Menu.Item>
+                                <Menu.SubMenu key="SubMenu" title="Navigation Two - Submenu">
+                                <Menu.Item key="two" >
+                                    Navigation Two
+                                </Menu.Item>
+                                <Menu.Item key="three" >
+                                    Navigation Three
+                                </Menu.Item>
+                                <Menu.ItemGroup title="Item Group">
+                                    <Menu.Item key="four" >
+                                    Navigation Four
+                                    </Menu.Item>
+                                    <Menu.Item key="five" >
+                                    Navigation Five
+                                    </Menu.Item>
+                                </Menu.ItemGroup>
+                                </Menu.SubMenu>
+                            </Menu>
+                        </div> */}
                         <ReflexContainer orientation="vertical">
                     
                             <ReflexElement className="left-bar"
