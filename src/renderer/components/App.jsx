@@ -295,7 +295,7 @@ class App extends React.Component {
         let newNote = await this.fancyTreeDomRef.current.addNote(key);
         this.openNoteInTreeAndDetails(newNote.key);
         console.log("addNote, newNote=", newNote);
-        this.openNoteDetails(newNote.key);
+        // this.openNoteDetails(newNote.key);
         return newNote;
     }
 
@@ -919,7 +919,7 @@ class App extends React.Component {
                                         dataSource={this.dataSource}
                                         trash={this.state.trash}
                                         openNoteInList={this.openNoteInList}
-                                        
+                                        openNoteInTreeAndDetails={this.openNoteInTreeAndDetails} 
                                         />
                                     <div style={{backgroundColor: "#efefef"}}>
                                         {

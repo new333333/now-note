@@ -149,19 +149,21 @@ class FancyTree extends React.Component {
 			}, "firstChild", relativeToKey).then(function(newNoteData) {
 				if (node.key.startsWith("root_")) {
 					self.fancytree.reload().then(function() {
-						let newNode = self.fancytree.getNodeByKey(newNoteData.key);
-						newNode.setActive();
-						newNode.setFocus();
+						// let newNode = self.fancytree.getNodeByKey(newNoteData.key);
+						// newNode.setActive();
+						// newNode.setFocus();
+						self.props.openNoteInTreeAndDetails(newNoteData.key);
 						resolve(newNoteData);
 					});
 				} else {
 					node.resetLazy();
-					node.setExpanded(true).then(function() {
-						let newNode = self.fancytree.getNodeByKey(newNoteData.key);
-						newNode.setActive();
-						newNode.setFocus();
-						resolve(newNoteData);
-					});
+					self.props.openNoteInTreeAndDetails(newNoteData.key);
+					// node.setExpanded(true).then(function() {
+					// 	let newNode = self.fancytree.getNodeByKey(newNoteData.key);
+					// 	newNode.setActive();
+					// 	newNode.setFocus();
+					// 	resolve(newNoteData);
+					// });
 				}
 				// let treeData = window.n3.dataToTreeData([newNoteData]);
 				// let newNode = node.addNode(treeData[0], "firstChild");
