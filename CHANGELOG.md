@@ -1,6 +1,11 @@
 # Changelog
 
 
+## 0.0.9-alpha
+
+- set focus on note after add from tree
+
+
 ## 0.0.8-alpha
 
 - footer added
