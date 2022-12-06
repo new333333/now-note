@@ -182,9 +182,9 @@ app.whenReady().then(() => {
     // Menu.setApplicationMenu(menu)
     mainWindow.setMenu(menu);
 
-    mainWindow.webContents.on("did-finish-load", () => {
-      mainWindow.setTitle("Some custom title....");
-    });
+    // mainWindow.webContents.on("did-finish-load", () => {
+    //   mainWindow.setTitle("Some custom title....");
+    // });
 
     log.debug("Menu ready");
   
