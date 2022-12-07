@@ -49,6 +49,7 @@ import 'tinymce/plugins/autoresize';
 /* eslint import/no-webpack-loader-syntax: off */
 import contentCss from '!!raw-loader!tinymce/skins/content/default/content.min.css';
 import contentUiCss from '!!raw-loader!tinymce/skins/ui/oxide/content.min.css';
+import contentNNCustomCss from '!!raw-loader!../css/tinymce.css';
 import { replace } from 'lodash';
 
 
@@ -173,8 +174,8 @@ class Note extends React.Component {
             // console.log("SetContent, event, getContent", event, self.tinyMCEDomRef.current ? self.tinyMCEDomRef.current.getContent() : undefined);
 
             if (event.paste) {
-                // it's not dirty yet, save it!
-                self.props.handleChangeDescription(self.props.note.key, self.tinyMCEDomRef.current.getContent());
+                // don't do it now, it moves cursor to the top after paste in editor
+                // self.props.handleChangeDescription(self.props.note.key, self.tinyMCEDomRef.current.getContent());
             }
 
         });
@@ -435,7 +436,7 @@ class Note extends React.Component {
                                     setup: this.setupTinyMce,
                                     skin: false,
                                     content_css: false,
-                                    content_style: [contentCss, contentUiCss, " .nn-link {color: blue; } "].join('\n'),
+                                    content_style: [contentCss, contentUiCss, contentNNCustomCss].join('\n'),
                                     height: "100%",
                                     inline_boundaries: false,
                                     powerpaste_word_import: "clean",
