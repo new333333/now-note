@@ -341,7 +341,7 @@ class Note extends React.Component {
         }
 
         return (
-            <div style={{backgroundColor: "#fafafa", padding: "5px", display: "flex", flexDirection: "column", height: "100%"}}>
+            <div id="nn-note">
                 {   
                     !this.props.note && 
                     <Text type="secondary">No note selected.</Text>

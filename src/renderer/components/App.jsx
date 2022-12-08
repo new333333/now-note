@@ -453,14 +453,24 @@ class App extends React.Component {
     }
 
     async expandNote(key, expanded) {
+        this.setState({
+            longOperationProcessing: true,
+        });
         let modifiedNote = await this.dataSource.modifyNote({
             key: key, 
             expanded: expanded	
+        });
+        this.setState({
+            longOperationProcessing: false,
         });
     }
 
 
     async handleChangeDescription(noteKey, description) {
+        this.setState({
+            longOperationProcessing: true,
+        });
+
         // console.log("handleChangeDescription noteKey=, description=", noteKey, description);
         let modifiedNote = await this.dataSource.modifyNote({
             key: noteKey, 
@@ -476,7 +486,7 @@ class App extends React.Component {
                     note.description = modifiedNote.description;
                     newState.detailsNote = note;
                 }
-
+                newState.longOperationProcessing = false;
                 return newState;
             }
         });
@@ -484,6 +494,10 @@ class App extends React.Component {
     }
 
     async handleChangeTitle(noteKey, title) {
+        this.setState({
+            longOperationProcessing: true,
+        });
+
         this.dataSource.modifyNote({
             key: noteKey, 
             title: title	
@@ -512,6 +526,7 @@ class App extends React.Component {
                     }
                 });
             }
+            newState.longOperationProcessing = false;
             return newState;
         }, () => {
             this.fancyTreeDomRef.current.setTitle(noteKey, title);
@@ -526,6 +541,10 @@ class App extends React.Component {
     }
 
     async handleChangeDone(noteKey, done, fromTree) {
+        this.setState({
+            longOperationProcessing: true,
+        });
+
         let modifiedNote = await this.dataSource.modifyNote({
             key: noteKey, 
             done: done	
@@ -549,7 +568,7 @@ class App extends React.Component {
                     }
                 });
             }
-
+            newState.longOperationProcessing = false;
             return newState;
         });
 
@@ -560,6 +579,10 @@ class App extends React.Component {
     }
 
     async handleChangeType(noteKey, type) {
+        this.setState({
+            longOperationProcessing: true,
+        });
+
         let modifiedNote = await this.dataSource.modifyNote({
             key: noteKey, 
             type: type	
@@ -582,7 +605,7 @@ class App extends React.Component {
                     }
                 });
             }
-
+            newState.longOperationProcessing = false;
             return newState;
         });
 
@@ -590,6 +613,10 @@ class App extends React.Component {
     }
 
     async handleChangePriority(noteKey, priority) {
+        this.setState({
+            longOperationProcessing: true,
+        });
+
         let self = this;
         this.dataSource.getPriorityStat().then(function(priorityStat) {
             self.setState({
@@ -615,7 +642,7 @@ class App extends React.Component {
                     }
                 });
             }
-
+            newState.longOperationProcessing = false;
             return newState;
         });
 
@@ -628,6 +655,10 @@ class App extends React.Component {
     }
 
     async addTag(noteKey, tag) {
+        this.setState({
+            longOperationProcessing: true,
+        });
+
         let tags = await this.dataSource.addTag(noteKey, tag);
         this.fancyTreeDomRef.current.setTags(noteKey, tags);
 
@@ -638,6 +669,7 @@ class App extends React.Component {
                 note.tags = tags;
                 return {
                     detailsNote: note,
+                    longOperationProcessing: false,
                 };
             }
         });
@@ -645,6 +677,10 @@ class App extends React.Component {
     }
 
     async deleteTag(noteKey, tag) {
+        this.setState({
+            longOperationProcessing: true,
+        });
+
         let tags = await this.dataSource.removeTag(noteKey, tag);
         this.fancyTreeDomRef.current.setTags(noteKey, tags);
 
@@ -655,6 +691,7 @@ class App extends React.Component {
                 note.tags = tags;
                 return {
                     detailsNote: note,
+                    longOperationProcessing: false,
                 };
             }
         });
@@ -903,7 +940,7 @@ class App extends React.Component {
                                         <Space>
                                             <Button size="small" disabled={this.state.trash}
                                                 onClick={(event)=> this.addNote()}
-                                            ><PlusOutlined /> Add note </Button>
+                                            ><PlusOutlined /> Add </Button>
                                         </Space>
                                             
                                     </div>
@@ -921,7 +958,7 @@ class App extends React.Component {
                                         openNoteInList={this.openNoteInList}
                                         openNoteInTreeAndDetails={this.openNoteInTreeAndDetails} 
                                         />
-                                    <div style={{backgroundColor: "#efefef"}}>
+                                    <div id="nn-trash">
                                         {
                                             !this.state.trash && 
                                             <Button size="small" type="text" icon={<DeleteFilled />}
