@@ -88,7 +88,7 @@ class RepositorySQLite  {
         try {
             settingsText = await fs.readFile(settingsFilePath, "utf-8");
         } catch (error) {
-            log.warn("Cannot load repository settings from " + settingsFilePath);
+            // log.warn("Cannot load repository settings from " + settingsFilePath);
         }
         let settings = JSON.parse(settingsText);
 		// log.info("getRepositorySettings settings=", settings);
@@ -107,7 +107,7 @@ class RepositorySQLite  {
 
 		try {
 			await this.sequelize.authenticate();
-			log.debug('Connection has been established successfully.');
+			// log.debug('Connection has been established successfully.');
 		} catch (error) {
 			log.error('Unable to connect to the database:', error);
 		}
@@ -400,7 +400,7 @@ class RepositorySQLite  {
 				that.#getNoteFolderHandle(notesFolderHandle, key).then(function(childrenContainerFolderHandle) {
 					// log.info("readNotesStore, childrenContainerFolderHandle=", childrenContainerFolderHandle);
 					that.#readNoteChildrenFile(childrenContainerFolderHandle).then(function(childrenKeys) {
-						log.info("readNotesStore, childrenKeys=", childrenKeys);
+						// log.info("readNotesStore, childrenKeys=", childrenKeys);
 
 						that.importNotes(childrenKeys, notesFolderHandle, key).then(function(children) {
 							resolve(children);
@@ -478,7 +478,6 @@ class RepositorySQLite  {
 		let self = this;
 
 		for (const [oldKey, newKey] of Object.entries(self.importMappingKeys)) {
-			console.log(`#importFixLinks - ${oldKey}: ${newKey}`);
 
 			let withtags = false;
 			let withchildren = false;
@@ -486,7 +485,6 @@ class RepositorySQLite  {
 			let withParents = false;
 
 			let note = await self.getNoteWith(newKey, withtags, withchildren, withDescription, withParents);
-			console.log("#importFixLinks newKey=, note=", newKey, note);
 
 			let $html = cheerio.load(note.description || "", null, false);
 			let linkSpan = $html("span");
@@ -534,7 +532,7 @@ class RepositorySQLite  {
 						let imgFileName = nextImg.attr("data-n3src");
 
 						let assetSrc = path.join(imgsFolder, imgFileName);
-						log.debug("#readNoteDesription assetSrc=", assetSrc);
+						// log.debug("#readNoteDesription assetSrc=", assetSrc);
 						
 						var imgUrl = fsSync.readFileSync(assetSrc).toString('base64');
 						nextImg.attr("src", "data:image/png;base64," + imgUrl);
@@ -670,12 +668,11 @@ class RepositorySQLite  {
 		trash = trash ? 1 : 0;
 		options = options || {};
 
-		// console.log("search - options", options);
 
 		let select = `SELECT * FROM Notes_index `;
 		let selectCount = `SELECT count(*) FROM Notes_index `;
 		let where = ` WHERE 
-				${searchText ? "(title MATCH :searchText or descriptionAsText MATCH :searchText) and" : ""} 
+				${searchText ? "(title MATCH :searchText or descriptionAsText MATCH :searchText or path MATCH :searchText) and" : ""} 
 				${options.parentNotesKey && options.parentNotesKey.length > 0 ? " (" + options.parentNotesKey.map((key, index) => " parents like '%," + key + ",%' " + (index < options.parentNotesKey.length - 1 ? " or " : " ")).join(" ") + ") and" : ""}
 				${options.types ? "  type in (" + options.types.join(", ") + ") and" : ""}
 				${options.dones ? "  done in (" + options.dones.join(", ") + ") and" : ""}
@@ -687,6 +684,8 @@ class RepositorySQLite  {
 		if (limit > -1) {
 			limitWhere = " LIMIT :limit OFFSET :offset ";
 		}
+
+
 
 		let selectResults = await this.sequelize.query(
 			select + where + limitWhere, {
@@ -710,7 +709,6 @@ class RepositorySQLite  {
 			}
 		);
 
-		console.log("countResults=", countResults);
 
 		searchResult = {
 			offset: options.offset || 0,
@@ -1086,7 +1084,7 @@ class RepositorySQLite  {
 		let $htmlCntainer = cheerio.load(description, null, false);
 		let internalLinks = $htmlCntainer("[data-nnlink-node]");
 	
-		log.debug("#setLinksBeforeWrite internalLinks.length", internalLinks.length);
+		// log.debug("#setLinksBeforeWrite internalLinks.length", internalLinks.length);
 
 		let newLinks = [];
 
@@ -1120,19 +1118,19 @@ class RepositorySQLite  {
 				from: key
 			}
 		});
-		log.debug("#setLinksBeforeWrite newLinks", newLinks);
+		// log.debug("#setLinksBeforeWrite newLinks", newLinks);
 		for await (const link of allLinks) {
 
-			log.debug("#setLinksBeforeWrite link", link);
+			// log.debug("#setLinksBeforeWrite link", link);
 
 			const linkToNote = await nnNote.Note.findByPk(link.to);
 			if (linkToNote) {
 				if (!newLinks.includes(link.to)) {
-					log.debug("#setLinksBeforeWrite 2 link.destroy", link);
+					// log.debug("#setLinksBeforeWrite 2 link.destroy", link);
 					await link.destroy();
 				}
 			} else {
-				log.debug("#setLinksBeforeWrite link.destroy", link);
+				// log.debug("#setLinksBeforeWrite link.destroy", link);
 				await link.destroy();
 			}
 		}
@@ -1665,7 +1663,6 @@ class RepositorySQLite  {
 		let withDescription = true;
 		let withParents = false;
 
-		// console.log("getNote key withDescription", key, withDescription);
 		return await this.getNoteWith(key, withtags, withchildren, withDescription, withParents);
 
 	}
@@ -1679,7 +1676,6 @@ class RepositorySQLite  {
 			if (noteModel === null) {
 				throw new nnNote.NoteNotFoundByKey(key);
 			}
-			// console.log("getNote2 key withDescription", key, withDescription);
 			return await this.toData(noteModel, withtags, withchildren, withDescription, withParents);
 		}
 	}
@@ -1711,7 +1707,7 @@ class RepositorySQLite  {
 	}
 
 	async getParents(key, parents) {
-		log.debug("getParentsStore key, parentsObj", key, parents);
+		// log.debug("getParentsStore key, parentsObj", key, parents);
 
 		parents = parents || [];
 
@@ -1719,18 +1715,18 @@ class RepositorySQLite  {
 			raw: true,
 		});
 
-		log.debug("getParentsStore noteModel", noteModel);
+		// log.debug("getParentsStore noteModel", noteModel);
 
 		if (noteModel === null) {
 			throw new nnNote.NoteNotFoundByKey(key);
 		}
 		if (noteModel.parent == null) {
 			parents.unshift(noteModel);
-			log.debug(">>>>>>>>>>>>>>>>> getParents, return 1 ", parents);
+			// log.debug(">>>>>>>>>>>>>>>>> getParents, return 1 ", parents);
 			return parents;
 		} else {
 			parents.unshift(noteModel);
-			log.debug(">>>>>>>>>>>>>>>>> getParents, return 2 ", parents);
+			// log.debug(">>>>>>>>>>>>>>>>> getParents, return 2 ", parents);
 			return await this.getParents(noteModel.parent, parents);
 		}
 
@@ -1748,7 +1744,7 @@ class RepositorySQLite  {
 				let assetModel = await nnAsset.Asset.findByPk(assetKey);
 
 				let assetSrc = path.join(this.directory, this.#assetsFolderName, assetKey, assetModel.name);
-				log.debug("#setInlineImagesPathAfterRead nextImg", assetKey, assetModel, assetSrc);
+				// log.debug("#setInlineImagesPathAfterRead nextImg", assetKey, assetModel, assetSrc);
 				
 				var imgUrl = fsSync.readFileSync(assetSrc).toString('base64');
 				nextImg.attr("src", "data:image/png;base64," + imgUrl);
@@ -1827,7 +1823,7 @@ class RepositorySQLite  {
 	}
 
 	async addFile(parentKey, filepath, hitMode, relativeToKey) {
-		log.debug("addFolder path", filepath);
+		// log.debug("addFolder path", filepath);
 
 		if (!path) {
 			return;
@@ -1836,10 +1832,10 @@ class RepositorySQLite  {
 		let resultNote = undefined;
 		
 		let stats = await fs.stat(filepath);
-		log.debug("addFolder stats", stats);
+		// log.debug("addFolder stats", stats);
 		if (stats.isDirectory()) {
 
-			log.debug("addFolder filepath isDirectory");
+			// log.debug("addFolder filepath isDirectory");
 			
 			resultNote = await this.addNote(parentKey, {
 				title: path.basename(filepath),
@@ -1853,7 +1849,7 @@ class RepositorySQLite  {
 			}
 
 		} else if (stats.isFile()) {
-			log.debug("addFolder path isFile");
+			// log.debug("addFolder path isFile");
 
 			let asset = await this.addAsset(null, path.basename(filepath), filepath, "path");
 
@@ -1911,7 +1907,6 @@ class RepositorySQLite  {
 			trash: note.trash,
 		};
 
-		// console.log("toData withDescription, note", withDescription, note);
 		if (withDescription) {
 			let description = note.description;
 			description = await this.#setInlineImagesPathAfterRead(description);
@@ -1920,7 +1915,6 @@ class RepositorySQLite  {
 
 			result.description = description;
 		}
-		// console.log("toData result", result);
 
 		if (withchildren) {
 			const countChildren = await nnNote.Note.count({
