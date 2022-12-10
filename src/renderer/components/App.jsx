@@ -42,7 +42,7 @@ class App extends React.Component {
     constructor(props) {
         super(props);
 
-        console.log("App starten");
+        // console.log("App starten");
 
         this.dataSource = window.electronAPI;
 
@@ -101,7 +101,7 @@ class App extends React.Component {
 
         this.initialRepository();
 
-        console.log("App ready");
+        // console.log("App ready");
     }
 
     async changeRepository() {
@@ -118,7 +118,7 @@ class App extends React.Component {
     }
 
     async initialRepository() {
-        console.log("initialRepository start");
+        // console.log("initialRepository start");
         let isRepositoryInitialized = await this.dataSource.isRepositoryInitialized();
         let repositories = await this.dataSource.getRepositories();
 
@@ -132,8 +132,8 @@ class App extends React.Component {
             repository = await this.dataSource.getRepository();
         }
         
-        console.log("initialRepository repositorySettings=", repositorySettings);
-        console.log("initialRepository repository=", repository);
+        // console.log("initialRepository repositorySettings=", repositorySettings);
+        // console.log("initialRepository repository=", repository);
 
         this.setState({
             isRepositoryInitialized: isRepositoryInitialized,
@@ -149,7 +149,7 @@ class App extends React.Component {
 
     async getRepositorySettings() {
         let repositorySettings = await this.dataSource.getRepositorySettings();
-        console.log("repositorySettings loaded", repositorySettings);
+        // console.log("repositorySettings loaded", repositorySettings);
 
         if (!repositorySettings.filter) {
             repositorySettings.filter = defaultFilter;
@@ -159,7 +159,7 @@ class App extends React.Component {
     }
 
     async saveRepositorySettings() {
-        console.log("saveRepositorySettings,this.state.repositorySettings=", this.state.repositorySettings);
+        // console.log("saveRepositorySettings,this.state.repositorySettings=", this.state.repositorySettings);
 
         this.dataSource.setRepositorySettings(this.state.repositorySettings);
     }
@@ -167,12 +167,12 @@ class App extends React.Component {
     async setFilter(filter) {
         this.setState((previousState) => {
 
-            console.log("setFilter, filter=, previousState.repositorySettings=", filter, previousState.repositorySettings);
+            // console.log("setFilter, filter=, previousState.repositorySettings=", filter, previousState.repositorySettings);
 
             let newFilter = {...previousState.repositorySettings.filter, ...filter};
-            console.log("setFilter, newFilter=", newFilter);
+            // console.log("setFilter, newFilter=", newFilter);
             let newRepositorySettings = {...previousState.repositorySettings, ...{filter: newFilter}};
-            console.log("setFilter, newRepositorySettings=", newRepositorySettings);
+            // console.log("setFilter, newRepositorySettings=", newRepositorySettings);
 
             return {
                 repositorySettings: newRepositorySettings
@@ -193,7 +193,7 @@ class App extends React.Component {
 
     async handleClickRepository(repositoryFolder) {
         let repositoryChanged = await this.dataSource.changeRepository(repositoryFolder);
-        console.log("handleClickRepository", repositoryChanged);
+        // console.log("handleClickRepository", repositoryChanged);
 
         if (repositoryChanged) {
             await this.initialRepository();
@@ -203,7 +203,7 @@ class App extends React.Component {
 
     loadTree(key, data) {
         let self = this;
-        console.log("loadTree, key=, this.state.trash=", key, this.state.trash);
+        // console.log("loadTree, key=, this.state.trash=", key, this.state.trash);
         
         if (key.type == 'source') {
 
@@ -294,14 +294,14 @@ class App extends React.Component {
         // console.log("addNote, key=", key);
         let newNote = await this.fancyTreeDomRef.current.addNote(key);
         this.openNoteInTreeAndDetails(newNote.key);
-        console.log("addNote, newNote=", newNote);
+        // console.log("addNote, newNote=", newNote);
         // this.openNoteDetails(newNote.key);
         return newNote;
     }
 
 
     async openNoteDetails(key) {
-        console.log("openNoteDetails", key);
+        // console.log("openNoteDetails", key);
         if (key) {
 
             let detailsNote = await this.dataSource.getNote(key);
@@ -324,17 +324,17 @@ class App extends React.Component {
     }
 
     async openNoteInTree(key) {
-        console.log("openNoteInTree", key);
+        // console.log("openNoteInTree", key);
 
         let detailsNoteParents = await this.dataSource.getParents(key);
 
-        console.log("openNoteInTree, detailsNoteParents=", detailsNoteParents);
+        // console.log("openNoteInTree, detailsNoteParents=", detailsNoteParents);
 
         await this.fancyTreeDomRef.current.openNotes(detailsNoteParents);
     }
 
     async openNoteInTreeAndDetails(key) {
-        console.log("openNoteInTreeAndDetails", key);
+        // console.log("openNoteInTreeAndDetails", key);
 
         await this.openNoteInTree(key);
         await this.openNoteDetails(key);
@@ -343,7 +343,7 @@ class App extends React.Component {
 
     async openNoteInList(key) {
 
-        console.log("openNoteInList", key);
+        // console.log("openNoteInList", key);
 
         this.setState({
             loadingList: true,
@@ -715,18 +715,18 @@ class App extends React.Component {
     }
 
     async delete(key) {
-        console.log("delete, key=", key);
+        // console.log("delete, key=", key);
 
         if (!key) {
-            console.log("Note to delete cannot be undefined, key=", key);
+            // console.log("Note to delete cannot be undefined, key=", key);
             return;
         }
 
         let note = await this.dataSource.getNote(key);
-        console.log("delete, note=", note);
+        // console.log("delete, note=", note);
 
         if (!note) {
-            console.log("Note to delete not exists, key=", key);
+            // console.log("Note to delete not exists, key=", key);
             return;
         }
 
@@ -742,13 +742,13 @@ class App extends React.Component {
                 longOperationProcessing: true,
             });
             
-            console.log("moveNoteToTrash start");
+            // console.log("moveNoteToTrash start");
 
 
 
 
             await this.dataSource.moveNoteToTrash(key);
-            console.log("moveNoteToTrash done");
+            // console.log("moveNoteToTrash done");
 
             this.setState({
                 longOperationProcessing: false,
@@ -766,18 +766,18 @@ class App extends React.Component {
     }
 
     async restore(key) {
-        console.log("restore, key=", key);
+        // console.log("restore, key=", key);
 
         if (!key) {
-            console.log("Note to restore cannot be undefined, key=", key);
+            // console.log("Note to restore cannot be undefined, key=", key);
             return;
         }
 
         let note = await this.dataSource.getNote(key);
-        console.log("restore, note=", note);
+        // console.log("restore, note=", note);
 
         if (!note) {
-            console.log("Note to delete not exists, key=", key);
+            // console.log("Note to delete not exists, key=", key);
             return;
         }
 
@@ -785,9 +785,9 @@ class App extends React.Component {
             longOperationProcessing: true,
         });
 
-        console.log("restore start");
+        // console.log("restore start");
         await this.dataSource.restore(key);
-        console.log("restore done");
+        // console.log("restore done");
 
 
         this.setState({
@@ -800,18 +800,18 @@ class App extends React.Component {
     }
 
     async deletePermanently() {
-        console.log("deletePermanently, key=", this.state.deleteNoteKey);
+        // console.log("deletePermanently, key=", this.state.deleteNoteKey);
 
         if (!this.state.deleteNoteKey) {
-            console.log("Note to delete permanently cannot be undefined, this.state.deleteNoteKey=", this.state.deleteNoteKey);
+            // console.log("Note to delete permanently cannot be undefined, this.state.deleteNoteKey=", this.state.deleteNoteKey);
             return;
         }
 
         let note = await this.dataSource.getNote(this.state.deleteNoteKey);
-        console.log("deletePermanently, note=", note);
+        // console.log("deletePermanently, note=", note);
 
         if (!note) {
-            console.log("Note to delete permanently not exists, this.state.deleteNoteKey=", this.state.deleteNoteKey);
+            // console.log("Note to delete permanently not exists, this.state.deleteNoteKey=", this.state.deleteNoteKey);
             return;
         }
 
@@ -828,7 +828,7 @@ class App extends React.Component {
 
             detailsNote: undefined,
         }, () => { 
-            console.log("openTrash new state", this.state.trash);
+            // console.log("openTrash new state", this.state.trash);
             this.fancyTreeDomRef.current.reload(note.parent);
             this.openNoteInList();
         });
@@ -836,24 +836,24 @@ class App extends React.Component {
     }
 
     async openTrash() {
-        console.log("openTrash", this.state.trash);
+        // console.log("openTrash", this.state.trash);
 
         this.setState((previousState) => {
-            console.log("openTrash previousState", previousState);
+            // console.log("openTrash previousState", previousState);
             return {
                 trash: !previousState.trash,
                 listParentNote: undefined,
                 detailsNote: undefined,
             };
         }, () => { 
-            console.log("openTrash new state", this.state.trash);
+            // console.log("openTrash new state", this.state.trash);
             this.fancyTreeDomRef.current.reload();
         });
         
     }
     
     hideModalDeleteNoteConfirmation() {
-        console.log("hideModalDeleteNoteConfirmation");
+        // console.log("hideModalDeleteNoteConfirmation");
 
         this.setState({
             showDeleteNoteConfirmationModal: false,
@@ -866,9 +866,9 @@ class App extends React.Component {
     render() {
 
 
-        console.log("App render start");
-        console.log("App render this.state.repositories=", this.state.repositories);
-        console.log("App render this.state.isRepositoryInitialized=", this.state.isRepositoryInitialized);
+        // console.log("App render start");
+        // console.log("App render this.state.repositories=", this.state.repositories);
+        // console.log("App render this.state.isRepositoryInitialized=", this.state.isRepositoryInitialized);
         
 
         return (
