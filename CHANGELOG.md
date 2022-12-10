@@ -1,6 +1,16 @@
 # Changelog
 
 
+## 0.0.10-alpha
+
+- editor CSS changed
+- colors changed
+- fix paste in editor (moved cursor to the top)
+- progress indicator on all long operations
+- background colors changed
+- infinite scroll search results
+
+
 ## 0.0.9-alpha
 
 - set focus on note after add from tree

@@ -148,7 +148,7 @@ class NotesList extends React.Component {
     }
 
     async handleNoteMenu(event) {
-        console.log("handleNoteMenu, event=", event);
+        // console.log("handleNoteMenu, event=", event);
 
         if (event.key == "open_tree") {
             this.props.openNoteInTree(this.props.note.key);
@@ -159,8 +159,8 @@ class NotesList extends React.Component {
 
     render() {
 
-        console.log("NotesList render start");
-        console.log("NotesList render this.props.filter=", this.props.filter);
+        // console.log("NotesList render start");
+        // console.log("NotesList render this.props.filter=", this.props.filter);
 
         const filterMenu = (
             <Menu
@@ -258,7 +258,7 @@ class NotesList extends React.Component {
                                             >
                                                 <List.Item.Meta
                                                     title={
-                                                        <div style={{fontWeight: 400, color: "#bbb", fontSize: "12px", overflow: "hidden", whiteSpace: "nowrap"}}>
+                                                        <div className="nn-list-breadCrumb">
                                                             <Tooltip title={note.path}>
                                                                 {note.path}
                                                             </Tooltip>

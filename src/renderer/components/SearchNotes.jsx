@@ -11,9 +11,12 @@ class SearchNotes extends React.Component {
         this.onSelectAutoComplete = this.onSelectAutoComplete.bind(this);
         this.onSearchAutoComplete = this.onSearchAutoComplete.bind(this);
         this.onChangeAutoComplete = this.onChangeAutoComplete.bind(this);
+        this.onPopupScroll = this.onPopupScroll.bind(this);
+
         this.state = {
             valueAutoComplete: "",
             optionsAutoComplete: [],
+            startSearchPosition: 0,
         };
     }
 
@@ -22,42 +25,89 @@ class SearchNotes extends React.Component {
        
         this.setState({
             valueAutoComplete: "",
-            optionsAutoComplete: []
+            optionsAutoComplete: [],
+            startSearchPosition: 0,
+        }, () => {
+            this.props.openNoteInTreeAndDetails(key);
+        });
+    }
+
+
+    resultToListOption(results) {
+
+        return results.map(function(note) {
+            return {
+                label: 
+                    <div className="nn-search-option">
+                        <div className="nn-search-title">
+                            {note.title}
+                        </div>
+                        <div className="nn-search-breadCrumb">
+                            {note.path}
+                        </div>
+                    </div>,
+                value: note.key,
+            };
         });
 
-        await this.props.openNoteInTreeAndDetails(key);
     }
 
     async onSearchAutoComplete(searchText) {
-        let searchResult = await this.props.dataSource.search(searchText, 20, this.props.trash);
-        let notes = searchResult.results;
+        let self = this;
 
-        let options = notes.map(function(note) {
-			return {
-                label: (
-                    <>
-                        <div>
-                            {note.title}
-                        </div>
-                        <div style={{color: "#bbb", fontSize: "12px"}}>
-                            {note.path}
-                        </div>
-                    </>
-                  ),
-                value: note.key,
-            };
-		});
-
-        this.setState({
-            optionsAutoComplete: options
+        self.props.dataSource.search(searchText, 20, self.props.trash, {
+            offset: 0
+        }).then(function(searchResult) {
+            let options = self.resultToListOption(searchResult.results);
+    
+            self.setState((previousState) => {
+                return {
+                    optionsAutoComplete: options,
+                    startSearchPosition: 20,
+                }
+            });
         });
+  
     }
 
     onChangeAutoComplete(data) {
         this.setState({
-            valueAutoComplete: data
+            valueAutoComplete: data,
         });
     }
+
+
+
+    onPopupScroll(event) {
+        let self = this;
+        let target = event.target;
+        if (!this.state.loading && (event.target.scrollTop + event.target.offsetHeight + 1 >= event.target.scrollHeight)) {
+
+            self.setState({loading: true}, ()=>{
+
+                target.scrollTo(0, target.scrollHeight);
+                self.props.dataSource.search(self.state.valueAutoComplete, 20, self.props.trash, {
+                    offset: self.state.startSearchPosition + 20
+                }).then(function(searchResult) {
+                    let newState = {
+                        loading: false,
+                    };
+
+                    if (searchResult.results.length > 0) {
+                        let options = self.resultToListOption(searchResult.results);
+
+                        let newOptions = [...self.state.optionsAutoComplete, ...options];
+
+                        newState.optionsAutoComplete = newOptions;
+                        newState.startSearchPosition = self.state.startSearchPosition + options.length;
+                    }
+
+                    self.setState(newState);
+
+                });
+            });
+        }
+    }  
 
     render() {
         return (
@@ -70,6 +120,7 @@ class SearchNotes extends React.Component {
                     onSelect={this.onSelectAutoComplete}
                     onSearch={this.onSearchAutoComplete}
                     onChange={this.onChangeAutoComplete}
+                    onPopupScroll={this.onPopupScroll}
                 >
                     <Input.Search size="small" placeholder="Search" />
                 </AutoComplete>
