@@ -30,7 +30,7 @@ class NoteBreadCrumbCollapse extends React.Component {
 
                                 })
                             }>
-                                <span style={{color: "#bbb"}}>{
+                                <span className="nn-breadCrumb-collapsed">{
                                     this.props.parents.map((parent, index) => {
 
                                         return (
