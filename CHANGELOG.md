@@ -9,6 +9,7 @@
 - progress indicator on all long operations
 - background colors changed
 - infinite scroll search results
+- save and load current open state
 
 
 ## 0.0.9-alpha

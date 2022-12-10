@@ -213,12 +213,12 @@ class NotesList extends React.Component {
                             </Button>
                         </Dropdown>
 
-                        <Button size="small">
+                        {/* <Button size="small">
                             <Space>
                                 Sort
                                 <DownOutlined />
                             </Space>
-                        </Button>
+                            </Button> */}
                     </Space>
                 </div>
                 <div id="nn-nodes-list" className='nn-nodes-list'>

@@ -171,27 +171,25 @@ class FancyTree extends React.Component {
 			});
 		});
     }
+	
+	
+	async openNotes(parents) {
+		let noteToOpen = parents.shift();
 
-	async openNotes(detailsNoteParents) {
-		let self = this;
+		console.log("openNotes, noteToOpen.key=", noteToOpen.key);
+		let node = this.fancytree.getNodeByKey(noteToOpen.key);
+		console.log("openNotes, node=", node);
 
-		for (let i = 0; i < detailsNoteParents.length - 1; i++) {
-			let noteToOpen = detailsNoteParents[i];
+		await node.load();
 
-			console.log("openNotes, noteToOpen.key=", noteToOpen.key);
-			let node = self.fancytree.getNodeByKey(noteToOpen.key);
-			console.log("openNotes, node=", node);
-
-			await node.setExpanded();
-			// await node.makeVisible();
+		if (parents.length > 0) {
+			await this.openNotes(parents)
+		} else {
+			await node.makeVisible();
+			node.setActive();
+			node.setFocus();
 		}
 
-		let lastKey = detailsNoteParents[detailsNoteParents.length - 1].key;
-		console.log("openNotes, lastKey=", lastKey);
-		let node = self.fancytree.getNodeByKey(lastKey);
-		await node.makeVisible();
-		node.setActive();
-		node.setFocus();
 	}
 
 	async remove(key) {
@@ -242,6 +240,11 @@ class FancyTree extends React.Component {
 						subNode.load();
 					}
 				});
+			},
+
+			init: function(event, data) {
+				console.log(">>>>> FancyTRee initialized");
+                self.props.treeIsInitialized();
 			},
 
             activate: function(event, data) {

@@ -1,5 +1,4 @@
 import React from 'react';
-
 import { ApartmentOutlined, UserOutlined , BarsOutlin1ed, NodeExpandOutlined, PlusOutlined, ThunderboltFilled, RetweetOutlined } from '@ant-design/icons';
 import { Input, Space, Button, List, Modal, Alert, message, Spin, Menu } from 'antd';
 import {DeleteFilled } from '@ant-design/icons';
@@ -88,6 +87,7 @@ class App extends React.Component {
         this.deletePermanently = this.deletePermanently.bind(this);
         this.saveRepositorySettings = this.saveRepositorySettings.bind(this);
         this.changeRepository = this.changeRepository.bind(this);
+        this.treeIsInitialized = this.treeIsInitialized.bind(this);
 
         this.fancyTreeDomRef = React.createRef();
         this.simpleListDomRef = React.createRef();
@@ -132,7 +132,7 @@ class App extends React.Component {
             repository = await this.dataSource.getRepository();
         }
         
-        // console.log("initialRepository repositorySettings=", repositorySettings);
+        //console.log("initialRepository repositorySettings=", repositorySettings);
         // console.log("initialRepository repository=", repository);
 
         this.setState({
@@ -144,7 +144,35 @@ class App extends React.Component {
 
             detailsNote: undefined,
             listParentNote: undefined,
+        }, () => {
+            //this.setAppStateFromSettings();
         });
+    }
+
+    treeIsInitialized() {
+        this.setState({
+            treeIsInitialized: true,
+        }, () => {
+            this.setAppStateFromSettings();
+        });
+    }
+
+
+    async setAppStateFromSettings() {
+        console.log("setAppStateFromSettings treeIsInitialized=" + this.state.treeIsInitialized);
+        if (this.state.treeIsInitialized &&
+            this.state.repositorySettings && 
+            this.state.repositorySettings.state && 
+            this.state.repositorySettings.state.details && 
+            this.state.repositorySettings.state.details.key) {
+            await this.openNoteInTreeAndDetails(this.state.repositorySettings.state.details.key);
+        }
+        if (this.state.repositorySettings && 
+            this.state.repositorySettings.state && 
+            this.state.repositorySettings.state.list && 
+            this.state.repositorySettings.state.list.key) {
+            await this.openNoteInList(this.state.repositorySettings.state.list.key);
+        }
     }
 
     async getRepositorySettings() {
@@ -311,13 +339,33 @@ class App extends React.Component {
             detailsNote.parents = detailsNoteParents;
             detailsNote.backlinks = detailsNoteBacklinks;
 
-            this.setState({
-                detailsNote: detailsNote
+            this.setState((prevState) => {
+
+                let repositorySettings = prevState.repositorySettings;
+                repositorySettings.state = repositorySettings.state || {};
+                repositorySettings.state.details = repositorySettings.state.details || {};
+                repositorySettings.state.details.key = detailsNote.key;
+                return {
+                    detailsNote: detailsNote,
+                    repositorySettings: repositorySettings,
+                }
+            }, () => {
+                this.saveRepositorySettings();
             });
 
         } else {
-            this.setState({
-                detailsNote: undefined,
+            this.setState((prevState) => {
+
+                let repositorySettings = prevState.repositorySettings;
+                repositorySettings.state = repositorySettings.state || {};
+                repositorySettings.state.details = repositorySettings.state.details || {};
+                delete repositorySettings.state.details.key;
+                return {
+                    detailsNote: undefined,
+                    repositorySettings: repositorySettings,
+                }
+            }, () => {
+                this.saveRepositorySettings();
             });
         }
 
@@ -352,6 +400,13 @@ class App extends React.Component {
 
         if (!key && this.state.listParentNote) {
             key = this.state.listParentNote.key;
+        }
+
+        if (!key) {
+            this.setState({
+                loadingList: false,
+            });
+            return;
         }
 
         let note = await this.dataSource.getNote(key);
@@ -398,9 +453,19 @@ class App extends React.Component {
         note.filteredSiblingsHasMore = searchResult.maxResults > searchResult.results.length;
         note.filteredSiblingsMaxResults = searchResult.maxResults;
 
-        this.setState({
-            listParentNote: note,
-            loadingList: false,
+        this.setState((prevState) => {
+
+            let repositorySettings = prevState.repositorySettings;
+            repositorySettings.state = repositorySettings.state || {};
+            repositorySettings.state.list = repositorySettings.state.list || {};
+            repositorySettings.state.list.key = note.key;
+            return {
+                listParentNote: note,
+                loadingList: false,
+                repositorySettings: repositorySettings,
+            }
+        }, () => {
+            this.saveRepositorySettings();
         });
     }
 
@@ -420,7 +485,7 @@ class App extends React.Component {
         let dones = [];
         if (!this.state.repositorySettings.filter.onlyDone && !this.state.repositorySettings.filter.onlyNotDone) {
             dones.push(0);
-            dones.push(1);
+            dones.push(1);setState
         } else if (this.state.repositorySettings.filter.onlyDone) {
             dones.push(1);
         } else if (this.state.repositorySettings.filter.onlyNotDone) {
@@ -957,6 +1022,7 @@ class App extends React.Component {
                                         trash={this.state.trash}
                                         openNoteInList={this.openNoteInList}
                                         openNoteInTreeAndDetails={this.openNoteInTreeAndDetails} 
+                                        treeIsInitialized={this.treeIsInitialized}
                                         />
                                     <div id="nn-trash">
                                         {
