@@ -10,6 +10,7 @@
 - background colors changed
 - infinite scroll search results
 - save and load current open state
+- save and load last opened repository
 
 
 ## 0.0.9-alpha

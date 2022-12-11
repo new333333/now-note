@@ -9,7 +9,7 @@ class UserSettings {
 
     constructor(userDataPath, userName) {
         this.userDataPath = userDataPath;
-        log.info("UserSettings.constructor userName", userName);
+        // log..info("UserSettings.constructor userName", userName);
         this.userName = userName;
     }
 
@@ -28,7 +28,7 @@ class UserSettings {
         if (!this.settings) {
             await this.#load();
         }
-        log.info("UserSettings call RepositoryFactory this.userName", this.userName);
+        // log..info("UserSettings call RepositoryFactory this.userName", this.userName);
         let repositoryFactory = new nnRepositoryFactory.RepositoryFactory(this.settings.repositories, this.userName);
         return await repositoryFactory.connectDefaultRepository();
     }
@@ -42,9 +42,14 @@ class UserSettings {
         }
 
         let repositoryByPath = this.settings.repositories.find(function(repository) {
-            log.info("connectRepository ", repositoryFolder, repository.path, repository.path == repositoryFolder);
+            // log..info("connectRepository ", repositoryFolder, repository.path, repository.path == repositoryFolder);
             return repository.path == repositoryFolder;
         });
+
+        this.settings.repositories.forEach(repository => {
+            repository.default = repository.path == repositoryFolder;
+        });
+        this.save();
 
         let repositoryFactory = new nnRepositoryFactory.RepositoryFactory(this.settings.repositories, this.userName);
         return await repositoryFactory.connectRepository(repositoryByPath);
@@ -87,7 +92,7 @@ class UserSettings {
                 default: this.settings.repositories.length == 0,
             });
         } else {
-            log.info(`Repository ${repositoryFolder} already exists.`);
+            // log..info(`Repository ${repositoryFolder} already exists.`);
         }
     }
 
@@ -98,7 +103,7 @@ class UserSettings {
                 await this.#load();
                 exists = true;
             } catch (error) {
-                log.debug("Can be ignored", error);
+                // log..debug("Can be ignored", error);
             }
         }
         return exists;

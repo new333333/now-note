@@ -31,16 +31,20 @@ class RepositoryFactory {
             throw new Error("No repositories defined.");
         }
 
-        log.info("connectDefaultRepository, this.repositories=", this.repositories);
+        // log.info("connectDefaultRepository, this.repositories=", this.repositories);
 
         let defaultRepository = this.repositories.find(function(element) {
-            log.info("connectDefaultRepository, element=, default=", element, element.default === true);
+            // log.info("connectDefaultRepository, element=, default=", element, element.default === true);
             if (element.default) {
                 return element;
             }
         });
 
-        log.info("connectDefaultRepository, defaultRepository=, nicht gefunden?=", defaultRepository, !defaultRepository );
+        if (this.repositories && this.repositories.length > 0) {
+            defaultRepository = this.repositories[0];
+        }
+
+        // log.info("connectDefaultRepository, defaultRepository=, nicht gefunden?=", defaultRepository, !defaultRepository );
 
         if (!defaultRepository) {
             throw new Error("No default repository found.");
