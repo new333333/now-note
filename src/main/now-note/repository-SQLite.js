@@ -1200,7 +1200,7 @@ class RepositorySQLite  {
 		}
 		
 
-		modifyNote.save();
+		await modifyNote.save();
 
 		if (reindex || reindexTree) {
 			let parents = await this.getParents(modifyNote.key);

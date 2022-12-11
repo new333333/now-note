@@ -3,6 +3,11 @@ const { contextBridge, ipcRenderer } = require('electron')
 
 contextBridge.exposeInMainWorld('electronAPI', {
   
+  // App
+  quit: () => ipcRenderer.invoke("app:quit"),
+  onClose: (callback) => ipcRenderer.on("wantClose", callback),
+  setDirty: (dirty) => ipcRenderer.invoke("app:setDirty", dirty),
+
   // Repository
   onChangeRepository: (callback) => ipcRenderer.on("changeRepository", callback),
   chooseRepositoryFolder: () => ipcRenderer.invoke("app:chooseRepositoryFolder"),
@@ -16,7 +21,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getRepository: () => ipcRenderer.invoke("app:getRepository"),
 
 
-  shutdown: () => ipcRenderer.invoke("app:shutdown"),
   getChildren: (key, trash) => ipcRenderer.invoke("store:getChildren", key, trash),
   addNote: (parentNoteKey, note, hitMode, relativeToKey) => ipcRenderer.invoke("store:addNote", parentNoteKey, note, hitMode, relativeToKey),
   modifyNote: (note) => ipcRenderer.invoke("store:modifyNote", note),

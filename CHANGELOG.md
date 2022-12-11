@@ -11,6 +11,7 @@
 - infinite scroll search results
 - save and load current open state
 - save and load last opened repository
+- save changes before quite app
 
 
 ## 0.0.9-alpha

@@ -85,9 +85,6 @@ class Note extends React.Component {
         if (this.tinyMCEDomRef.current && this.tinyMCEDomRef.current.isDirty()) {
             await this.props.handleChangeDescription(this.props.note.key, this.tinyMCEDomRef.current.getContent());
         }
-        if (this.titleDomRef.current) {
-            await this.props.saveTitle(this.props.note.key, this.titleDomRef.current.input.value);
-        }
     }
 
     handleChangeDone(event) {
@@ -106,14 +103,6 @@ class Note extends React.Component {
         this.props.handleChangeTitle(this.props.note.key, value);
     }
 
-
-    async saveTitle(event) {
-        console.log(">>>>>>>>>>>> saveTitle on blur ");
-        let title = event.target.value;
-        title = title.replaceAll("/", "");
-        await this.props.saveTitle(this.props.note.key, title);
-    }
-    
     async onBlurEditor(value, editor) {
         console.log("onBlurEditor(value, editor), isDirty", value, this.tinyMCEDomRef.current.isDirty());
         if (this.tinyMCEDomRef.current && this.tinyMCEDomRef.current.isDirty()) {
@@ -152,7 +141,7 @@ class Note extends React.Component {
         }
 
     }
-
+/*
     componentWillUnmount() {
         // console.log("componentWillUnmount(value, editor)", value);
         if (this.tinyMCEDomRef.current && this.props.note) {
@@ -161,7 +150,7 @@ class Note extends React.Component {
             }
         }
     }
-
+*/
     setupTinyMce(editor) {
 
         let self = this;
@@ -239,25 +228,6 @@ class Note extends React.Component {
                                 }
                             });
                             resolve(results);
-                        } else {
-                            resolve([{
-                                type: "cardmenuitem",
-                                value: "value",
-                                label: "label",
-                                items: [
-                                    {
-                                        type: "cardcontainer",
-                                        direction: "vertical",
-                                        items: [
-                                            {
-                                                type: "cardtext",
-                                                text: "New note: " + pattern,
-                                                name: "char_name"
-                                            }
-                                        ]
-                                    }
-                                ]
-                            }]);
                         }
                     }
                     
@@ -366,7 +336,7 @@ class Note extends React.Component {
                                         </Tooltip>
                                     </div>
                             }
-                            <div style={{flexBasis: "100%" }}>
+                            <div style={{flexBasis: "100%" }} >
                                 {
                                     this.props.note.trash &&
                                     <Paragraph strong style={{marginBottom: 0}}>{this.props.note.title}</Paragraph>
@@ -378,7 +348,7 @@ class Note extends React.Component {
                                             tooltip: "click to edit",
                                             onChange: this.handleChangeTitle,
                                             triggerType: ["icon", "text"],
-                                            autoSize: { maxRows: 5 }
+                                            autoSize: { maxRows: 5 },
                                         }}
                                     >{this.props.note.title}</Paragraph>
                                 }

@@ -76,7 +76,6 @@ class App extends React.Component {
         this.addTag = this.addTag.bind(this);
         this.deleteTag = this.deleteTag.bind(this);
         this.handleChangeTitle = this.handleChangeTitle.bind(this);
-        this.saveTitle = this.saveTitle.bind(this);
         this.getNoteTypeLabel = this.getNoteTypeLabel.bind(this);
         this.getOtherNoteTypeLabel = this.getOtherNoteTypeLabel.bind(this);
         this.addNote = this.addNote.bind(this);
@@ -95,13 +94,32 @@ class App extends React.Component {
 
         let self = this;
 
-        this.dataSource.onChangeRepository((_event, value) => {
+        this.dataSource.onChangeRepository((event) => {
             self.changeRepository();
         });
+
+        this.dataSource.onClose(function(event) {
+            console.log("onClose App");
+            
+            self.beforeQuiteApp().then(function() {
+                self.dataSource.setDirty(false).then(function() {
+                    self.dataSource.quit();
+                });
+            });
+
+        });
+
 
         this.initialRepository();
 
         // console.log("App ready");
+    }
+
+    async beforeQuiteApp() {
+        console.log("beforeQuiteApp");
+        await this.noteDomRef.current.saveChanges();
+        console.log("closeRepository");
+        await this.dataSource.closeRepository();
     }
 
     async changeRepository() {
@@ -532,33 +550,43 @@ class App extends React.Component {
 
 
     async handleChangeDescription(noteKey, description) {
-        this.setState({
-            longOperationProcessing: true,
+        console.log("handleChangeDescription noteKey=, description=", noteKey, description);
+
+        let self = this;
+        return new Promise(function(resolve, reject) {
+
+            self.setState({
+                longOperationProcessing: true,
+            }, () => {
+                self.dataSource.modifyNote({
+                    key: noteKey, 
+                    description: description	
+                }).then(function(modifiedNote) {
+                    // console.log("handleChangeDescription modifiedNote=", modifiedNote);
+                    self.setState((previousState) => {
+                        if (previousState.detailsNote) {
+                            let newState = {}
+                            if (previousState.detailsNote && previousState.detailsNote.key == noteKey) {
+                                let note = JSON.parse(JSON.stringify(previousState.detailsNote));
+                                note.description = modifiedNote.description;
+                                newState.detailsNote = note;
+                            }
+                            newState.longOperationProcessing = false;
+                            return newState;
+                        }
+                    }, () => {
+                        resolve();
+                    });
+                });
+            });
         });
 
-        // console.log("handleChangeDescription noteKey=, description=", noteKey, description);
-        let modifiedNote = await this.dataSource.modifyNote({
-            key: noteKey, 
-            description: description	
-        });
-        
-        // console.log("handleChangeDescription modifiedNote=", modifiedNote);
-        this.setState((previousState) => {
-            if (previousState.detailsNote) {
-                let newState = {}
-                if (previousState.detailsNote && previousState.detailsNote.key == noteKey) {
-                    let note = JSON.parse(JSON.stringify(previousState.detailsNote));
-                    note.description = modifiedNote.description;
-                    newState.detailsNote = note;
-                }
-                newState.longOperationProcessing = false;
-                return newState;
-            }
-        });
 
     }
 
     async handleChangeTitle(noteKey, title) {
+        console.log("handleChangeTitle noteKey=, title=", noteKey, title);
+
         this.setState({
             longOperationProcessing: true,
         });
@@ -595,13 +623,6 @@ class App extends React.Component {
             return newState;
         }, () => {
             this.fancyTreeDomRef.current.setTitle(noteKey, title);
-        });
-    }
-
-    async saveTitle(noteKey, title) {
-        await this.dataSource.modifyNote({
-            key: noteKey, 
-            title: title	
         });
     }
 
@@ -1077,7 +1098,6 @@ class App extends React.Component {
                                         handleChangeDone={this.handleChangeDone} 
                                         handleChangeType={this.handleChangeType} 
                                         handleChangeTitle={this.handleChangeTitle}
-                                        saveTitle={this.saveTitle}
                                         
                                         handleChangeDescription={this.handleChangeDescription}
                                         handleChangePriority={this.handleChangePriority}

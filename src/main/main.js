@@ -19,6 +19,8 @@ try {
 // log.info("Start NOW-Note app...");
 
 
+
+
 const createWindow = () => {
     const mainWindow = new BrowserWindow({
       width: 1000,
@@ -163,7 +165,9 @@ const createWindow = () => {
   
 
 
-let n3 = {};
+let n3 = {
+  isDirty: true
+};
 
 app.whenReady().then(() => {
 
@@ -176,6 +180,14 @@ app.whenReady().then(() => {
     // log.debug("Start with default repository: ", n3.repository);
 
     let mainWindow = createWindow();
+
+    mainWindow.on('close', function(e){
+      log.info("On mainWindow.close, n3.isDirty=", n3.isDirty);
+      if (n3.isDirty) {
+        e.preventDefault();
+        n3.mainWindow.webContents.send('wantClose');
+      }
+    });
 
     // log.debug("mainWindow=", mainWindow);
   
@@ -210,12 +222,10 @@ app.on('window-all-closed', () => {
 });
 
 
-
 function openDefaultRepo(userDataPath, n3) {
   return new Promise(function(resolve, reject) {
 
-    // n3.userSettings = new nnUserSettings.UserSettings(userDataPath);
-    // log.info("initNowNoteApplication", userDataPath, n3);
+    log.info("initNowNoteApplication", userDataPath, n3);
     n3.userSettings.connectDefaultRepository().then(function(repository) {
       if (repository) {
         n3.repository = repository;
@@ -229,7 +239,16 @@ function openDefaultRepo(userDataPath, n3) {
 
 function initIpcMainHandle(ipcMain) {
 
-  ipcMain.handle("app:chooseRepositoryFolder", function() {
+  ipcMain.handle("app:setDirty", function(event, dirty) {
+    log.info("app:setDirty, dirty=", dirty);
+    n3.isDirty = dirty;
+  });
+
+  ipcMain.handle("app:quit", function(event) {
+    app.quit();
+  });
+
+  ipcMain.handle("app:chooseRepositoryFolder", function(event) {
 
     return new Promise(function(resolve, err) {
       let options = {
@@ -304,11 +323,11 @@ function initIpcMainHandle(ipcMain) {
     }
   });
 
-  ipcMain.handle("app:isRepositoryInitialized", function() {
+  ipcMain.handle("app:isRepositoryInitialized", function(event) {
     return n3.repository !== undefined;
   });
 
-  ipcMain.handle("app:getRepositories", function() {
+  ipcMain.handle("app:getRepositories", function(event) {
     if (n3.userSettings) {
       return n3.userSettings.getRepositories().then(function(repositories) {
         return repositories;
@@ -319,17 +338,8 @@ function initIpcMainHandle(ipcMain) {
     return [];
   });
 
-  ipcMain.handle("app:getRepository", function() {
+  ipcMain.handle("app:getRepository", function(event) {
     return n3.repository.getRepository(app.getVersion());
-  });
-
-  ipcMain.handle("app:shutdown", function() {
-    // log.info("Want to shutdown NOW-Note app - close storage first");
-    return n3.repository.closeRepository().then(function() {
-      // log.info("Shutdown NOW-Note app...");
-      mainWindow.destroy();
-      return Promise.resolve();
-    });
   });
   
   ipcMain.handle("store:getChildren", function(event, key, trash) {
@@ -343,6 +353,8 @@ function initIpcMainHandle(ipcMain) {
   });
 
   ipcMain.handle("store:modifyNote", function(event, note) {
+    log.info("store:modifyNote", note, n3.repository);
+
     return n3.repository.modifyNote(note);
   });
 
@@ -357,10 +369,6 @@ function initIpcMainHandle(ipcMain) {
   ipcMain.handle("store:findTag", function(event, tag) {
     return n3.repository.findTag(tag);
   });
-
-  // ipcMain.handle("store:addAsset", function(event, fileType, fileName, filePathOrBase64, fileTransferType) {
-  //   return n3.repository.addAsset(fileType, fileName, filePathOrBase64, fileTransferType);
-  // });
 
   ipcMain.handle("store:addFile", function(event, parentKey, path, hitMode, relativeToKey) {
     return n3.repository.addFile(parentKey, path, hitMode, relativeToKey);
