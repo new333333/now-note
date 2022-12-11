@@ -71,11 +71,14 @@ class RepositorySQLite  {
 
 	async setRepositorySettings(newSettings) {
         let settings = await this.getRepositorySettings();
-		// log.info("setRepositorySettings settings=", settings);
 
         settings = {...settings, ...newSettings};
 
-		// log.info("setRepositorySettings merged settings=", settings);
+		delete settings.filterOnlyNotes;
+        delete settings.filterOnlyNotes;
+        delete settings.filterOnlyTasks;
+        delete settings.filterOnlyDone;
+        delete settings.filterOnlyNotDone;
 
 		let settingsFilePath = path.join(this.directory, this.#settingsFileName);
         await fs.writeFile(settingsFilePath, JSON.stringify(settings, null, 2));
