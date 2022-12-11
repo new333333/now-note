@@ -12,6 +12,7 @@
 - save and load current open state
 - save and load last opened repository
 - save changes before quite app
+- tree icon changed
 
 
 ## 0.0.9-alpha
