@@ -8,6 +8,9 @@ const nnUserSettings = require('./now-note/user-settings');
 const nnRepositoryFactory = require('./now-note/repository-factory');
 const os = require ('os');
 
+// Optional, initialize the logger for any renderer processses
+//log.initialize({ preload: true });
+//log.info('Log from the main process initialized');
 
 try {
   require('electron-reloader')(module)
@@ -170,11 +173,11 @@ app.whenReady().then(() => {
 
   openDefaultRepo(userDataPath, n3).then(function() {
 
-    log.debug("Start with default repository: ", n3.repository);
+    // log.debug("Start with default repository: ", n3.repository);
 
     let mainWindow = createWindow();
 
-    log.debug("mainWindow=", mainWindow);
+    // log.debug("mainWindow=", mainWindow);
   
     n3.mainWindow = mainWindow;
   
@@ -186,16 +189,16 @@ app.whenReady().then(() => {
     //   mainWindow.setTitle("Some custom title....");
     // });
 
-    log.debug("Menu ready");
+    // log.debug("Menu ready");
   
     app.on('activate', () => {
       if (BrowserWindow.getAllWindows().length === 0) createWindow()
     });
   
-    log.debug("initIpcMainHandle now");
+    // log.debug("initIpcMainHandle now");
     initIpcMainHandle(ipcMain);
 
-    log.debug("initIpcMainHandle ready");
+    // log.debug("initIpcMainHandle ready");
   });
 
 
@@ -212,7 +215,7 @@ function openDefaultRepo(userDataPath, n3) {
   return new Promise(function(resolve, reject) {
 
     // n3.userSettings = new nnUserSettings.UserSettings(userDataPath);
-    log.info("initNowNoteApplication", userDataPath, n3);
+    // log.info("initNowNoteApplication", userDataPath, n3);
     n3.userSettings.connectDefaultRepository().then(function(repository) {
       if (repository) {
         n3.repository = repository;
@@ -238,16 +241,16 @@ function initIpcMainHandle(ipcMain) {
       }
 
       let choosedFolders = dialog.showOpenDialogSync(options);
-      log.debug("showOpenDialogSync", choosedFolders);
+      // log.debug("showOpenDialogSync", choosedFolders);
 
       if (choosedFolders) {
 
         let repositoryFolder = choosedFolders[0];
-        log.debug("showOpenDialogSync path", repositoryFolder);
+        // log.debug("showOpenDialogSync path", repositoryFolder);
 
         n3.userSettings.addRepository("NOW NOte Repository", repositoryFolder, nnRepositoryFactory.SQLITE3_TYPE).then(function() {
           n3.userSettings.save().then(function() {
-            log.debug("Default user settings saved.");
+            // log.debug("Default user settings saved.");
             n3.userSettings.connectRepository(repositoryFolder).then(function(repository) {
               n3.repository = repository;
               resolve(true);
@@ -295,7 +298,7 @@ function initIpcMainHandle(ipcMain) {
     // log.info("app:closeRepository");
     if (n3.repository) {
       return n3.repository.closeRepository().then(function() {
-        log.info("closeRepository done");
+        // log.info("closeRepository done");
         n3.repository = undefined;
       });
     }
@@ -321,9 +324,9 @@ function initIpcMainHandle(ipcMain) {
   });
 
   ipcMain.handle("app:shutdown", function() {
-    log.info("Want to shutdown NOW-Note app - close storage first");
+    // log.info("Want to shutdown NOW-Note app - close storage first");
     return n3.repository.closeRepository().then(function() {
-      log.info("Shutdown NOW-Note app...");
+      // log.info("Shutdown NOW-Note app...");
       mainWindow.destroy();
       return Promise.resolve();
     });
@@ -364,7 +367,7 @@ function initIpcMainHandle(ipcMain) {
   });
 
   ipcMain.handle("store:moveNote", function(event, key, from, to, hitMode, relativTo) {
-    log.debug("store:moveNote", key, from, to, hitMode, relativTo);
+    // log.debug("store:moveNote", key, from, to, hitMode, relativTo);
     return n3.repository.moveNote(key, from, to, hitMode, relativTo);
   });
 
@@ -411,14 +414,14 @@ function initIpcMainHandle(ipcMain) {
   });
 
   ipcMain.handle('download-attachment',  function(event, url) {
-    log.debug('download-attachment', url);  
+    // log.debug('download-attachment', url);  
 
     // file:////e:\...
     let filePath = url.substring(8);
     let fileName = path.basename(filePath);
-    log.debug('download-attachment fileName', fileName);  
+    // log.debug('download-attachment fileName', fileName);  
 
-    log.debug('download-attachment filePath', filePath);  
+    // log.debug('download-attachment filePath', filePath);  
 
     let options = {
       //Placeholder 1
@@ -433,17 +436,17 @@ function initIpcMainHandle(ipcMain) {
     }
 
     dialog.showSaveDialog(mainWindow, options).then(function(saveObj) {
-      log.debug("showSaveDialog", saveObj);
+      // log.debug("showSaveDialog", saveObj);
 
       if (!saveObj.canceled && saveObj.filePath) {
         fs.copyFile(filePath, saveObj.filePath).then(function() {
-          log.debug("showSaveDialog ready");
+          // log.debug("showSaveDialog ready");
         });
       }
     });
 
   });
 
-  log.debug("initIpcMainHandle end...");
+  // log.debug("initIpcMainHandle end...");
 
 }
