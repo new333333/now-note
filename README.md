@@ -1,6 +1,6 @@
 # NOW Note
 
-- Open source
+- Open source and free
 - tree structured
 - locally stored
 - offline only
