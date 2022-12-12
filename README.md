@@ -1,6 +1,6 @@
 # NOW Note
 
-- tree sttructured
+- tree structured
 - offline only
 - full text search
 - paste files and images
