@@ -1,10 +1,12 @@
 # NOW Note
 
+- Open source
 - tree structured
+- locally stored
 - offline only
 - full text search
 - paste files and images
-
+- HTML Notes
 
 ## Screenshots
 
