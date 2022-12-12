@@ -2,6 +2,9 @@
 
 - tree sttructured
 - offline only
+- full text search
+- paste files and images
+
 
 ## Screenshots
 
