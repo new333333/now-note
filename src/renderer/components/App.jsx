@@ -1,9 +1,6 @@
 import React from 'react';
-import { ApartmentOutlined, UserOutlined , BarsOutlin1ed, NodeExpandOutlined, PlusOutlined, ThunderboltFilled, RetweetOutlined } from '@ant-design/icons';
-import { Input, Space, Button, List, Modal, Alert, message, Spin, Menu } from 'antd';
-import {DeleteFilled } from '@ant-design/icons';
-
-const { Search } = Input;
+import { PlusOutlined, DeleteFilled } from '@ant-design/icons';
+import { ConfigProvider, Space, Button, List, Modal, Alert, message, Spin, Drawer } from 'antd';
 
 import {
     ReflexContainer,
@@ -57,6 +54,7 @@ class App extends React.Component {
             },
 
             showDeleteNoteConfirmationModal: false,
+            openHistory: false,
         };
         this.loadTree = this.loadTree.bind(this);
         
@@ -87,6 +85,7 @@ class App extends React.Component {
         this.saveRepositorySettings = this.saveRepositorySettings.bind(this);
         this.changeRepository = this.changeRepository.bind(this);
         this.treeIsInitialized = this.treeIsInitialized.bind(this);
+        this.showHistory = this.showHistory.bind(this);
 
         this.fancyTreeDomRef = React.createRef();
         this.simpleListDomRef = React.createRef();
@@ -117,7 +116,9 @@ class App extends React.Component {
 
     async beforeQuiteApp() {
         console.log("beforeQuiteApp");
-        await this.noteDomRef.current.saveChanges();
+        if (this.noteDomRef.current) {
+            await this.noteDomRef.current.saveChanges();
+        }
         console.log("closeRepository");
         await this.dataSource.closeRepository();
     }
@@ -947,19 +948,43 @@ class App extends React.Component {
         });
     }
 
+    async showHistory() {
+        console.log("showHistory now");
+
+        this.setState({
+            openHistory: true
+        });
+    }
+
   
 
     render() {
 
 
         // console.log("App render start");
-        // console.log("App render this.state.repositories=", this.state.repositories);
-        // console.log("App render this.state.isRepositoryInitialized=", this.state.isRepositoryInitialized);
+        console.log("App render this.state.openHistory=", this.state.openHistory);
         
 
         return (
 
+            <ConfigProvider
+            theme={{
+              token: {
+                colorPrimary: '#00b96b',
+              },
+            }}
+          >
+
+<Drawer getContainer={false} title="Basic Drawer" placement="right" visible={this.state.openHistory}>
+                            <p>Some contents...</p>
+                            <p>Some contents...</p>
+                            <p>Some contents...</p>
+                        </Drawer>
+
             <Spin wrapperClassName="nn-spin-full-screen" spinning={this.state.longOperationProcessing}>
+
+
+
                 {
                 
                     !this.state.isRepositoryInitialized ? 
@@ -1112,6 +1137,7 @@ class App extends React.Component {
                                         openNoteInList={this.openNoteInList}
                                         delete={this.delete}
                                         restore={this.restore}
+                                        showHistory={this.showHistory}
                                     />
                                 </div>
                             </ReflexElement>
@@ -1148,6 +1174,8 @@ class App extends React.Component {
                         </ReflexContainer>
 
                         <Footer repository={this.state.repository} changeRepository={this.changeRepository}/>
+
+
                     </>
                 }
 
@@ -1164,7 +1192,9 @@ class App extends React.Component {
                     <Alert message="It can not be recover anymore!" type="warning" />
                     <p>The files and images will be NOT removed.</p>
                 </Modal>
+
             </Spin>
+            </ConfigProvider>
         )
     }
 }

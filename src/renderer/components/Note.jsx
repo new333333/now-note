@@ -1,6 +1,6 @@
 import React from 'react';
 import { Dropdown, Menu, Divider, Checkbox, Tooltip, Collapse, Typography, Button } from 'antd';
-import Icon, { UnorderedListOutlined, PlusOutlined, DeleteFilled, EllipsisOutlined, ApartmentOutlined } from '@ant-design/icons';
+import Icon, { HistoryOutlined, UnorderedListOutlined, PlusOutlined, DeleteFilled, EllipsisOutlined, ApartmentOutlined } from '@ant-design/icons';
 import {NotePriority} from './NotePriority.jsx';
 import {NoteBacklinks} from './NoteBacklinks.jsx';
 import {NoteTags} from './NoteTags.jsx';
@@ -250,10 +250,16 @@ class Note extends React.Component {
             this.delete(this.props.note.key);
         } else if (event.key == "restore") {
             this.props.restore(this.props.note.key);
+        } else if (event.key == "history") {
+            this.props.showHistory(this.props.note.key);
         }
+
+        
     }
 
     render() {
+
+        console.log(this.props.note);
 
         let noteMenu = undefined;
         if (this.props.note) {
@@ -287,6 +293,32 @@ class Note extends React.Component {
                 });
             }
 
+            /*
+            noteMenuItems.push({
+                key: 'history',
+                label: "History",
+                icon: <HistoryOutlined />,
+            });
+            */
+           
+            noteMenuItems.push({
+                type: 'divider'
+            });
+            
+
+            noteMenuItems.push({
+                key: 'metadata',
+                disabled: true,
+                label: <>
+                        <div className="nn-note-metadata">Last modified: {this.props.note.updatedAt.toLocaleString()}</div> 
+                        <div className="nn-note-metadata">Created on: {this.props.note.createdAt.toLocaleString()}</div>
+                        <div className="nn-note-metadata">Created by: {this.props.note.createdBy}</div> 
+                        <div className="nn-note-metadata">Id: {this.props.note.key}</div> 
+                        </>,
+            });
+
+
+
             noteMenu = (
                 <Menu
                     onClick={(event)=> this.handleNoteMenu(event)}
@@ -294,6 +326,8 @@ class Note extends React.Component {
                 />
             );
         }
+
+       
 
         if (this.tinyMCEDomRef.current && this.props.note) {
             this.tinyMCEDomRef.current.setContent(this.props.note.description);
