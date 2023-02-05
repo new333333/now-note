@@ -1,6 +1,6 @@
 {
   "name": "now-note",
-  "version": "0.0.10-alpha",
+  "version": "0.0.11-alpha",
   "description": "Notes and tasks",
   "main": ".webpack/main",
   "scripts": {
@@ -43,9 +43,9 @@
     "style-loader": "^3.3.1"
   },
   "dependencies": {
-    "@ant-design/icons": "^4.7.0",
+    "@ant-design/icons": "^4.8.0",
     "@tinymce/tinymce-react": "^4.2.0",
-    "antd": "^4.22.8",
+    "antd": "^5.0.6",
     "cheerio": "^1.0.0-rc.12",
     "date-fns": "^2.29.3",
     "dayjs": "^1.11.5",

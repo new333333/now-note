@@ -1,6 +1,19 @@
 # Changelog
 
 
+## 0.0.12-alpha
+
+- show history
+
+
+## 0.0.11-alpha
+
+- display metadata
+- fixed start app without settings
+- added local folder settings
+- update to Ant Design 5.0
+
+
 ## 0.0.10-alpha
 
 - editor CSS changed
