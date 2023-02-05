@@ -1904,6 +1904,8 @@ class RepositorySQLite  {
 			title: note.title,
 			type: note.type,
 			createdBy: note.createdBy,
+			createdAt: note.createdAt,
+			updatedAt: note.updatedAt,
 			done: note.done,
 			priority: note.priority,
 			expanded: note.expanded,
