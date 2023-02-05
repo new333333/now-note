@@ -28,6 +28,7 @@ const createWindow = () => {
       webPreferences: {
         preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY,
       },
+      // icon: '../build/icon.ico',
       //frame: false,
       //titleBarStyle: 'hidden',
     });
@@ -171,9 +172,12 @@ let n3 = {
 
 app.whenReady().then(() => {
 
+  let workingPath = process.cwd();
+  log.debug("workingPathPrc: ", workingPath);
+
   let userDataPath = app.getPath("userData");
   const username = os.userInfo().username;
-  n3.userSettings = new nnUserSettings.UserSettings(userDataPath, os.userInfo().username);
+  n3.userSettings = new nnUserSettings.UserSettings(workingPath, userDataPath, os.userInfo().username);
 
   openDefaultRepo(userDataPath, n3).then(function() {
 
@@ -267,7 +271,7 @@ function initIpcMainHandle(ipcMain) {
         let repositoryFolder = choosedFolders[0];
         // log.debug("showOpenDialogSync path", repositoryFolder);
 
-        n3.userSettings.addRepository("NOW NOte Repository", repositoryFolder, nnRepositoryFactory.SQLITE3_TYPE).then(function() {
+        n3.userSettings.addRepository("NOW Note Repository", repositoryFolder, nnRepositoryFactory.SQLITE3_TYPE).then(function() {
           n3.userSettings.save().then(function() {
             // log.debug("Default user settings saved.");
             n3.userSettings.connectRepository(repositoryFolder).then(function(repository) {

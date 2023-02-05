@@ -1,20 +1,35 @@
 const log = require('electron-log');
+const fss = require('fs');
 const fs = require('fs').promises;
 const path = require('path');
 const nnRepositoryFactory = require('./repository-factory');
 
 class UserSettings {
 
-    #fileName = "userSettings.json";
+    #settingsFileName = "userSettings.json";
 
-    constructor(userDataPath, userName) {
+    constructor(workingPath, userDataPath, userName) {
+        this.workingPath = workingPath;
         this.userDataPath = userDataPath;
         // log..info("UserSettings.constructor userName", userName);
         this.userName = userName;
     }
 
     #getFilePath() {
-        return path.join(this.userDataPath, this.#fileName);
+        if (this.filePath) {
+            return this.filePath;
+        } else {
+
+            if (fss.existsSync(path.join(this.workingPath, this.#settingsFileName))) {
+                this.filePath = path.join(this.workingPath, this.#settingsFileName);
+            } else {
+                this.filePath = path.join(this.userDataPath, this.#settingsFileName);
+            }
+
+
+        }
+        log.info("UserSettings. #getFilePath, this.filePath", this.filePath);
+        return this.filePath;
     }
 
     async getRepositories() {
@@ -58,16 +73,12 @@ class UserSettings {
     async #load() {
         try {
             this.settings = await fs.readFile(this.#getFilePath(), "utf-8");
+            this.settings = JSON.parse(this.settings);
         } catch (error) {
+            log.warn(error);
             this.settings = this.settings || {};
             this.settings.repositories = this.settings.repositories || [];
-            if (error.code === 'ENOENT') {
-                throw new UserSettingsNoFoundError(error);
-            } else {
-                throw new UserSettingsUnknownError(error);
-            }
         }
-        this.settings = JSON.parse(this.settings);
     }
 
     async save() {
@@ -111,28 +122,6 @@ class UserSettings {
 
 }
 
-class UserSettingsUnknownError extends Error {
-
-    constructor(error) {
-        super("Unknown error: " + error.message);
-        this.error = error;
-        this.name = 'UserSettingsUnknownError';
-    }
-
-}
-
-class UserSettingsNoFoundError extends Error {
-
-    constructor(error) {
-        super(`User setting doesn't exists ("${error}".`);
-        this.error = error;
-        this.name = 'UserSettingsNoFoundError';
-    }
-
-}
-
 module.exports = {
     UserSettings : UserSettings,
-    UserSettingsNoFoundError : UserSettingsNoFoundError,
-    UserSettingsUnknownError: UserSettingsUnknownError
 }

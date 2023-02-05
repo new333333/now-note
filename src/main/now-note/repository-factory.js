@@ -28,7 +28,7 @@ class RepositoryFactory {
 
     async connectDefaultRepository() {
         if (!this.repositories) {
-            throw new Error("No repositories defined.");
+            return undefined;
         }
 
         // log.info("connectDefaultRepository, this.repositories=", this.repositories);
@@ -47,7 +47,7 @@ class RepositoryFactory {
         // log.info("connectDefaultRepository, defaultRepository=, nicht gefunden?=", defaultRepository, !defaultRepository );
 
         if (!defaultRepository) {
-            throw new Error("No default repository found.");
+            return undefined;
         }
 
         return this.connectRepository(defaultRepository);
