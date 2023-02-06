@@ -247,14 +247,14 @@ class NotesList extends React.Component {
                                     scrollableTarget="nn-nodes-list"
                                 >
                                     <List
-                                        header={<Text strong>Found {this.props.note.filteredSiblingsMaxResults} Notes</Text>}
+                                        header={<Text strong>{this.props.note.filteredSiblingsMaxResults}. { this.props.note.filteredSiblingsMaxResults == 1 && <>Note</> }{ this.props.note.filteredSiblingsMaxResults != 1 && <>Notes</> }</Text>}
                                         locale={{emptyText: "No Children Notes"}}
                                         bordered
                                         size="small"
                                         dataSource={this.props.note.filteredSiblings}
                                         renderItem={(note, index) => (
                                             <List.Item 
-                                                
+                                            size="small"
                                             >
                                                 <List.Item.Meta
                                                     title={
