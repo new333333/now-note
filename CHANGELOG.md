@@ -7,6 +7,7 @@
 - change some labels 
 - layout fixed (scrollbar in window)
 - fix drop on itself
+- delay spin
 
 ## 0.0.11-alpha
 
