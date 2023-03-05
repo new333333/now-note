@@ -4,7 +4,9 @@
 ## 0.0.12-alpha
 
 - show history
-
+- change some labels 
+- layout fixed (scrollbar in window)
+- fix drop on itself
 
 ## 0.0.11-alpha
 
@@ -39,7 +41,7 @@
 - initialize repository refactored
 - opening notes changes
 - new color schema
-- use Less CSS
+- use Less  CSS
 
 
 ## 0.0.7-alpha

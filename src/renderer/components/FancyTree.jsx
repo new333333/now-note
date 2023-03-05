@@ -296,8 +296,8 @@ class FancyTree extends React.Component {
 					if (!self.props.trash) {
 						menu["add"] = { "name": "Add" };
 					}
-					menu["open"] = { "name": "Open Details" };
-					menu["openlist"] = { "name": "Open List" };
+					menu["open"] = { "name": "Show Note" };
+					menu["openlist"] = { "name": "List sub notes" };
 					menu["delete"] = { "name": self.props.trash ? "Delete Permanently" : "Move To Trash" };
 					if (self.props.trash) {
 						menu["restore"] = { "name": "Restore" };
@@ -414,11 +414,25 @@ class FancyTree extends React.Component {
 						
 						// hitMode === "after" || hitMode === "before" || hitMode === "over"
 						console.log("data.hitMode", data.hitMode);
+
+
+						var key = data.otherNode.key;
+						var from = oldParentNote.key;
+						var to = data.hitMode === "over" ? node.key : node.parent.key;
+
+						console.log("key", key);
+						console.log("from", from);
+						console.log("to", to);
+
+						// drop on itself
+						if (key != to) {
 						
-						self.props.dataSource.moveNote(data.otherNode.key, oldParentNote.key, data.hitMode === "over" ? node.key : node.parent.key, data.hitMode, node.key).then(function() {
-							console.log("moveNote done");
-							data.otherNode.moveTo(node, data.hitMode);
-						});
+							self.props.dataSource.moveNote(key, from, to, data.hitMode, node.key).then(function() {
+								console.log("moveNote done");
+								data.otherNode.moveTo(node, data.hitMode);
+							});
+
+						}
 						
 						data.tree.render(true, false);
 					} else if (data.files.length) {

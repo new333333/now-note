@@ -1,13 +1,14 @@
 import React from 'react';
-import { Dropdown, Menu, Divider, Checkbox, Tooltip, Collapse, Typography, Button } from 'antd';
-import Icon, { HistoryOutlined, UnorderedListOutlined, PlusOutlined, DeleteFilled, EllipsisOutlined, ApartmentOutlined } from '@ant-design/icons';
+import {Dropdown, Menu, Divider, Checkbox, Tooltip, Collapse, Typography, Button} from 'antd';
+import Icon, {HistoryOutlined, UnorderedListOutlined, PlusOutlined, DeleteFilled, EllipsisOutlined, ApartmentOutlined} from '@ant-design/icons';
 import {NotePriority} from './NotePriority.jsx';
 import {NoteBacklinks} from './NoteBacklinks.jsx';
 import {NoteTags} from './NoteTags.jsx';
-import { Editor } from '@tinymce/tinymce-react';
+import {Editor} from '@tinymce/tinymce-react';
 import {NoteBreadCrumbCollapse} from './NoteBreadCrumbCollapse.jsx';
-const { Panel } = Collapse;
-const { Text, Link, Paragraph } = Typography;
+import {SearchNotes} from './SearchNotes.jsx';
+const {Panel} = Collapse;
+const {Text, Link, Paragraph} = Typography;
 
 
 import tinymce from 'tinymce/tinymce';
@@ -273,12 +274,12 @@ class Note extends React.Component {
             }
             noteMenuItems.push({
                 key: 'open_tree',
-                label: "Open tree",
+                label: "Focus in tree",
                 icon: <ApartmentOutlined />,
             });
             noteMenuItems.push({
                 key: 'open_list',
-                label: "Open as list",
+                label: "List sub notes",
                 icon: <UnorderedListOutlined />,
             });
             noteMenuItems.push({

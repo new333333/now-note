@@ -247,7 +247,7 @@ class NotesList extends React.Component {
                                     scrollableTarget="nn-nodes-list"
                                 >
                                     <List
-                                        header={<Text strong>{this.props.note.filteredSiblingsMaxResults}. { this.props.note.filteredSiblingsMaxResults == 1 && <>Note</> }{ this.props.note.filteredSiblingsMaxResults != 1 && <>Notes</> }</Text>}
+                                        header={<Text strong>{this.props.note.filteredSiblingsMaxResults} { this.props.note.filteredSiblingsMaxResults == 1 && <>Note</> }{ this.props.note.filteredSiblingsMaxResults != 1 && <>Notes</> }</Text>}
                                         locale={{emptyText: "No Children Notes"}}
                                         bordered
                                         size="small"
@@ -265,23 +265,24 @@ class NotesList extends React.Component {
                                                         </div>
                                                         }
                                                     description={
-                                                        <>
-                                                            <div>
-                                                                <Space>
-                                                                    <Text strong type="secondary" style={{paddingRight: "3px"}}>{index + 1}.</Text>
-                                                                    {
-                                                                        note.type == "task" &&
-                                                                            <Checkbox 
-                                                                                disabled={this.props.trash} 
-                                                                                checked={note.done} 
-                                                                                onChange={(event)=> this.handleChangeDone(note.key, event)} />
-                                                                    }
-                                                                    {/*<Dropdown overlay={noteMenu} trigger={['contextMenu']}>*/}
-                                                                        <Link style={{color: "rgba(0, 0, 0, 0.85)"}} strong onClick={(event)=> this.props.openNoteInTreeAndDetails(note.key)}>
+                                                        <div style={{overflow: "hidden"}}>
+                                                            <div style={{whiteSpace: "nowrap"}}>
+                                                                <Text strong type="secondary" style={{paddingRight: "5px"}}>{index + 1}.</Text>
+                                                                {
+                                                                    note.type == "task" &&
+                                                                        <Checkbox 
+                                                                            style={{paddingRight: "5px"}}
+                                                                            disabled={this.props.trash} 
+                                                                            checked={note.done} 
+                                                                            onChange={(event)=> this.handleChangeDone(note.key, event)} />
+                                                                }
+                                                                {/*<Dropdown overlay={noteMenu} trigger={['contextMenu']}>*/}
+                                                                    <Tooltip title={note.title}>
+                                                                        <Link style={{color: "rgba(0, 0, 0, 0.85)", overflow: "hidden", whiteSpace: "nowrap"}} strong onClick={(event)=> this.props.openNoteInTreeAndDetails(note.key)}>
                                                                             {note.title}
                                                                         </Link>
-                                                                    {/*</Dropdown>*/}
-                                                                </Space>
+                                                                    </Tooltip>
+                                                                {/*</Dropdown>*/}
                                                             </div>
                                                             <span style={{marginRight: "5px", fontWeight: "bold"}}>
                                                                 {
@@ -313,7 +314,7 @@ class NotesList extends React.Component {
                                                                     />
                                                                 }
                                                             </span>
-                                                        </>
+                                                        </div>
                                                     }
                                                 />
                                             </List.Item>

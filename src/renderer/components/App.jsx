@@ -1138,6 +1138,8 @@ class App extends React.Component {
                                         delete={this.delete}
                                         restore={this.restore}
                                         showHistory={this.showHistory}
+
+                                        trash={this.state.trash}
                                     />
                                 </div>
                             </ReflexElement>
