@@ -981,7 +981,7 @@ class App extends React.Component {
                             <p>Some contents...</p>
                         </Drawer>
 
-            <Spin wrapperClassName="nn-spin-full-screen" spinning={this.state.longOperationProcessing}>
+            <Spin wrapperClassName="nn-spin-full-screen" delay={1000} spinning={this.state.longOperationProcessing}>
 
 
 
