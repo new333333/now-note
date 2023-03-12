@@ -11,7 +11,10 @@
 - update Dropdown to Ant 
 - add note: set focus on title
 - prevent update old description for a short time
+- prevent update old title for a short time
 - ctrl-s saves title
+- ctrl-s saves description
+
 
 ## 0.0.11-alpha
 

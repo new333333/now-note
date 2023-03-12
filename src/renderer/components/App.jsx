@@ -585,49 +585,61 @@ class App extends React.Component {
                 });
             });
         });
-
-
     }
 
     async handleChangeTitle(noteKey, title) {
         console.log("handleChangeTitle noteKey=, title=", noteKey, title);
 
-        this.setState({
-            longOperationProcessing: true,
-        });
-
-        this.dataSource.modifyNote({
-            key: noteKey, 
-            title: title	
-        });
-
         title = title.replaceAll("/", "");
-        this.setState((previousState) => {
-            let newState = {}
 
-            if (previousState.detailsNote) {
-                if (previousState.detailsNote && previousState.detailsNote.key == noteKey) {
-                    let note = JSON.parse(JSON.stringify(previousState.detailsNote));
-                    note.title = title;
-                    if (note.parents) {
-                        note.parents[note.parents.length - 1].title = title;
-                    }
-                    newState.detailsNote = note;
+        let self = this;
+        return new Promise(function(resolve, reject) {
+
+            self.setState((previousState) => {
+                let note = JSON.parse(JSON.stringify(previousState.detailsNote));
+                note.title = title;
+                return {
+                    longOperationProcessing: true,
+                    // prevents update old title for a short time
+                    detailsNote: note
                 }
-            }
-
-            if (previousState.listParentNote) {
-                newState.listParentNote = JSON.parse(JSON.stringify(previousState.listParentNote));
-                newState.listParentNote.filteredSiblings.forEach((note) => {
-                    if (note.key === noteKey) {
-                        note.title = title;
-                    }
+            }, () => {
+                console.log("handleChangeTitle save now");
+                self.dataSource.modifyNote({
+                    key: noteKey, 
+                    title: title	
+                }).then(function(modifiedNote) {
+                    console.log("handleChangeTitle modifiedNote=", modifiedNote);
+                    self.setState((previousState) => {
+                        if (previousState.detailsNote) {
+                            let newState = {}
+                            if (previousState.detailsNote && previousState.detailsNote.key == noteKey) {
+                                let note = JSON.parse(JSON.stringify(previousState.detailsNote));
+                                note.title = modifiedNote.title;
+                                if (note.parents) {
+                                    note.parents[note.parents.length - 1].title = title;
+                                }
+                                newState.detailsNote = note;
+                            }
+                            console.log("handleChangeTitle listParentNote");
+                            if (previousState.listParentNote) {
+                                newState.listParentNote = JSON.parse(JSON.stringify(previousState.listParentNote));
+                                newState.listParentNote.filteredSiblings.forEach((note) => {
+                                    if (note.key === noteKey) {
+                                        note.title = title;
+                                    }
+                                });
+                            }
+                            console.log("handleChangeTitle listParentNote done");
+                            newState.longOperationProcessing = false;
+                            return newState;
+                        }
+                    }, () => {
+                        self.fancyTreeDomRef.current.setTitle(noteKey, title);
+                        resolve();
+                    });
                 });
-            }
-            newState.longOperationProcessing = false;
-            return newState;
-        }, () => {
-            this.fancyTreeDomRef.current.setTitle(noteKey, title);
+            });
         });
     }
 
