@@ -357,6 +357,8 @@ function initIpcMainHandle(ipcMain) {
   });
 
   ipcMain.handle("store:modifyNote", function(event, note) {
+    log.info("store:modifyNote", note, n3.repository);
+
     return n3.repository.modifyNote(note);
   });
 
