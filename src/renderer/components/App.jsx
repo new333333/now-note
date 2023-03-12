@@ -114,6 +114,7 @@ class App extends React.Component {
         // console.log("App ready");
     }
 
+
     async beforeQuiteApp() {
         console.log("beforeQuiteApp");
         if (this.noteDomRef.current) {
@@ -345,7 +346,6 @@ class App extends React.Component {
 
 
     async openNoteDetails(key, editableTitle) {
-        console.log("openNoteDetails, key=, editableTitle=", key, editableTitle);
         if (this.state.detailsNote != undefined && key == this.state.detailsNote.key) {
             return;
         }
@@ -403,8 +403,6 @@ class App extends React.Component {
     }
 
     async openNoteInTreeAndDetails(key, editableTitle) {
-        console.log("openNoteInTreeAndDetails key=, editableTitle=", key, editableTitle);
-
         await this.openNoteInTree(key);
         await this.openNoteDetails(key, editableTitle);
     }
@@ -506,7 +504,7 @@ class App extends React.Component {
         let dones = [];
         if (!this.state.repositorySettings.filter.onlyDone && !this.state.repositorySettings.filter.onlyNotDone) {
             dones.push(0);
-            dones.push(1);setState
+            dones.push(1);
         } else if (this.state.repositorySettings.filter.onlyDone) {
             dones.push(1);
         } else if (this.state.repositorySettings.filter.onlyNotDone) {
@@ -553,19 +551,23 @@ class App extends React.Component {
 
 
     async handleChangeDescription(noteKey, description) {
-        console.log("handleChangeDescription noteKey=, description=", noteKey, description);
-
         let self = this;
         return new Promise(function(resolve, reject) {
 
-            self.setState({
-                longOperationProcessing: true,
+            self.setState((previousState) => {
+                let note = JSON.parse(JSON.stringify(previousState.detailsNote));
+                note.description = description;
+                return {
+                    longOperationProcessing: true,
+                    // prevents update old description for a short time
+                    detailsNote: note
+                }
             }, () => {
                 self.dataSource.modifyNote({
                     key: noteKey, 
                     description: description	
                 }).then(function(modifiedNote) {
-                    // console.log("handleChangeDescription modifiedNote=", modifiedNote);
+                    console.log("handleChangeDescription modifiedNote=", modifiedNote);
                     self.setState((previousState) => {
                         if (previousState.detailsNote) {
                             let newState = {}

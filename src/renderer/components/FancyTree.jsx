@@ -163,9 +163,7 @@ class FancyTree extends React.Component {
 	async openNotes(parents) {
 		let noteToOpen = parents.shift();
 
-		console.log("openNotes, noteToOpen.key=", noteToOpen.key);
 		let node = this.fancytree.getNodeByKey(noteToOpen.key);
-		console.log("openNotes, node=", node);
 
 		await node.load();
 

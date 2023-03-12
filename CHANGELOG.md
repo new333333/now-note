@@ -10,7 +10,8 @@
 - delay spin
 - update Dropdown to Ant 
 - add note: set focus on title
- 
+- prevent update old description for a short time
+- ctrl-s saves title
 
 ## 0.0.11-alpha
 

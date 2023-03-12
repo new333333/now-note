@@ -5,6 +5,7 @@ import Icon, {HistoryOutlined, UnorderedListOutlined, PlusOutlined, DeleteFilled
 import {NotePriority} from './NotePriority.jsx';
 import {NoteBacklinks} from './NoteBacklinks.jsx';
 import {NoteTags} from './NoteTags.jsx';
+import {NoteTitle} from './NoteTitle.jsx';
 import {Editor} from '@tinymce/tinymce-react';
 import {NoteBreadCrumbCollapse} from './NoteBreadCrumbCollapse.jsx';
 import {SearchNotes} from './SearchNotes.jsx';
@@ -61,9 +62,7 @@ class Note extends React.Component {
         super(props);
         
         this.tinyMCEDomRef = React.createRef();
-        this.titleDomRef = React.createRef();
 
-        this.handleChangeTitle = this.handleChangeTitle.bind(this);
         this.handleChangeType = this.handleChangeType.bind(this);
         this.handleNoteMenu = this.handleNoteMenu.bind(this);
 
@@ -71,19 +70,6 @@ class Note extends React.Component {
         this.onClickEditor = this.onClickEditor.bind(this);
         this.setupTinyMce = this.setupTinyMce.bind(this);
     }
-
-    componentDidMount() {
-
-    }
-
-    
-    componentDidUpdate(prevProps, prevState) {
-        console.log("componentDidUpdate editableTitle=", this.props.editableTitle);
-        if (this.titleDomRef.current && this.props.editableTitle) {
-            this.titleDomRef.current.focus();
-        }
-    }
-
 
     async saveChanges() {
         if (this.tinyMCEDomRef.current && this.tinyMCEDomRef.current.isDirty()) {
@@ -103,20 +89,13 @@ class Note extends React.Component {
         this.props.handleChangeType(this.props.note.key, this.props.noteTypes[foundTypeIdx == 0 ? 1 : 0].key );
     }
 
-    handleChangeTitle(value) {
-        this.props.handleChangeTitle(this.props.note.key, value);
-    }
-
     async onBlurEditor(value, editor) {
-        console.log("onBlurEditor(value, editor), isDirty", value, this.tinyMCEDomRef.current.isDirty());
         if (this.tinyMCEDomRef.current && this.tinyMCEDomRef.current.isDirty()) {
             await this.props.handleChangeDescription(this.props.note.key, this.tinyMCEDomRef.current.getContent());
         }
     }
 
     async onClickEditor(e, editor) {
-        console.log("onClickEditor(e, editor) isDirty", e, editor, this.tinyMCEDomRef.current.isDirty());
-
         if (e.srcElement &&  e.srcElement.dataset && e.srcElement.dataset.gotoNote) {
             // console.log("activateNode", e.srcElement.dataset.gotoNote);
             // TODO: check dirty?
@@ -369,21 +348,11 @@ class Note extends React.Component {
                                     </div>
                             }
                             <div style={{flexBasis: "100%" }} >
-                                {
-                                    this.props.note.trash &&
-                                    <Paragraph strong style={{marginBottom: 0}}>{this.props.note.title}</Paragraph>
-                                }
-                                {
-                                    !this.props.note.trash &&
-                                    <TextArea
-                                        ref={this.titleDomRef}
-                                        value={this.props.note.title}
-                                        onChange={(event)=> this.handleChangeTitle(event.target.value)}
-                                        autoSize={{
-                                            minRows: 1,
-                                        }}
-                                    />
-                                }
+                                <NoteTitle 
+                                    note={this.props.note} 
+                                    editableTitle={this.props.editableTitle}
+                                    handleChangeTitle={this.props.handleChangeTitle}
+                                />
                             </div>
                             <div>
                                 <Dropdown menu={{items,onClick}}>
