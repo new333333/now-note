@@ -173,7 +173,15 @@ class RepositorySQLite  {
 				allowNull: true,
 				unique: false
 			},
-		}, { sequelize });
+		}, { 
+			sequelize,
+			indexes: [
+				{
+					unique: false,
+					fields: ['parent']
+				}
+			]
+		});
 
 		nnTitle.Title.init({
 			key: {
@@ -250,39 +258,33 @@ class RepositorySQLite  {
 
 	async #setupSQLite() {
 
-		let [results, metadata] = await this.sequelize.query(`SELECT name FROM sqlite_master WHERE type='table' AND name='Notes'`);
+		let [results, metadata] = await this.sequelize.query(`SELECT name FROM sqlite_master WHERE type='index' AND name='notes_parent'`);
 		if (results.length == 0) {
-			// log.info("SQLite repository: initialize new database.");
+			await this.sequelize.sync({ alter: true });
+		}
+
+		[results, metadata] = await this.sequelize.query(`SELECT name FROM sqlite_master WHERE type='table' AND name='Notes'`);
+		if (results.length == 0) {
 			await this.sequelize.sync({ alter: true });
 		}
 
 		[results, metadata] = await this.sequelize.query(`SELECT name FROM sqlite_master WHERE type='table' AND name='Notes_index'`);
 		if (results.length == 0) {
-			// log.info("SQLite repository: add Notes_index table.");
 			await this.sequelize.query(`CREATE VIRTUAL TABLE Notes_index USING FTS5(key UNINDEXED, path, parents, title, descriptionAsText, tags, type, done, priority, trash, prefix='1 2 3')`);
 		}
 
 
 		[results, metadata] = await this.sequelize.query(`PRAGMA table_info(Notes)`);
-		// log.info("results=", results);
-
 		let restoreParentKeyColumn = results.find(function(column) {
             if (column.name == "restoreParentKey") {
                 return column;
             }
         });
-		// log.info("restoreParentKeyColumn=", restoreParentKeyColumn);
 
 		if (!restoreParentKeyColumn) {
-
-			// log.info("SQLite repository: Add Column Notes.restoreParentKey");
-
 			const queryInterface = this.sequelize.getQueryInterface();
 			let transaction = await this.sequelize.transaction();
 			try {
-
-				
-
 				await queryInterface.addColumn('Notes', 'restoreParentKey', {
 					type: DataTypes.UUID,
 					allowNull: true,
