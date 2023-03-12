@@ -103,8 +103,8 @@ class FancyTree extends React.Component {
         this.props.openNoteInList(key);
 	}
 
-    async addNote(key) {
-        console.log("addNote key", key);
+    async addNote(key, editableTitle) {
+        console.log("addNote key, editableTitle", key, editableTitle);
 
 		if (key) {
 			let detailsNoteParents = await this.props.dataSource.getParents(key);
@@ -116,7 +116,7 @@ class FancyTree extends React.Component {
 
 			let newNoteData = {
 				checkbox: false,
-				title: dayjs().format("[am] DD.MM.YYYY [um] HH:mm[Uhr]"),
+				title: "",
 				type: "note",
 				priority: 0,
 				done: false,
@@ -145,29 +145,16 @@ class FancyTree extends React.Component {
 				priority: newNoteData.priority,
 				done: newNoteData.done,
 				expanded: false,
-				// createdBy: window.nn.userSettings.settings.userName
 			}, "firstChild", relativeToKey).then(function(newNoteData) {
 				if (node.key.startsWith("root_")) {
 					self.fancytree.reload().then(function() {
-						// let newNode = self.fancytree.getNodeByKey(newNoteData.key);
-						// newNode.setActive();
-						// newNode.setFocus();
-						self.props.openNoteInTreeAndDetails(newNoteData.key);
+						self.props.openNoteInTreeAndDetails(newNoteData.key, editableTitle);
 						resolve(newNoteData);
 					});
 				} else {
 					node.resetLazy();
-					self.props.openNoteInTreeAndDetails(newNoteData.key);
-					// node.setExpanded(true).then(function() {
-					// 	let newNode = self.fancytree.getNodeByKey(newNoteData.key);
-					// 	newNode.setActive();
-					// 	newNode.setFocus();
-					// 	resolve(newNoteData);
-					// });
+					self.props.openNoteInTreeAndDetails(newNoteData.key, editableTitle);
 				}
-				// let treeData = window.n3.dataToTreeData([newNoteData]);
-				// let newNode = node.addNode(treeData[0], "firstChild");
-				// newNode.setActive();
 			});
 		});
     }
@@ -186,8 +173,10 @@ class FancyTree extends React.Component {
 			await this.openNotes(parents)
 		} else {
 			await node.makeVisible();
-			node.setActive();
-			node.setFocus();
+			if (parents.length == 0) {
+				node.setActive();
+				node.setFocus();
+			}
 		}
 
 	}
@@ -243,7 +232,7 @@ class FancyTree extends React.Component {
 			},
 
 			init: function(event, data) {
-				console.log(">>>>> FancyTRee initialized");
+				// console.log(">>>>> FancyTRee initialized");
                 self.props.treeIsInitialized();
 			},
 

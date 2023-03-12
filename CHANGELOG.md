@@ -6,8 +6,11 @@
 - show history
 - change some labels 
 - layout fixed (scrollbar in window)
-- fix drop on itself
+- FIX: drop note on itself
 - delay spin
+- update Dropdown to Ant 
+- add note: set focus on title
+ 
 
 ## 0.0.11-alpha
 

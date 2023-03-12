@@ -178,7 +178,7 @@ class App extends React.Component {
 
 
     async setAppStateFromSettings() {
-        console.log("setAppStateFromSettings treeIsInitialized=" + this.state.treeIsInitialized);
+        // console.log("setAppStateFromSettings treeIsInitialized=" + this.state.treeIsInitialized);
         if (this.state.treeIsInitialized &&
             this.state.repositorySettings && 
             this.state.repositorySettings.state && 
@@ -338,17 +338,17 @@ class App extends React.Component {
     }
 
     async addNote(key) {
-        // console.log("addNote, key=", key);
-        let newNote = await this.fancyTreeDomRef.current.addNote(key);
-        this.openNoteInTreeAndDetails(newNote.key);
-        // console.log("addNote, newNote=", newNote);
-        // this.openNoteDetails(newNote.key);
-        return newNote;
+        let editableTitle = true;
+        let newNote = await this.fancyTreeDomRef.current.addNote(key, editableTitle);
+        await openNoteDetails(newNote.key, editableTitle);
     }
 
 
-    async openNoteDetails(key) {
-        // console.log("openNoteDetails", key);
+    async openNoteDetails(key, editableTitle) {
+        console.log("openNoteDetails, key=, editableTitle=", key, editableTitle);
+        if (this.state.detailsNote != undefined && key == this.state.detailsNote.key) {
+            return;
+        }
         if (key) {
 
             let detailsNote = await this.dataSource.getNote(key);
@@ -367,6 +367,7 @@ class App extends React.Component {
                 return {
                     detailsNote: detailsNote,
                     repositorySettings: repositorySettings,
+                    editableTitle: editableTitle
                 }
             }, () => {
                 this.saveRepositorySettings();
@@ -382,6 +383,7 @@ class App extends React.Component {
                 return {
                     detailsNote: undefined,
                     repositorySettings: repositorySettings,
+                    editableTitle: false
                 }
             }, () => {
                 this.saveRepositorySettings();
@@ -400,11 +402,11 @@ class App extends React.Component {
         await this.fancyTreeDomRef.current.openNotes(detailsNoteParents);
     }
 
-    async openNoteInTreeAndDetails(key) {
-        // console.log("openNoteInTreeAndDetails", key);
+    async openNoteInTreeAndDetails(key, editableTitle) {
+        console.log("openNoteInTreeAndDetails key=, editableTitle=", key, editableTitle);
 
         await this.openNoteInTree(key);
-        await this.openNoteDetails(key);
+        await this.openNoteDetails(key, editableTitle);
     }
 
 
@@ -962,7 +964,7 @@ class App extends React.Component {
 
 
         // console.log("App render start");
-        console.log("App render this.state.openHistory=", this.state.openHistory);
+        //console.log("App render this.state.openHistory=", this.state.openHistory);
         
 
         return (
@@ -975,7 +977,7 @@ class App extends React.Component {
             }}
           >
 
-<Drawer getContainer={false} title="Basic Drawer" placement="right" visible={this.state.openHistory}>
+<Drawer getContainer={false} title="Basic Drawer" placement="right" open={this.state.openHistory}>
                             <p>Some contents...</p>
                             <p>Some contents...</p>
                             <p>Some contents...</p>
@@ -1119,6 +1121,7 @@ class App extends React.Component {
                                         priorityStat={this.state.priorityStat}
 
                                         note={this.state.detailsNote} 
+                                        editableTitle={this.state.editableTitle}
 
                                         handleChangeDone={this.handleChangeDone} 
                                         handleChangeType={this.handleChangeType} 
@@ -1184,7 +1187,7 @@ class App extends React.Component {
 
                 <Modal
                     title="Modal"
-                    visible={this.state.showDeleteNoteConfirmationModal}
+                    open={this.state.showDeleteNoteConfirmationModal}
                     onOk={this.hideModalDeleteNoteConfirmation}
                     onCancel={this.deletePermanently}
                     okText="Cancel"

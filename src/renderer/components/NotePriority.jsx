@@ -14,11 +14,15 @@ class NotePriority extends React.Component {
       this.props.handleChangePriority(this.props.noteKey, value );
     }
 
-    handleChangePriorityMenu(event) {
-        this.props.handleChangePriority(this.props.noteKey, this.props.priorityStat[event.key] );
+    handleChangePriorityMenu(key) {
+        this.props.handleChangePriority(this.props.noteKey, this.props.priorityStat[key] );
     }
 
     render() {
+
+        const onClick = ({ key }) => {
+            this.handleChangePriorityMenu(key);
+        };
 
         let minimumPriority = 0;
         if (this.props.priorityStat) {
@@ -41,36 +45,32 @@ class NotePriority extends React.Component {
         }
 
 
-        const priorityMenu = (
-            <Menu
-                onClick={(event)=> this.handleChangePriorityMenu(event)}
-                items={[
-                    {
-                        key: 'minimum',
-                        label: "Set: " + minimumPriority + " (Minimum)",
-                    },
-                    {
-                        key: 'average',
-                        label: "Set: " + averagePriority + " (Average)",
-                    },
-                    {
-                        key: 'mediana',
-                        label: "Set: " + medianaPriority + " (Mediana)",
-                    },
-                    {
-                        key: 'maximum',
-                        label: "Set: " + maximumPriority + " (Maximum)",
-                    },
-                ]}
-            />
-          );
+        const items=[
+            {
+                key: 'minimum',
+                label: "Set: " + minimumPriority + " (Minimum)",
+            },
+            {
+                key: 'average',
+                label: "Set: " + averagePriority + " (Average)",
+            },
+            {
+                key: 'mediana',
+                label: "Set: " + medianaPriority + " (Mediana)",
+            },
+            {
+                key: 'maximum',
+                label: "Set: " + maximumPriority + " (Maximum)",
+            },
+        ];
 
         return (
+            
             <span style={{marginRight: "5px"}}>
                 Priority:&nbsp;
                 {
                     !this.props.trash && 
-                    <Dropdown overlay={priorityMenu}>
+                    <Dropdown menu={{items,onClick}}>
                         <InputNumber 
                             disabled={true}
                             min={0} 

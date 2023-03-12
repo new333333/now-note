@@ -35,14 +35,14 @@ class NotesList extends React.Component {
         this.props.openNoteDetails(key);
     }
 
-    handleSetFilter(event) {
-        if (event.key == "filterOnlyTasks") {
+    handleSetFilter(key) {
+        if (key == "filterOnlyTasks") {
             this.setFilterOnlyTasks();
-        } else if (event.key == "filterOnlyNotes") {
+        } else if (key == "filterOnlyNotes") {
             this.setFilterOnlyNotes();
-        } else if (event.key == "filterOnlyDone") {
+        } else if (key == "filterOnlyDone") {
             this.setFilterOnlyDone();
-        } else if (event.key == "filterOnlyNotDone") {
+        } else if (key == "filterOnlyNotDone") {
             this.setFilterOnlyNotDone();
         }
     }
@@ -162,12 +162,10 @@ class NotesList extends React.Component {
         // console.log("NotesList render start");
         // console.log("NotesList render this.props.filter=", this.props.filter);
 
-        const filterMenu = (
-            <Menu
-                onClick={(event)=> this.handleSetFilter(event)} 
-                items={this.getFilterMenuItems()}
-            />
-        );
+        const items= this.getFilterMenuItems();
+        const onClick = ({ key }) => {
+            this.handleSetFilter(key);
+        };
 
         let activeFiltersCount = 0;
         if (this.props.filter.onlyNotes || this.props.filter.onlyTasks) {
@@ -204,7 +202,7 @@ class NotesList extends React.Component {
             <div className='n3-bar-vertical'>
                 <div className={`nn-header ${this.props.trash ? "nn-trash-background-color" : ""}`}>
                     <Space>
-                        <Dropdown overlay={filterMenu}>
+                        <Dropdown menu={{items, onClick}}>
                             <Button size="small">
                                 <Space>
                                     Filter {activeFiltersCount > 0 ? <Badge size="small" count={activeFiltersCount} /> : ""}
@@ -276,7 +274,7 @@ class NotesList extends React.Component {
                                                                             checked={note.done} 
                                                                             onChange={(event)=> this.handleChangeDone(note.key, event)} />
                                                                 }
-                                                                {/*<Dropdown overlay={noteMenu} trigger={['contextMenu']}>*/}
+                                                                {/*<Dropdown menu={noteMenu} trigger={['contextMenu']}>*/}
                                                                     <Tooltip title={note.title}>
                                                                         <Link style={{color: "rgba(0, 0, 0, 0.85)", overflow: "hidden", whiteSpace: "nowrap"}} strong onClick={(event)=> this.props.openNoteInTreeAndDetails(note.key)}>
                                                                             {note.title}

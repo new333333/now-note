@@ -1,5 +1,6 @@
 import React from 'react';
-import {Dropdown, Menu, Divider, Checkbox, Tooltip, Collapse, Typography, Button} from 'antd';
+import {Dropdown, Menu, Divider, Checkbox, Tooltip, Collapse, Typography, Button, Input} from 'antd';
+const { TextArea } = Input;
 import Icon, {HistoryOutlined, UnorderedListOutlined, PlusOutlined, DeleteFilled, EllipsisOutlined, ApartmentOutlined} from '@ant-design/icons';
 import {NotePriority} from './NotePriority.jsx';
 import {NoteBacklinks} from './NoteBacklinks.jsx';
@@ -70,6 +71,19 @@ class Note extends React.Component {
         this.onClickEditor = this.onClickEditor.bind(this);
         this.setupTinyMce = this.setupTinyMce.bind(this);
     }
+
+    componentDidMount() {
+
+    }
+
+    
+    componentDidUpdate(prevProps, prevState) {
+        console.log("componentDidUpdate editableTitle=", this.props.editableTitle);
+        if (this.titleDomRef.current && this.props.editableTitle) {
+            this.titleDomRef.current.focus();
+        }
+    }
+
 
     async saveChanges() {
         if (this.tinyMCEDomRef.current && this.tinyMCEDomRef.current.isDirty()) {
@@ -228,9 +242,8 @@ class Note extends React.Component {
 
 
     async addNote(key) {
-        // console.log("addNote, key=", key);
+        console.log("addNote, key=", key);
         let newNote = await this.props.addNote(key);
-        this.props.openNoteInTreeAndDetails(newNote.key);
     }
 
     async delete(key) {
@@ -238,76 +251,75 @@ class Note extends React.Component {
         this.props.delete(key);
     }
 
-    async handleNoteMenu(event) {
-        console.log("handleNoteMenu, event=", event);
+    async handleNoteMenu(key) {
+        console.log("handleNoteMenu, key=", key);
 
-        if (event.key == "add_note") {
+        if (key == "add_note") {
             this.addNote(this.props.note.key)
-        } else if (event.key == "open_tree") {
+        } else if (key == "open_tree") {
             this.props.openNoteInTree(this.props.note.key);
-        } else if (event.key == "open_list") {
+        } else if (key == "open_list") {
             this.props.openNoteInList(this.props.note.key);
-        } else if (event.key == "delete") {
+        } else if (key == "delete") {
             this.delete(this.props.note.key);
-        } else if (event.key == "restore") {
+        } else if (key == "restore") {
             this.props.restore(this.props.note.key);
-        } else if (event.key == "history") {
+        } else if (key == "history") {
             this.props.showHistory(this.props.note.key);
         }
 
         
     }
+    
 
     render() {
 
-        console.log(this.props.note);
-
-        let noteMenu = undefined;
+        const items = [];
         if (this.props.note) {
-            let noteMenuItems = [];
+            
             if (!this.props.note.trash) { 
-                noteMenuItems.push({
+                items.push({
                     key: 'add_note',
                     label: "Add note",
                     icon: <PlusOutlined />,
                 });
             }
-            noteMenuItems.push({
+            items.push({
                 key: 'open_tree',
                 label: "Focus in tree",
                 icon: <ApartmentOutlined />,
             });
-            noteMenuItems.push({
+            items.push({
                 key: 'open_list',
                 label: "List sub notes",
                 icon: <UnorderedListOutlined />,
             });
-            noteMenuItems.push({
+            items.push({
                 key: 'delete',
                 label: this.props.note.trash ? "Delete Permanently" : "Move To Trash",
                 icon: <DeleteFilled />,
             });
             if (this.props.note.trash) { 
-                noteMenuItems.push({
+                items.push({
                     key: 'restore',
                     label: "Restore",
                 });
             }
 
             /*
-            noteMenuItems.push({
+            items.push({
                 key: 'history',
                 label: "History",
                 icon: <HistoryOutlined />,
             });
             */
            
-            noteMenuItems.push({
+            items.push({
                 type: 'divider'
             });
             
 
-            noteMenuItems.push({
+            items.push({
                 key: 'metadata',
                 disabled: true,
                 label: <>
@@ -318,17 +330,13 @@ class Note extends React.Component {
                         </>,
             });
 
-
-
-            noteMenu = (
-                <Menu
-                    onClick={(event)=> this.handleNoteMenu(event)}
-                    items={noteMenuItems}
-                />
-            );
         }
 
-       
+        const onClick = ({ key }) => {
+            this.handleNoteMenu(key);
+        };
+
+        
 
         if (this.tinyMCEDomRef.current && this.props.note) {
             this.tinyMCEDomRef.current.setContent(this.props.note.description);
@@ -367,18 +375,18 @@ class Note extends React.Component {
                                 }
                                 {
                                     !this.props.note.trash &&
-                                    <Paragraph strong style={{marginBottom: 0}}
-                                        editable={{
-                                            tooltip: "click to edit",
-                                            onChange: this.handleChangeTitle,
-                                            triggerType: ["icon", "text"],
-                                            autoSize: { maxRows: 5 },
+                                    <TextArea
+                                        ref={this.titleDomRef}
+                                        value={this.props.note.title}
+                                        onChange={(event)=> this.handleChangeTitle(event.target.value)}
+                                        autoSize={{
+                                            minRows: 1,
                                         }}
-                                    >{this.props.note.title}</Paragraph>
+                                    />
                                 }
                             </div>
                             <div>
-                                <Dropdown overlay={noteMenu}>
+                                <Dropdown menu={{items,onClick}}>
                                     <Button shape="circle" icon={<EllipsisOutlined />} size="small" />
                                 </Dropdown>
                             </div>
