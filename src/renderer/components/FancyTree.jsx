@@ -299,7 +299,7 @@ class FancyTree extends React.Component {
 						node.setActive();
 						node.setFocus();
 					} else if (action == "add") {
-						self.addNote(node.key);
+						self.addNote(node.key, true);
 					} else if (action == "delete") {
 						self.delete(node.key);
 					} else if (action == "restore") {
