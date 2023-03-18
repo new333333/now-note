@@ -230,6 +230,7 @@ class Note extends React.Component {
                                 ref={this.descriptionDomRef}
                                 note={this.props.note}
                                 handleChangeDescription={this.props.handleChangeDescription} 
+                                dataSource={this.props.dataSource}
                             />
                         </div>
                         <div>
