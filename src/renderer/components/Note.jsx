@@ -231,6 +231,7 @@ class Note extends React.Component {
                                 note={this.props.note}
                                 handleChangeDescription={this.props.handleChangeDescription} 
                                 dataSource={this.props.dataSource}
+                                openNoteInTreeAndDetails={this.props.openNoteInTreeAndDetails}
                             />
                         </div>
                         <div>
