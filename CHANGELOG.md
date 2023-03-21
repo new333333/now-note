@@ -1,6 +1,16 @@
 # Changelog
 
 
+## 0.0.14-alpha
+
+- better handling images with registered protocol
+
+
+## 0.0.13-alpha
+
+- fix go to linkded note
+
+
 ## 0.0.12-alpha
 
 - show history
