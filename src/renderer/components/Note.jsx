@@ -37,17 +37,6 @@ class Note extends React.Component {
         this.props.handleChangeType(this.props.note.key, this.props.noteTypes[foundTypeIdx == 0 ? 1 : 0].key );
     }
 
-/*
-    componentWillUnmount() {
-        // console.log("componentWillUnmount(value, editor)", value);
-        if (this.tinyMCEDomRef.current && this.props.note) {
-            if (this.tinyMCEDomRef.current.isDirty()) {
-                this.props.handleChangeDescription(this.props.note.key, this.tinyMCEDomRef.current.getContent());
-            }
-        }
-    }
-*/
-
     async saveChanges() {
         if (this.descriptionDomRef.current) {
             this.descriptionDomRef.current.saveChanges();
