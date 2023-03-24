@@ -256,18 +256,34 @@ class RepositorySQLite  {
 	}
 
 
+	async sequelizeSync() {
+		await this.sequelize.query(`DROP TABLE IF EXISTS Notes_backup`);
+		await this.sequelize.query(`DROP TABLE IF EXISTS Titles_backup`);
+		await this.sequelize.query(`DROP TABLE IF EXISTS Descriptions_backup`);
+		await this.sequelize.query(`DROP TABLE IF EXISTS Tags_backup`);
+		await this.sequelize.query(`DROP TABLE IF EXISTS Links_backup`);
+		await this.sequelize.query(`DROP TABLE IF EXISTS Assets_backup`);
+
+			await this.sequelize.sync({ alter: true });
+		}
+
 	async #setupSQLite() {
-
+		log.info("setupSQLite check index");
+		let alreadySync = false;
 		let [results, metadata] = await this.sequelize.query(`SELECT name FROM sqlite_master WHERE type='index' AND name='notes_parent'`);
-		if (results.length == 0) {
-			await this.sequelize.sync({ alter: true });
+		if (results.length == 0 && !alreadySync) {
+			await this.sequelizeSync();
+			alreadySync = true;
 		}
 
+		log.info("setupSQLite Notes");
 		[results, metadata] = await this.sequelize.query(`SELECT name FROM sqlite_master WHERE type='table' AND name='Notes'`);
-		if (results.length == 0) {
-			await this.sequelize.sync({ alter: true });
+		if (results.length == 0 && !alreadySync) {
+			await this.sequelizeSync();
+			alreadySync = true;
 		}
 
+		log.info("setupSQLite Notes_index");
 		[results, metadata] = await this.sequelize.query(`SELECT name FROM sqlite_master WHERE type='table' AND name='Notes_index'`);
 		if (results.length == 0) {
 			await this.sequelize.query(`CREATE VIRTUAL TABLE Notes_index USING FTS5(key UNINDEXED, path, parents, title, descriptionAsText, tags, type, done, priority, trash, prefix='1 2 3')`);
