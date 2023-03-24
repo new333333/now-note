@@ -1,6 +1,8 @@
 import React from 'react';
 import {Editor} from '@tinymce/tinymce-react';
 
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
 
 import tinymce from 'tinymce/tinymce';
 
@@ -193,7 +195,8 @@ class NoteDescription extends React.Component {
 
         return (
             <>
-                <Editor
+            <ReactQuill  />
+                {/*<Editor
                     onInit={(evt, editor) => this.tinyMCEDomRef.current = editor}
                     initialValue={this.props.note.description}
                     onBlur={this.onBlurEditor}
@@ -222,7 +225,7 @@ class NoteDescription extends React.Component {
                             "removeformat | code",
                         toolbar_mode: 'sliding'
                     }}
-                />
+                />*/}
             </>
         );
     }
