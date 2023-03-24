@@ -215,6 +215,8 @@ app.whenReady().then(() => {
     initIpcMainHandle(ipcMain);
 
     // log.debug("initIpcMainHandle ready");
+  }).catch(function(e) {
+    log.error(e);
   });
 
 
@@ -236,6 +238,8 @@ function openDefaultRepo(userDataPath, n3) {
       }
 
       resolve();
+    }).catch(function(e) {
+      reject(e);
     });
 
   });  
