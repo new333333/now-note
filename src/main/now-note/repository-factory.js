@@ -40,7 +40,7 @@ class RepositoryFactory {
             }
         });
 
-        if (this.repositories && this.repositories.length > 0) {
+        if (!defaultRepository && this.repositories && this.repositories.length > 0) {
             defaultRepository = this.repositories[0];
         }
 
