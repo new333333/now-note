@@ -78,17 +78,14 @@ class NoteDescription extends React.Component {
             await this.props.openNoteInTreeAndDetails(e.srcElement.dataset.gotoNote);
         }
         
-        if (e.srcElement &&  e.srcElement.dataset && e.srcElement.dataset.n3assetKey) {
-            // TODO: check dirty?
+        if (e.srcElement) {
             
-            if (e.srcElement.tagName == "A") {
-                // TODO: download by assetKey, don't set HREF any more by loading description
-                if (this.tinyMCEDomRef.current.isDirty()) {
-                    this.props.handleChangeDescription(this.props.note.key, this.tinyMCEDomRef.current.getContent());
-                }
-                this.props.dataSource.downloadAttachment(e.srcElement.href);
-            } else if (e.srcElement.tagName == "IMG") {
-                // console.log("TODO: download image");
+            if (e.srcElement.tagName == "A" && e.srcElement.href && e.srcElement.href.startsWith("nn-asset:")) {
+                window.open(e.srcElement.href, '_blank');
+            }
+            
+            if (e.srcElement.tagName == "IMG") {
+                // console.log("TODO: show big image");
                 // if (this.tinyMCEDomRef.current.isDirty()) {
                 //  this.props.handleChangeDescription(this.props.note.key, this.tinyMCEDomRef.current.getContent());
                 // }

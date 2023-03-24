@@ -263,9 +263,9 @@ class RepositorySQLite  {
 		await this.sequelize.query(`DROP TABLE IF EXISTS Tags_backup`);
 		await this.sequelize.query(`DROP TABLE IF EXISTS Links_backup`);
 		await this.sequelize.query(`DROP TABLE IF EXISTS Assets_backup`);
-
-			await this.sequelize.sync({ alter: true });
-		}
+		
+		await this.sequelize.sync({ alter: true });
+	}
 
 	async #setupSQLite() {
 		log.info("setupSQLite check index");
@@ -540,6 +540,7 @@ class RepositorySQLite  {
 				let $html = cheerio.load(data.description || "", null, false);
 
 				/*
+				Support old repository implementation.
 				{
 					"description": "<br><img src=\"\" width=\"1083\" height=\"423\" data-n3src=\"image_a6616736-5b65-483c-8487-605f48dde068.png\"><ul>\n<li><a id=\"key-val\" class=\"issue-link\" href=\"https://jira.rodias.de/browse/RODIAS-84\" rel=\"50237\" data-issue-key=\"RODIAS-84\">RODIAS-84 </a>IT-Security Response Team</li>\n</ul>",
 					"timeStamp": "2022-10-25T07:25:46.686Z"
@@ -840,7 +841,6 @@ class RepositorySQLite  {
 		if (note.hasOwnProperty("description")) {
 			let html = note.description;
 			html = await this.#setInlineImagesBeforeWrite(html);
-			html = await this.#setAttachmentsPathBeforeWrite(html);
 			note.description = html;
 		}
 
@@ -970,6 +970,30 @@ class RepositorySQLite  {
 	}
 
 
+	async getAssetFileReadStream(assetKey) {
+		const assetModel = await nnAsset.Asset.findByPk(assetKey);
+		const assetSrc = path.join(this.directory, this.#assetsFolderName, assetKey, assetModel.name);
+		const assetFileReadableStream = fsSync.createReadStream(assetSrc);
+		return assetFileReadableStream;
+	}
+
+	async copyAssetFileToFolder(assetKey, targetFolder) {
+		const assetModel = await nnAsset.Asset.findByPk(assetKey);
+		const assetSrc = path.join(this.directory, this.#assetsFolderName, assetKey, assetModel.name);
+		await fs.copyFile(assetSrc, targetFolder);
+	}
+
+	async getAssetFileName(assetKey) {
+		const assetModel = await nnAsset.Asset.findByPk(assetKey);
+		return assetModel.name;
+	}
+
+	async getAssetFilePath(assetKey) {
+		const assetModel = await nnAsset.Asset.findByPk(assetKey);
+		const assetPath = path.join(this.directory, this.#assetsFolderName, assetKey, assetModel.name);
+		return assetPath;
+	}
+
 	async #setInlineImagesBeforeWrite(htmltext) {
 		// log.debug("setInlineImagesBeforeWrite htmltext", htmltext);
 
@@ -997,9 +1021,12 @@ class RepositorySQLite  {
 					// log.debug("setInlineImagesBeforeWrite has imgSrc", imgSrc);
 
 					if (nextImg.attr("data-n3asset-key")) {
-						// log.debug("setInlineImagesBeforeWrite has n3asset-key");
+						// support old repository implementations
+						// log.debug("setInlineImagesBeforeWrite has old n3asset-key");
+						let assetKey = nextImg.attr("data-n3asset-key");
 
-						nextImg.attr("src", "");
+						nextImg.removeAttr("data-n3asset-key");
+						nextImg.attr("src", "nn-asset:" + assetKey);
 					} else if (imgSrc.indexOf("data:image/") == 0) {
 						// log.debug("setInlineImagesBeforeWrite is data:image");
 
@@ -1010,31 +1037,28 @@ class RepositorySQLite  {
 						let fileTransferType = imgSrc.substring(15, 21); // base64
 						let asset = await this.addAsset(fileType, fileName, filePathOrBase64, fileTransferType);
 						// log.debug("write back img?", asset);
-						nextImg.attr("src", "");
-						nextImg.attr("data-n3asset-key", asset.key);
+						nextImg.attr("src", "nn-asset:" + asset.key);
 
 					} else if (imgSrc.indexOf("file:///") == 0) {
-						// log.debug("setInlineImagesBeforeWrite is file:///");
+						// copy/paste e.g. from outlook
+						log.debug("setInlineImagesBeforeWrite is file:///");
 
 						let filePath = imgSrc.substring("file:///".length);
 						// log.debug("setInlineImagesBeforeWrite filePath", filePath);
 
 						let asset = await this.addAsset(null, path.basename(filePath), filePath, "path");
 
-						nextImg.attr("src", "");
-						nextImg.attr("data-n3asset-key", asset.key);
-
+						nextImg.attr("src", "nn-asset:" + asset.key);
 					} else if (imgSrc.indexOf("file://") == 0) {
-						// log.debug("setInlineImagesBeforeWrite is file://");
+						// copy/paste e.g. from outlook
+						log.debug("setInlineImagesBeforeWrite is file://");
 
 						let filePath = imgSrc.substring("file://".length);
 						// log.debug("setInlineImagesBeforeWrite filePath", filePath);
 
 						let asset = await this.addAsset(null, path.basename(filePath), filePath, "path");
 
-						nextImg.attr("src", "");
-						nextImg.attr("data-n3asset-key", asset.key);
-
+						nextImg.attr("src", "nn-asset:" + asset.key);
 					}
 
 				}
@@ -1185,7 +1209,6 @@ class RepositorySQLite  {
 			let html = note.description;
 			html = await this.#setLinksBeforeWrite(note.key, html);
 			html = await this.#setInlineImagesBeforeWrite(html);
-			html = await this.#setAttachmentsPathBeforeWrite(html);
 
 			if (!skipVersioning) {
 				let oldDescription = await nnDescription.Description.create({
@@ -1754,21 +1777,16 @@ class RepositorySQLite  {
 	}
 
 	async #setInlineImagesPathAfterRead(html) {
+		// support old repository implementations
 		let $html = cheerio.load(html || "", null, false);
 		let imgs = $html("img");
 
 		for (let i = 0; i < imgs.length; i++) {
 			let nextImg = imgs.eq(i);
 			if (nextImg.attr("data-n3asset-key")) {
-
 				let assetKey = nextImg.attr("data-n3asset-key");
-				let assetModel = await nnAsset.Asset.findByPk(assetKey);
-
-				let assetSrc = path.join(this.directory, this.#assetsFolderName, assetKey, assetModel.name);
-				// log.debug("#setInlineImagesPathAfterRead nextImg", assetKey, assetModel, assetSrc);
-				
-				var imgUrl = fsSync.readFileSync(assetSrc).toString('base64');
-				nextImg.attr("src", "data:image/png;base64," + imgUrl);
+				nextImg.attr("src", "nn-asset:" + assetKey);
+				nextImg.removeAttr("data-n3asset-key");
 			}
 		}
 
@@ -1810,6 +1828,7 @@ class RepositorySQLite  {
 
 	
 	async #setAttachmentsPathAfterRead(htmltext) {
+		// support old repository implementation
 		let $linksHiddenContainer = cheerio.load(htmltext || "", null, false);
 		let links = $linksHiddenContainer("a[data-n3asset-key]");
 
@@ -1820,23 +1839,8 @@ class RepositorySQLite  {
 
 				let assetKey = nextLinks.attr("data-n3asset-key");	
 
-				let assetModel = await nnAsset.Asset.findByPk(assetKey);
-				nextLinks.attr("href", path.join(this.directory, this.#assetsFolderName, assetKey, assetModel.name));
-			}
-		}
-
-		return $linksHiddenContainer.html();
-	}
-
-	async #setAttachmentsPathBeforeWrite(htmltext) {
-		let $linksHiddenContainer = cheerio.load(htmltext || "", null, false);
-		let links = $linksHiddenContainer("a[data-n3asset-key]");
-
-		for (let i = 0; i < links.length; i++) {
-			let nextLinks = links.eq(i);
-			// log.debug("#setAttachmentsPathAfterRead nextLinks", nextLinks.attr("data-n3asset-key"));
-			if (nextLinks.attr("data-n3asset-key")) {
-				nextLinks.attr("href", "#");
+				nextImg.attr("href", "nn-asset:" + assetKey);
+				nextImg.removeAttr("data-n3asset-key");
 			}
 		}
 
@@ -1877,7 +1881,7 @@ class RepositorySQLite  {
 			resultNote = await this.addNote(parentKey, {
 				title: path.basename(filepath),
 				type: "note",
-				description: "<a href='" + asset.src + "' data-n3asset-key='" + asset.key + "' download>" + path.basename(filepath) + "</a>"
+				description: "<a href='nn-asset:" + asset.key + "' download>" + path.basename(filepath) + "</a>"
 			}, hitMode, relativeToKey);
 
 		

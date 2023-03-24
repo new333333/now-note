@@ -1,5 +1,5 @@
 const log = require('electron-log');
-const {app, BrowserWindow, ipcMain, dialog, Menu, MenuItem} = require('electron')
+const {app, BrowserWindow, ipcMain, dialog, Menu, MenuItem, protocol, shell} = require('electron')
 // include the Node.js 'path' module at the top of your file
 const path = require('path');
 const { title } = require('process');
@@ -167,10 +167,30 @@ const createWindow = () => {
 
 
 let n3 = {
-  isDirty: true
+  isDirty: true,
+  repository: false,
 };
 
 app.whenReady().then(() => {
+
+  
+  protocol.registerStreamProtocol("nn-asset", (request, callback) => {
+    let assetKey = request.url.substring("nn-asset:".length);
+
+    // Accept: 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8'
+    if (request.headers.Accept.startsWith("image/")) {
+      n3.repository.getAssetFileReadStream(assetKey).then(function(assetFileReadableStream) {
+        callback({
+          data: assetFileReadableStream
+        });
+      });
+    } else {
+      log.debug("registerStreamProtocol: else ", request);
+    }
+    
+  });
+
+
 
   let workingPath = process.cwd();
   log.debug("workingPathPrc: ", workingPath);
@@ -192,6 +212,17 @@ app.whenReady().then(() => {
         n3.mainWindow.webContents.send('wantClose');
       }
     });
+    
+    mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+      let assetKey = url.substring("nn-asset:".length);
+      n3.repository.getAssetFilePath(assetKey).then(function(assetPath) {
+        shell.openExternal("file:///" + assetPath);
+      });
+
+
+      return { action: 'deny' }
+    })
+    
 
     // log.debug("mainWindow=", mainWindow);
   
@@ -361,8 +392,6 @@ function initIpcMainHandle(ipcMain) {
   });
 
   ipcMain.handle("store:modifyNote", function(event, note) {
-    log.info("store:modifyNote", note, n3.repository);
-
     return n3.repository.modifyNote(note);
   });
 
@@ -430,35 +459,49 @@ function initIpcMainHandle(ipcMain) {
   });
 
   ipcMain.handle('download-attachment',  function(event, url) {
-    // log.debug('download-attachment', url);  
+    log.debug('download-attachment', url);  
+
+    let assetKey = url.substring("nn-asset:".length);
 
     // file:////e:\...
-    let filePath = url.substring(8);
-    let fileName = path.basename(filePath);
+    //let filePath = url.substring(8);
+    // let fileName = path.basename(filePath);
     // log.debug('download-attachment fileName', fileName);  
 
     // log.debug('download-attachment filePath', filePath);  
 
-    let options = {
-      //Placeholder 1
-      title: "Save file",
+    n3.repository.getAssetFileName(assetKey).then(function(fileName) {
+      log.debug('download-attachment fileName', fileName);
 
-      //Placeholder 2
-      defaultPath : fileName,
+      let options = {
+        //Placeholder 1
+        title: "Save file",
+
+        //Placeholder 2
+        defaultPath : fileName,
 
 
-      //Placeholder 4
-      buttonLabel : "Save File",
-    }
-
-    dialog.showSaveDialog(mainWindow, options).then(function(saveObj) {
-      // log.debug("showSaveDialog", saveObj);
-
-      if (!saveObj.canceled && saveObj.filePath) {
-        fs.copyFile(filePath, saveObj.filePath).then(function() {
-          // log.debug("showSaveDialog ready");
-        });
+        //Placeholder 4
+        buttonLabel : "Save File",
       }
+
+      dialog.showSaveDialog(n3.mainWindow, options).then(function(saveObj) {
+        // log.debug("showSaveDialog", saveObj);
+
+        if (!saveObj.canceled && saveObj.filePath) {
+
+          n3.repository.copyAssetFileToFolder(assetKey, saveObj.filePath).then(function() {
+            log.debug("showSaveDialog ready");
+          });
+
+  /*
+          fs.copyFile(filePath, saveObj.filePath).then(function() {
+            // log.debug("showSaveDialog ready");
+          });
+          */
+        }
+      });
+
     });
 
   });

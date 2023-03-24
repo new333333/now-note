@@ -4,11 +4,14 @@
 ## 0.0.14-alpha
 
 - better handling images with registered protocol
+- eror by opening default repository #138
+- open files with system programm #139
+- use electron.protocol.interceptFileProtocol in place of base64 for images - it's very slow for big files #99
 
 
 ## 0.0.13-alpha
 
-- fix go to linkded note
+- fix go to linked note
 
 
 ## 0.0.12-alpha

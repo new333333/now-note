@@ -12,3 +12,7 @@ p {
 .nn-link {
     color: blue; 
 }
+
+a {
+    cursor: pointer;
+}
