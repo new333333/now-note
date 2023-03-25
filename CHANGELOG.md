@@ -8,7 +8,7 @@
 - open files with system programm #139
 - use electron.protocol.interceptFileProtocol in place of base64 for images - it's very slow for big files #99
 - save description on blur doesn't work #135
-
+- do not refresh tree after delete note #125
 
 ## 0.0.13-alpha
 

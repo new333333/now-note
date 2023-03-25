@@ -842,7 +842,7 @@ class App extends React.Component {
                 detailsNote: undefined,
             });
 
-            await this.fancyTreeDomRef.current.reload(note.parent);
+            await this.fancyTreeDomRef.current.remove(note.key);
             await this.openNoteInList();
 
             message.warning(<Button type="link"
