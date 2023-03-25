@@ -49,31 +49,46 @@ class NoteDescription extends React.Component {
     constructor(props) {
         super(props);
 
-        this.tinyMCEDomRef = React.createRef();
+        this.editorRef = React.createRef();
 
-        this.onBlurEditor = this.onBlurEditor.bind(this);
-        this.onClickEditor = this.onClickEditor.bind(this);
-        this.setupTinyMce = this.setupTinyMce.bind(this);
+        this.onInit = this.onInit.bind(this);
+        this.onClick = this.onClick.bind(this);
+        this.onDrop = this.onDrop.bind(this);
+        this.onKeyDown = this.onKeyDown.bind(this);
+
+        this.saveInterval = setInterval(() => {
+            this.saveChanges();
+        }, 5000);
     }
 
     async saveChanges() {
-        if (this.tinyMCEDomRef.current && this.tinyMCEDomRef.current.isDirty()) {
-            await this.props.handleChangeDescription(this.props.note.key, this.tinyMCEDomRef.current.getContent());
+        console.log("saveChanges?", this.editorRef.current.isDirty());
+        if (this.editorRef.current && this.editorRef.current.isDirty()) {
+            this.props.handleChangeDescription(this.props.noteKey, this.editorRef.current.getContent());
+            this.editorRef.current.save();
         }
     }
 
-    async onBlurEditor(value, editor) {
-        if (this.tinyMCEDomRef.current && this.tinyMCEDomRef.current.isDirty()) {
-            await this.props.handleChangeDescription(this.props.note.key, this.tinyMCEDomRef.current.getContent());
+    async onKeyDown(e, editor) {
+        if (e.key === "s" && e.ctrlKey) {
+            this.saveChanges();
         }
     }
 
-    async onClickEditor(e, editor) {
+    shouldComponentUpdate(nextProps, nextState, nextContext) {
+        if (this.props.noteKey !== nextProps.noteKey) {
+            this.saveChanges();
+        }
+        return this.props.noteKey !== nextProps.noteKey;       
+    }
+
+    async onClick(e, editor) {
+        console.log("onClick");
         if (e.srcElement &&  e.srcElement.dataset && e.srcElement.dataset.gotoNote) {
             // console.log("activateNode", e.srcElement.dataset.gotoNote);
             // TODO: check dirty?
-            if (this.tinyMCEDomRef.current.isDirty()) {
-                await this.props.handleChangeDescription(this.props.note.key, this.tinyMCEDomRef.current.getContent());
+            if (this.editorRef.current.isDirty()) {
+                await this.props.handleChangeDescription(this.props.noteKey, this.editorRef.current.getContent());
             }
             await this.props.openNoteInTreeAndDetails(e.srcElement.dataset.gotoNote);
         }
@@ -86,8 +101,8 @@ class NoteDescription extends React.Component {
             
             if (e.srcElement.tagName == "IMG") {
                 // console.log("TODO: show big image");
-                // if (this.tinyMCEDomRef.current.isDirty()) {
-                //  this.props.handleChangeDescription(this.props.note.key, this.tinyMCEDomRef.current.getContent());
+                // if (this.editorRef.current.isDirty()) {
+                //  this.props.handleChangeDescription(this.props.note.noteKey, this.editorRef.current.getContent());
                 // }
             }
             
@@ -95,29 +110,13 @@ class NoteDescription extends React.Component {
 
     }
 
-    setupTinyMce(editor) {
+    async onDrop(a, b, c) {
+        console.log("onDrop", a, b, c);
+    }
+
+    onInit(editor) {
 
         let self = this;
-
-        editor.on("drop", function(event, a, b, c) {
-            console.log("drop", event, a, b, c);
-        });
-
-        editor.on("keydown", function(e) {
-            if (e.key === "s" && e.ctrlKey) {
-                self.saveChanges();
-            }
-        });
-
-        editor.on("SetContent", function(event, a, b, c) {
-            // console.log("SetContent, event, getContent", event, self.tinyMCEDomRef.current ? self.tinyMCEDomRef.current.getContent() : undefined);
-
-            if (event.paste) {
-                // don't do it now, it moves cursor to the top after paste in editor
-                // self.props.handleChangeDescription(self.props.note.key, self.tinyMCEDomRef.current.getContent());
-            }
-
-        });
 
         editor.ui.registry.addAutocompleter("specialchars", {
             ch: '#',
@@ -186,22 +185,22 @@ class NoteDescription extends React.Component {
         });
     }
 
-    render() {
-        if (this.tinyMCEDomRef.current && this.props.note) {
-            this.tinyMCEDomRef.current.setContent(this.props.note.description);
-        }
 
+    render() {
+        console.log("NoteDescription render()");
         return (
             <>
                 <Editor
-                    onInit={(evt, editor) => this.tinyMCEDomRef.current = editor}
-                    initialValue={this.props.note.description}
-                    onBlur={this.onBlurEditor}
-                    onClick={this.onClickEditor}
-                    disabled={this.props.note.trash}
+                    onInit={(evt, editor) => this.editorRef.current = editor}
+                    initialValue={this.props.description}
+                    
+                    onKeyDown={this.onKeyDown}
+                    onDrop={this.onDrop}
+                    onClick={this.onClick}
+                    disabled={this.props.disabled}
                     init={{
                         text_patterns: false,
-                        setup: this.setupTinyMce,
+                        setup: this.onInit,
                         skin: false,
                         content_css: false,
                         content_style: [contentCss, contentUiCss, contentNNCustomCss].join('\n'),

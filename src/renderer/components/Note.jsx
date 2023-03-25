@@ -217,7 +217,9 @@ class Note extends React.Component {
                         <div style={{flex: 1}}>
                             <NoteDescription 
                                 ref={this.descriptionDomRef}
-                                note={this.props.note}
+                                noteKey={this.props.note.key}
+                                description={this.props.note.description}
+                                disabled={this.props.note.trash}
                                 handleChangeDescription={this.props.handleChangeDescription} 
                                 dataSource={this.props.dataSource}
                                 openNoteInTreeAndDetails={this.props.openNoteInTreeAndDetails}
