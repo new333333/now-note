@@ -42,7 +42,6 @@ import 'tinymce/plugins/autoresize';
 import contentCss from '!!raw-loader!tinymce/skins/content/default/content.min.css';
 import contentUiCss from '!!raw-loader!tinymce/skins/ui/oxide/content.min.css';
 import contentNNCustomCss from '!!raw-loader!../css/tinymce.css';
-import { replace } from 'lodash';
 
 class NoteDescription extends React.Component {
 

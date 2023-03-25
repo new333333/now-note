@@ -1,6 +1,5 @@
 import { PlusOutlined } from '@ant-design/icons';
 import { Input, Tag, Tooltip, AutoComplete } from 'antd';
-import { times } from 'lodash';
 import React from 'react';
 
 class SearchNotes extends React.Component {

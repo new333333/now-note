@@ -8,7 +8,6 @@ const nnTag = require('./Tag');
 const nnLink = require('./Link');
 const nnAsset = require('./Asset');
 const cheerio = require('cheerio');
-const { result } = require('lodash');
 const fs = require('fs').promises;
 const fsSync = require('fs');
 const parseJSON = require('date-fns/parseJSON')
