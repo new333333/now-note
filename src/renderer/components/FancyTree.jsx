@@ -488,8 +488,13 @@ class FancyTree extends React.Component {
         this.fancytree = $.ui.fancytree.getTree($domNode);
     }
 
-    render() {
+	shouldComponentUpdate(nextProps, nextState, nextContext) {
+		// render tree only ones
+        return !this.domRef.current;       
+    }
 
+    render() {
+		console.log("FancyTree render()");
         return (
 			<div className='n3-tree' ref={this.domRef}>
 			</div>
