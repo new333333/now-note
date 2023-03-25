@@ -554,24 +554,24 @@ class App extends React.Component {
         let self = this;
 
         return new Promise(function(resolve, reject) {
-                self.dataSource.modifyNote({
-                    key: noteKey, 
-                    description: description	
-                }).then(function(modifiedNote) {
+            self.dataSource.modifyNote({
+                key: noteKey, 
+                description: description	
+            }).then(function(modifiedNote) {
                 // don't modify state, it prevents rendering
-                    console.log("handleChangeDescription modifiedNote=", modifiedNote);
+                console.log("handleChangeDescription modifiedNote=", modifiedNote);
                 if (self.state.detailsNote.key == modifiedNote.key) {
                     self.state.detailsNote.description = modifiedNote.description;
-                            }
-                        resolve();
-                    });
-                });
+                }
+                resolve();
+            });
+        });
         
         
     }
 
     async handleChangeTitle(noteKey, title) {
-        console.log("handleChangeTitle noteKey=, title=", noteKey, title);
+        // console.log("handleChangeTitle noteKey=, title=", noteKey, title);
 
         title = title.replaceAll("/", "");
 
@@ -587,12 +587,12 @@ class App extends React.Component {
                     detailsNote: note
                 }
             }, () => {
-                console.log("handleChangeTitle save now");
+                // console.log("handleChangeTitle save now");
                 self.dataSource.modifyNote({
                     key: noteKey, 
                     title: title	
                 }).then(function(modifiedNote) {
-                    console.log("handleChangeTitle modifiedNote=", modifiedNote);
+                    // console.log("handleChangeTitle modifiedNote=", modifiedNote);
                     self.setState((previousState) => {
                         if (previousState.detailsNote) {
                             let newState = {}
@@ -604,7 +604,7 @@ class App extends React.Component {
                                 }
                                 newState.detailsNote = note;
                             }
-                            console.log("handleChangeTitle listParentNote");
+                            // console.log("handleChangeTitle listParentNote");
                             if (previousState.listParentNote) {
                                 newState.listParentNote = JSON.parse(JSON.stringify(previousState.listParentNote));
                                 newState.listParentNote.filteredSiblings.forEach((note) => {
@@ -613,7 +613,7 @@ class App extends React.Component {
                                     }
                                 });
                             }
-                            console.log("handleChangeTitle listParentNote done");
+                            // console.log("handleChangeTitle listParentNote done");
                             newState.longOperationProcessing = false;
                             return newState;
                         }
@@ -958,11 +958,7 @@ class App extends React.Component {
   
 
     render() {
-
-
-        // console.log("App render start");
-        //console.log("App render this.state.openHistory=", this.state.openHistory);
-        
+        console.log("App render()");
 
         return (
 
