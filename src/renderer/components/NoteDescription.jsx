@@ -55,13 +55,13 @@ class NoteDescription extends React.Component {
         this.onDrop = this.onDrop.bind(this);
         this.onKeyDown = this.onKeyDown.bind(this);
 
+        // check every 5sec if description modified and save
         this.saveInterval = setInterval(() => {
             this.saveChanges();
         }, 5000);
     }
 
     async saveChanges() {
-        console.log("saveChanges?", this.editorRef.current.isDirty());
         if (this.editorRef.current && this.editorRef.current.isDirty()) {
             this.props.handleChangeDescription(this.props.noteKey, this.editorRef.current.getContent());
             this.editorRef.current.save();
@@ -79,6 +79,10 @@ class NoteDescription extends React.Component {
             this.saveChanges();
         }
         return this.props.noteKey !== nextProps.noteKey;       
+    }
+
+    componentDidUpdate(prevProps, prevState, snapshot) {
+        this.editorRef.current.setContent(this.props.description);
     }
 
     async onClick(e, editor) {
