@@ -552,39 +552,22 @@ class App extends React.Component {
 
     async handleChangeDescription(noteKey, description) {
         let self = this;
-        return new Promise(function(resolve, reject) {
 
-            self.setState((previousState) => {
-                let note = JSON.parse(JSON.stringify(previousState.detailsNote));
-                note.description = description;
-                return {
-                    longOperationProcessing: true,
-                    // prevents update old description for a short time
-                    detailsNote: note
-                }
-            }, () => {
+        return new Promise(function(resolve, reject) {
                 self.dataSource.modifyNote({
                     key: noteKey, 
                     description: description	
                 }).then(function(modifiedNote) {
+                // don't modify state, it prevents rendering
                     console.log("handleChangeDescription modifiedNote=", modifiedNote);
-                    self.setState((previousState) => {
-                        if (previousState.detailsNote) {
-                            let newState = {}
-                            if (previousState.detailsNote && previousState.detailsNote.key == noteKey) {
-                                let note = JSON.parse(JSON.stringify(previousState.detailsNote));
-                                note.description = modifiedNote.description;
-                                newState.detailsNote = note;
+                if (self.state.detailsNote.key == modifiedNote.key) {
+                    self.state.detailsNote.description = modifiedNote.description;
                             }
-                            newState.longOperationProcessing = false;
-                            return newState;
-                        }
-                    }, () => {
                         resolve();
                     });
                 });
-            });
-        });
+        
+        
     }
 
     async handleChangeTitle(noteKey, title) {
