@@ -11,10 +11,14 @@ import 'jquery.fancytree/dist/skin-win8/ui.fancytree.min.css';  // CSS or LESS
 import '../css/jquery.fancytree-now-note.css';
 
 import 'jquery.fancytree/dist/modules/jquery.fancytree.dnd5';
+import 'jquery.fancytree/dist/modules/jquery.fancytree.glyph';
 import 'jquery-contextmenu/dist/jquery.contextMenu.min.css';
 import 'jquery-contextmenu/dist/jquery.contextMenu.min.js';
 import '../js/jquery.fancytree.contextMenu';
 
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { solid, regular, brands, icon } from '@fortawesome/fontawesome-svg-core/import.macro' // <-- import styles to be used
+import ReactDOMServer from 'react-dom/server'
 
 class FancyTree extends React.Component {
 
@@ -212,13 +216,31 @@ class FancyTree extends React.Component {
         let self = this;
 
         $domNode.fancytree({
-            extensions: ["dnd5", "contextMenu"],
+            extensions: ["dnd5", "contextMenu", "glyph"],
 			checkbox: true,
-			icon: false,
 			escapeTitles: true,
             nodata: false,
             source: this.props.loadTree,
             lazyLoad: this.props.loadTree,
+
+			glyph: {
+				preset: "awesome5",
+				map: {}
+			},
+			icon: function(event, data) {
+				return false;
+				console.log("tree icon", data.node);
+				if (data.node.statusNodeType == "loading") {
+					console.log("tree icon retrurn false");
+					return false;
+				}
+				if (data.node.title.trim() == "Rodias") {
+					return {html: ReactDOMServer.renderToString(<FontAwesomeIcon icon={solid("note-sticky")} />)}
+				}
+				// return {html: ReactDOMServer.renderToString(<FontAwesomeIcon icon={solid("check")} />)}
+				return false;
+			},
+
             // Load all lazy/unloaded child nodes
 			// (which will trigger `loadChildren` recursively)
             loadChildren: function(event, data) {

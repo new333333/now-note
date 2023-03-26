@@ -8,7 +8,12 @@ import {NoteTags} from './NoteTags.jsx';
 import {NoteTitle} from './NoteTitle.jsx';
 import {NoteDescription} from './NoteDescription.jsx';
 import {NoteBreadCrumbCollapse} from './NoteBreadCrumbCollapse.jsx';
-import {SearchNotes} from './SearchNotes.jsx';
+
+
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { solid, regular, brands, icon } from '@fortawesome/fontawesome-svg-core/import.macro' // <-- import styles to be used
+
+
 const {Panel} = Collapse;
 const {Text, Link, Paragraph} = Typography;
 
@@ -155,6 +160,9 @@ class Note extends React.Component {
                         </div>
                         <Divider style={{margin: "5px 0"}} />
                         <div style={{display: "flex", alignItems: "center" }}>
+                            <>
+                                <FontAwesomeIcon icon={solid('user-secret')} />
+                            </>
                             {
                                 this.props.note.type == "task" &&
                                     <div style={{margin: "0 5px"}}>

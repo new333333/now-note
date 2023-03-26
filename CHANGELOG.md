@@ -1,6 +1,10 @@
 # Changelog
 
 
+## 0.0.15-alpha
+- styling note title #2
+
+
 ## 0.0.14-alpha
 
 - better handling images with registered protocol
