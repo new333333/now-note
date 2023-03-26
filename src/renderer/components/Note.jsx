@@ -160,9 +160,9 @@ class Note extends React.Component {
                         </div>
                         <Divider style={{margin: "5px 0"}} />
                         <div style={{display: "flex", alignItems: "center" }}>
-                            <>
+                            {/*<>
                                 <FontAwesomeIcon icon={solid('user-secret')} />
-                            </>
+                            </>*/}
                             {
                                 this.props.note.type == "task" &&
                                     <div style={{margin: "0 5px"}}>
