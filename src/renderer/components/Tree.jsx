@@ -20,7 +20,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { solid, regular, brands, icon } from '@fortawesome/fontawesome-svg-core/import.macro' // <-- import styles to be used
 import ReactDOMServer from 'react-dom/server'
 
-class FancyTree extends React.Component {
+class Tree extends React.Component {
 
 	constructor(props) {
         super(props);
@@ -524,4 +524,4 @@ class FancyTree extends React.Component {
     }
 }
 
-export {FancyTree};
+export {Tree};

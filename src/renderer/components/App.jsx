@@ -9,7 +9,7 @@ import {
   } from 'react-reflex'
   
 import 'react-reflex/styles.css'
-import {FancyTree} from './FancyTree.jsx';
+import {Tree} from './Tree.jsx';
 import {NotesList} from './NotesList.jsx';
 import {Note} from './Note.jsx';
 import {SearchNotes} from './SearchNotes.jsx';
@@ -87,7 +87,7 @@ class App extends React.Component {
         this.treeIsInitialized = this.treeIsInitialized.bind(this);
         this.showHistory = this.showHistory.bind(this);
 
-        this.fancyTreeDomRef = React.createRef();
+        this.treeDomRef = React.createRef();
         this.simpleListDomRef = React.createRef();
         this.noteDomRef = React.createRef();
 
@@ -340,7 +340,7 @@ class App extends React.Component {
 
     async addNote(key) {
         let editableTitle = true;
-        let newNote = await this.fancyTreeDomRef.current.addNote(key, editableTitle);
+        let newNote = await this.treeDomRef.current.addNote(key, editableTitle);
         await openNoteDetails(newNote.key, editableTitle);
     }
 
@@ -399,7 +399,7 @@ class App extends React.Component {
 
         // console.log("openNoteInTree, detailsNoteParents=", detailsNoteParents);
 
-        await this.fancyTreeDomRef.current.openNotes(detailsNoteParents);
+        await this.treeDomRef.current.openNotes(detailsNoteParents);
     }
 
     async openNoteInTreeAndDetails(key, editableTitle) {
@@ -618,7 +618,7 @@ class App extends React.Component {
                             return newState;
                         }
                     }, () => {
-                        self.fancyTreeDomRef.current.setTitle(noteKey, title);
+                        self.treeDomRef.current.setTitle(noteKey, title);
                         resolve();
                     });
                 });
@@ -659,7 +659,7 @@ class App extends React.Component {
         });
 
         if (!fromTree) {
-            this.fancyTreeDomRef.current.setDone(noteKey, done);
+            this.treeDomRef.current.setDone(noteKey, done);
         }
 
     }
@@ -695,7 +695,7 @@ class App extends React.Component {
             return newState;
         });
 
-        this.fancyTreeDomRef.current.setType(noteKey, type);
+        this.treeDomRef.current.setType(noteKey, type);
     }
 
     async handleChangePriority(noteKey, priority) {
@@ -732,7 +732,7 @@ class App extends React.Component {
             return newState;
         });
 
-        this.fancyTreeDomRef.current.setPriority(noteKey, priority);
+        this.treeDomRef.current.setPriority(noteKey, priority);
         await this.dataSource.modifyNote({
             key: noteKey, 
             priority: priority	
@@ -746,7 +746,7 @@ class App extends React.Component {
         });
 
         let tags = await this.dataSource.addTag(noteKey, tag);
-        this.fancyTreeDomRef.current.setTags(noteKey, tags);
+        this.treeDomRef.current.setTags(noteKey, tags);
 
         
         this.setState((previousState) => {
@@ -768,7 +768,7 @@ class App extends React.Component {
         });
 
         let tags = await this.dataSource.removeTag(noteKey, tag);
-        this.fancyTreeDomRef.current.setTags(noteKey, tags);
+        this.treeDomRef.current.setTags(noteKey, tags);
 
         
         this.setState((previousState) => {
@@ -842,7 +842,7 @@ class App extends React.Component {
                 detailsNote: undefined,
             });
 
-            await this.fancyTreeDomRef.current.remove(note.key);
+            await this.treeDomRef.current.remove(note.key);
             await this.openNoteInList();
 
             message.warning(<Button type="link"
@@ -880,7 +880,7 @@ class App extends React.Component {
             longOperationProcessing: false,
             detailsNote: undefined,
         }, () => { 
-            this.fancyTreeDomRef.current.reload(note.parent);
+            this.treeDomRef.current.reload(note.parent);
             this.openNoteInList();
         });
     }
@@ -915,7 +915,7 @@ class App extends React.Component {
             detailsNote: undefined,
         }, () => { 
             // console.log("openTrash new state", this.state.trash);
-            this.fancyTreeDomRef.current.reload(note.parent);
+            this.treeDomRef.current.reload(note.parent);
             this.openNoteInList();
         });
         
@@ -933,7 +933,7 @@ class App extends React.Component {
             };
         }, () => { 
             // console.log("openTrash new state", this.state.trash);
-            this.fancyTreeDomRef.current.reload();
+            this.treeDomRef.current.reload();
         });
         
     }
@@ -1050,8 +1050,8 @@ class App extends React.Component {
                                         </Space>
                                             
                                     </div>
-                                    <FancyTree
-                                        ref={this.fancyTreeDomRef}
+                                    <Tree
+                                        ref={this.treeDomRef}
                                         loadTree={this.loadTree} 
                                         delete={this.delete}
                                         restore={this.restore}
