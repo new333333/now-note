@@ -3,6 +3,7 @@
 
 ## 0.0.15-alpha
 - styling note title #2
+- edit notes in tree #143
 
 
 ## 0.0.14-alpha
