@@ -10,7 +10,6 @@ class NoteTitle extends React.Component {
 
         this.titleDomRef = React.createRef();
 
-        this.handleChangeTitle = this.handleChangeTitle.bind(this);
         this.handleEditTitle = this.handleEditTitle.bind(this);
         this.handleKeydown = this.handleKeydown.bind(this);
 
@@ -30,16 +29,13 @@ class NoteTitle extends React.Component {
             this.titleDomRef.current.focus();
         }
      
-        if (prevProps && prevProps.note && this.props.note && prevProps.note.key != this.props.note.key) {
+        if (prevProps && prevProps.note && this.props.note && 
+            (prevProps.note.key != this.props.note.key || 
+                (prevProps.note.key == this.props.note.key && prevProps.note.title != this.props.note.title))) {
             this.setState({
                 title: this.props.note.title,
             });
         }
-    }
-
-
-    handleChangeTitle(value) {
-        this.props.handleChangeTitle(this.props.note.key, value);
     }
 
     handleEditTitle(value) {
@@ -49,6 +45,7 @@ class NoteTitle extends React.Component {
     }
 
     render() {
+        console.log("NoteTitle render() note", this.props.note);
         return (
             <>
                 {
@@ -59,7 +56,7 @@ class NoteTitle extends React.Component {
                     !this.props.note.trash &&
                     <TextArea
                         onKeyDown={(event)=> this.handleKeydown(event)}
-                        onBlur={(event)=> this.handleChangeTitle(event.target.value)}
+                        onBlur={(event)=> this.props.handleChangeTitle(this.props.note.key, event.target.value)}
                         size="large"
                         bordered={false}
                         ref={this.titleDomRef}
