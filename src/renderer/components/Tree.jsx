@@ -12,6 +12,7 @@ import '../css/jquery.fancytree-now-note.css';
 
 import 'jquery.fancytree/dist/modules/jquery.fancytree.dnd5';
 import 'jquery.fancytree/dist/modules/jquery.fancytree.glyph';
+import 'jquery.fancytree/dist/modules/jquery.fancytree.edit';
 import 'jquery-contextmenu/dist/jquery.contextMenu.min.css';
 import 'jquery-contextmenu/dist/jquery.contextMenu.min.js';
 import '../js/jquery.fancytree.contextMenu';
@@ -216,12 +217,46 @@ class Tree extends React.Component {
         let self = this;
 
         $domNode.fancytree({
-            extensions: ["dnd5", "contextMenu", "glyph"],
+            extensions: ["dnd5", "contextMenu", "glyph", "edit"],
 			checkbox: true,
 			escapeTitles: true,
             nodata: false,
             source: this.props.loadTree,
             lazyLoad: this.props.loadTree,
+
+
+			edit: {
+				adjustWidthOfs: 4,   // null: don't adjust input size to content
+				inputCss: { minWidth: 0 },
+				triggerStart: ["clickActive", "f2", "dblclick", "shift+click", "mac+enter"],
+				beforeEdit: () => {
+					//console.log("beforeEdit");
+				},   // Return false to prevent edit mode
+				edit: () => {
+					//console.log("edit");
+				},         // Editor was opened (available as data.input)
+				beforeClose: () => {
+					//console.log("beforeClose");
+				},  // Return false to prevent cancel/save (data.input is available)
+				save: (event, data) => {
+					(function(event, data) {
+						setTimeout(function() {
+							if (event && event.type == 'save' && data.dirty) {
+								console.log("save", data.node.title);
+
+								self.props.handleChangeTitle(data.node.key, data.node.title).then(function() {
+									console.log("saved");
+								});
+							}
+						}, 500);
+					})(event, data);
+					return true;
+				},         // Save data.input.val() or return false to keep editor open
+				close: () => {
+					//console.log("close");
+				},        // Editor was removed
+			},
+
 
 			glyph: {
 				preset: "awesome5",

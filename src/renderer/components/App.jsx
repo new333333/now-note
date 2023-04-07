@@ -1059,6 +1059,7 @@ class App extends React.Component {
                                         addNote={this.addNote}
                                         expandNote={this.expandNote}
                                         handleChangeDone={this.handleChangeDone} 
+                                        handleChangeTitle={this.handleChangeTitle}
                                         dataSource={this.dataSource}
                                         trash={this.state.trash}
                                         openNoteInList={this.openNoteInList}
