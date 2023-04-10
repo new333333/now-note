@@ -1838,8 +1838,8 @@ class RepositorySQLite  {
 
 				let assetKey = nextLinks.attr("data-n3asset-key");	
 
-				nextImg.attr("href", "nn-asset:" + assetKey);
-				nextImg.removeAttr("data-n3asset-key");
+				nextLinks.attr("href", "nn-asset:" + assetKey);
+				nextLinks.removeAttr("data-n3asset-key");
 			}
 		}
 
