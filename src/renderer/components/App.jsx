@@ -23,6 +23,10 @@ let noteTypes = [
     {
         label: "Task",
         key: "task",
+    },
+    {
+        label: "Link",
+        key: "link",
     }
 ];
 
@@ -56,7 +60,6 @@ class App extends React.Component {
             showDeleteNoteConfirmationModal: false,
             openHistory: false,
         };
-        this.loadTree = this.loadTree.bind(this);
         
         this.openNoteDetails = this.openNoteDetails.bind(this);
         this.openNoteInTree = this.openNoteInTree.bind(this);
@@ -185,13 +188,21 @@ class App extends React.Component {
             this.state.repositorySettings.state && 
             this.state.repositorySettings.state.details && 
             this.state.repositorySettings.state.details.key) {
-            await this.openNoteInTreeAndDetails(this.state.repositorySettings.state.details.key);
+            // it's app start and there is never trash on start, so check if note in trasj
+            let note = await this.dataSource.getNote(this.state.repositorySettings.state.details.key);
+            if (note && !note.trash) {
+                await this.openNoteInTreeAndDetails(this.state.repositorySettings.state.details.key);
+            }
         }
         if (this.state.repositorySettings && 
             this.state.repositorySettings.state && 
             this.state.repositorySettings.state.list && 
             this.state.repositorySettings.state.list.key) {
-            await this.openNoteInList(this.state.repositorySettings.state.list.key);
+                 // it's app start and there is never trash on start, so check if note in trasj
+            let note = await this.dataSource.getNote(this.state.repositorySettings.state.list.key);
+            if (note && !note.trash) {
+                await this.openNoteInList(this.state.repositorySettings.state.list.key);
+            }
         }
     }
 
@@ -249,95 +260,6 @@ class App extends React.Component {
     }
 
 
-    loadTree(key, data) {
-        let self = this;
-        // console.log("loadTree, key=, this.state.trash=", key, this.state.trash);
-        
-        if (key.type == 'source') {
-
-            return this.dataSource.getChildren(null, this.state.trash).then(function(rootNodes) {
-                rootNodes = self.mapToTreeData(rootNodes);
-
-                // console.log("loadTree, rootNodes=", rootNodes);
-
-
-                return rootNodes;
-            });
-          
-
-        } else if (data.node) {
-
-            data.result = this.dataSource.getChildren(data.node.key, this.state.trash).then(function(children) {
-                children = self.mapToTreeData(children);
-                return children;
-            });
-
-        }
-
-    }
-
-    mapToTreeData(tree) {
-        tree = mapNotesToTreeNodes(tree);
-        return tree;
-    
-    
-        function mapNotesToTreeNodes(tree) {
-            if (!tree) {
-                return tree;
-            }
-    
-            for (let i = 0; i < tree.length; i++) {
-    
-                tree[i].data = tree[i].data || {};
-                tree[i].data.description = tree[i].description;
-                tree[i].data.modifiedBy = tree[i].modifiedBy;
-                tree[i].data.modifiedOn = tree[i].modifiedOn;
-                tree[i].data.createdBy = tree[i].createdBy;
-                tree[i].data.createdOn = tree[i].createdOn;
-                tree[i].data.done = tree[i].done;
-                tree[i].data.priority = tree[i].priority;
-                tree[i].data.type = tree[i].type;
-                tree[i].data.tags = tree[i].tags;
-                
-    
-                delete tree[i].parent;
-                delete tree[i].modifiedOn;
-                delete tree[i].modifiedBy;
-                delete tree[i].description;
-                delete tree[i].createdOn;
-                delete tree[i].createdBy;
-                delete tree[i].done;
-                delete tree[i].priority;
-                delete tree[i].type;
-                delete tree[i].tags;
-    
-                tree[i].lazy = true;
-                
-                if (!tree[i].hasChildren) {
-                    tree[i].children = [];
-                }
-                setCheckBoxFromTyp(tree[i]);
-    
-            }
-    
-            return tree;
-        }
-    
-        function setCheckBoxFromTyp(node) {
-            if (!node) {
-                return node;
-            }
-    
-            node.data = node.data || {};
-            node.checkbox = node.data.type !== undefined && node.data.type === "task";
-            node.selected = node.data.done !== undefined && node.data.done;
-            node.unselectable = node.trash;
-
-            return node;
-        }
-    
-    }
-
     async addNote(key) {
         let editableTitle = true;
         let newNote = await this.treeDomRef.current.addNote(key, editableTitle);
@@ -352,8 +274,11 @@ class App extends React.Component {
         if (key) {
 
             let detailsNote = await this.dataSource.getNote(key);
-            let detailsNoteParents = await this.dataSource.getParents(key);
-            let detailsNoteBacklinks = await this.dataSource.getBacklinks(key);
+            if (detailsNote.type == "link") {
+                detailsNote = detailsNote.linkedNote;
+            }
+            let detailsNoteParents = await this.dataSource.getParents(detailsNote.key);
+            let detailsNoteBacklinks = await this.dataSource.getBacklinks(detailsNote.key);
 
             detailsNote.parents = detailsNoteParents;
             detailsNote.backlinks = detailsNoteBacklinks;
@@ -392,19 +317,19 @@ class App extends React.Component {
 
     }
 
-    async openNoteInTree(key) {
-        // console.log("openNoteInTree", key);
+    async openNoteInTree(key, editableTitle) {
+        // console.log("openNoteInTree", key, editableTitle);
 
         let detailsNoteParents = await this.dataSource.getParents(key);
 
         // console.log("openNoteInTree, detailsNoteParents=", detailsNoteParents);
 
-        await this.treeDomRef.current.openNotes(detailsNoteParents);
+        await this.treeDomRef.current.openNotes(detailsNoteParents, editableTitle);
     }
 
     async openNoteInTreeAndDetails(key, editableTitle) {
-        await this.openNoteInTree(key);
-        await this.openNoteDetails(key, editableTitle);
+        await this.openNoteInTree(key, editableTitle);
+        await this.openNoteDetails(key);
     }
 
 
@@ -1052,7 +977,6 @@ class App extends React.Component {
                                     </div>
                                     <Tree
                                         ref={this.treeDomRef}
-                                        loadTree={this.loadTree} 
                                         delete={this.delete}
                                         restore={this.restore}
                                         openNoteDetails={this.openNoteDetails}

@@ -1,7 +1,8 @@
 import React from 'react';
 
-import {Input} from 'antd';
+import {Input, Typography} from 'antd';
 const { TextArea } = Input;
+const { Paragraph } = Typography;
 
 class NoteTitle extends React.Component {
 
@@ -45,7 +46,7 @@ class NoteTitle extends React.Component {
     }
 
     render() {
-        console.log("NoteTitle render() note", this.props.note);
+        //console.log("NoteTitle render() note", this.props.note);
         return (
             <>
                 {

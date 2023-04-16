@@ -3,6 +3,8 @@ import { Collapse, Badge } from 'antd';
 const { Panel } = Collapse;
 import { HomeOutlined, DownOutlined } from '@ant-design/icons';
 import {NoteBreadCrumb} from './NoteBreadCrumb.jsx';
+import { blue } from '@ant-design/colors';
+
 
 class NoteBacklinks extends React.Component {
 
@@ -11,7 +13,6 @@ class NoteBacklinks extends React.Component {
     }
 
     render() {
-        
         return (
             <Collapse bordered={false}>
                 <Panel style={{ padding: "0" }}  header={
@@ -21,7 +22,7 @@ class NoteBacklinks extends React.Component {
                         {this.props.backlinks &&
                             <Badge 
                                 count={this.props.backlinks.length} 
-                                style={{ backgroundColor: '#002766' }} 
+                                style={{ backgroundColor: blue[5] }} 
                             />
                         }  
                     </>
@@ -31,13 +32,11 @@ class NoteBacklinks extends React.Component {
                         (
                             <ul>
                                 {this.props.backlinks.map((backlink, index) => {
-
                                     return (
-                                        <li key={backlink.key}>
-                                            <NoteBreadCrumb parents={backlink.parents} handleClickNote={this.props.handleClickNote} />
+                                        <li key={backlink.note.key}>
+                                            <NoteBreadCrumb parents={backlink.note.parents} handleClickNote={this.props.handleClickNote} />
                                         </li>
                                     )
-
 
                                 })}
                             </ul>

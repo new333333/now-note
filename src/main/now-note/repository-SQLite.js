@@ -172,6 +172,11 @@ class RepositorySQLite  {
 				allowNull: true,
 				unique: false
 			},
+			linkToKey: {
+				type: DataTypes.UUID,
+				allowNull: true,
+				unique: false
+			},
 		}, { 
 			sequelize,
 			indexes: [
@@ -228,6 +233,10 @@ class RepositorySQLite  {
 			to: {
 				type: DataTypes.UUID,
 				allowNull: false
+			},
+			type: {
+				type: DataTypes.STRING,
+				allowNull: true
 			}
 		}, { sequelize });
 
@@ -267,9 +276,64 @@ class RepositorySQLite  {
 	}
 
 	async #setupSQLite() {
+
+		log.info("setupSQLite Link.type column");
+		let [results, metadata] = await this.sequelize.query(`PRAGMA table_info(Links)`);
+		let linkTypeColumn = results.find(function(column) {
+            if (column.name == "type") {
+                return column;
+            }
+        });
+
+		if (!linkTypeColumn) {
+			const queryInterface = this.sequelize.getQueryInterface();
+			let transaction = await this.sequelize.transaction();
+			try {
+				log.info("setupSQLite add Link.type column");
+				await queryInterface.addColumn('Links', 'type', {
+					type: DataTypes.STRING,
+					allowNull: true
+				}, {transaction} ); 
+
+				await transaction.commit();
+			} catch (err) {
+				log.error(err);
+				await transaction.rollback();
+			}
+		}
+
+
+
+
+		log.info("setupSQLite Notes.linkToKey column");
+		[results, metadata] = await this.sequelize.query(`PRAGMA table_info(Notes)`);
+		let linkToKeyKeyColumn = results.find(function(column) {
+            if (column.name == "linkToKey") {
+                return column;
+            }
+        });
+		if (!linkToKeyKeyColumn) {
+			const queryInterface = this.sequelize.getQueryInterface();
+			let transaction = await this.sequelize.transaction();
+			try {
+				log.info("setupSQLite add Notes.linkToKey column");
+				await queryInterface.addColumn('Notes', 'linkToKey', {
+					type: DataTypes.UUID,
+					allowNull: true,
+					unique: false
+				}, {transaction} ); 
+
+				await transaction.commit();
+			} catch (err) {
+				log.error(err);
+				await transaction.rollback();
+			}
+		}
+
+
 		log.info("setupSQLite check index");
 		let alreadySync = false;
-		let [results, metadata] = await this.sequelize.query(`SELECT name FROM sqlite_master WHERE type='index' AND name='notes_parent'`);
+		[results, metadata] = await this.sequelize.query(`SELECT name FROM sqlite_master WHERE type='index' AND name='notes_parent'`);
 		if (results.length == 0 && !alreadySync) {
 			await this.sequelizeSync();
 			alreadySync = true;
@@ -850,11 +914,20 @@ class RepositorySQLite  {
 			html = await this.#setLinksBeforeWrite(newNote.key, html);
 			newNote.description = html;
 		}
-		newNote.save();
+		await newNote.save();
 
 		let resultNote = await this.toData(newNote, false, false, true);
 
-		this.#addNoteIndex(newNote);
+		await this.#addNoteIndex(newNote);
+
+		if (newNote.linkToKey) {
+			await nnLink.Link.create({
+				from: newNote.key,
+				to: newNote.linkToKey,
+				type: "note"
+			});
+
+		}
 		
 		return resultNote;
 	}
@@ -1146,7 +1219,17 @@ class RepositorySQLite  {
 					await nnLink.Link.findOrCreate({
 						where: {
 							from: key,
-							to: linkToNoteKey
+							to: linkToNoteKey,
+							type: {
+								[Op.or]: {
+									[Op.lt]: "link",
+									[Op.eq]: null,
+								},
+							},
+						}, defaults: {
+							from: key,
+							to: linkToNoteKey,
+							type: "link",
 						}
 					});
 					
@@ -1159,7 +1242,13 @@ class RepositorySQLite  {
 
 		let allLinks = await nnLink.Link.findAll({
 			where: {
-				from: key
+				from: key,
+				type: {
+					[Op.or]: {
+						[Op.lt]: "link",
+						[Op.eq]: null,
+					},
+				},
 			}
 		});
 		// log.debug("#setLinksBeforeWrite newLinks", newLinks);
@@ -1347,10 +1436,20 @@ class RepositorySQLite  {
 			],
 		});
 
-		let resultNotes = [];
+		let withtags = false;
+		let withchildren = true;
+		let withDescription = false;
+		let withParents = false;
 
+		let resultNotes = [];
 		for (let i = 0; i < notes.length; i++) {
-			let resultNote = await this.toData(notes[i], false, true, false);
+			let noteModel = notes[i];
+
+			if (noteModel.type == "link") {
+				let linkedNoteModel = await this.getNoteWith(noteModel.linkToKey, withtags, false, withDescription, withParents);
+				noteModel.linkedNote = await this.toData(linkedNoteModel, withtags, false, withDescription, withParents);
+			}
+			let resultNote = await this.toData(noteModel, withtags, withchildren, withDescription, withParents);
 			resultNotes.push(resultNote);
 		};
 
@@ -1657,6 +1756,12 @@ class RepositorySQLite  {
 		await nnLink.Link.destroy({
 			where: {
 				from: key,
+				type: {
+					[Op.or]: {
+						[Op.lt]: "link",
+						[Op.eq]: null,
+					},
+				},
 			},
 		});
 
@@ -1719,6 +1824,14 @@ class RepositorySQLite  {
 			if (noteModel === null) {
 				throw new nnNote.NoteNotFoundByKey(key);
 			}
+
+
+			if (noteModel.type == "link") {
+				let linkedNoteModel = await this.getNoteWith(noteModel.linkToKey, withtags, false, withDescription, withParents);
+				noteModel.linkedNote = await this.toData(linkedNoteModel, withtags, false, withDescription, withParents);
+			}
+
+
 			return await this.toData(noteModel, withtags, withchildren, withDescription, withParents);
 		}
 	}
@@ -1743,7 +1856,18 @@ class RepositorySQLite  {
 
 		for (let i = 0; i < links.length; i++) {
 			let node = await this.getNoteWith(links[i].from, false, false, false, true);
-			backlinks.push(node);
+
+			if (node.parents.length > 0) {
+				if (node.parents[node.parents.length - 1].type == "link") {
+					let linkedNoteModel = await this.getNoteWith(node.parents[node.parents.length - 1].linkToKey, false, false, false, false);
+					node.parents[node.parents.length - 1].linkedNote = await this.toData(linkedNoteModel, false, false, false, false);
+				}
+			}
+
+			backlinks.push({
+				type: links[i].type,
+				note: node
+			});
 		}
 
 		return backlinks;
@@ -1931,6 +2055,8 @@ class RepositorySQLite  {
 			priority: note.priority,
 			expanded: note.expanded,
 			trash: note.trash,
+			linkToKey: note.linkToKey,
+			linkedNote: note.linkedNote,
 		};
 
 		if (withDescription) {

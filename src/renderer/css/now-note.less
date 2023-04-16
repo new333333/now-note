@@ -33,6 +33,13 @@
 html {
 	height: 100%;
 	width: 100%;
+	font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,'Noto Sans',sans-serif,'Apple Color Emoji','Segoe UI Emoji','Segoe UI Symbol','Noto Color Emoji';
+    font-size: 14px;
+}
+
+html, ul.fancytree-container {
+	font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,'Noto Sans',sans-serif,'Apple Color Emoji','Segoe UI Emoji','Segoe UI Symbol','Noto Color Emoji';
+    font-size: 14px;
 }
 
 body {
@@ -358,6 +365,8 @@ body {
 .n3-tree {
 	overflow: auto;
 	flex: 1;
+	/* left place for context menu */
+		padding-left: 15px;
 }
 
 .fancytree-node {
@@ -424,3 +433,22 @@ span.fancytree-title {
 	margin: 0;
 	padding: 0;
 }
+
+
+.fancytree-node {
+	/* to fire mouse over on node event*/
+		padding-left: 50px;
+		margin-left: -50px;
+	/* to position context menu trigger relativ to it */
+		position: relative;
+}
+
+/*  position context menu trigger relativ to node span */
+.nn-fancytree-node-context-menu-trigger {
+	position: absolute;
+	left: 35px;
+	top: 2px;
+	cursor: pointer;
+}
+
+
