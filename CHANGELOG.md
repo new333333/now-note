@@ -4,6 +4,9 @@
 ## 0.0.15-alpha
 - styling note title #2
 - edit notes in tree #143
+- tree context menu rebuild #145
+- link notes in tree #144
+- error open note with file #142
 
 
 ## 0.0.14-alpha
