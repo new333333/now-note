@@ -1,19 +1,25 @@
 import React from 'react';
 import { PlusOutlined, DeleteFilled } from '@ant-design/icons';
 import { ConfigProvider, Space, Button, List, Modal, Alert, message, Spin, Drawer } from 'antd';
+import './App.scss';
 
 import {
     ReflexContainer,
     ReflexSplitter,
     ReflexElement
   } from 'react-reflex'
-  
+
 import 'react-reflex/styles.css'
 import {Tree} from './Tree.jsx';
 import {NotesList} from './NotesList.jsx';
 import {Note} from './Note.jsx';
 import {SearchNotes} from './SearchNotes.jsx';
 import {Footer} from './Footer.jsx';
+
+const $ = require("jquery");
+window.jQuery = $;
+window.$ = $;
+console.log("App window", window);
 
 let noteTypes = [
     {
@@ -34,22 +40,22 @@ let defaultFilter = {
     onlyNotes: false,
     onlyTasks: false,
     onlyDone: false,
-    onlyNotDone: false, 
+    onlyNotDone: false,
 }
 
-class App extends React.Component {
+export default class App extends React.Component {
 
     constructor(props) {
         super(props);
 
-        // console.log("App starten");
+        console.log(window);
 
-        this.dataSource = window.electronAPI;
+        this.dataSource = window.electron.ipcRenderer;
 
         this.state = {
             longOperationProcessing: false,
             trash: false,
-            
+
             detailsNote: undefined,
             listParentNote: undefined,
 
@@ -60,7 +66,7 @@ class App extends React.Component {
             showDeleteNoteConfirmationModal: false,
             openHistory: false,
         };
-        
+
         this.openNoteDetails = this.openNoteDetails.bind(this);
         this.openNoteInTree = this.openNoteInTree.bind(this);
         this.openNoteInTreeAndDetails = this.openNoteInTreeAndDetails.bind(this);
@@ -81,8 +87,8 @@ class App extends React.Component {
         this.getOtherNoteTypeLabel = this.getOtherNoteTypeLabel.bind(this);
         this.addNote = this.addNote.bind(this);
         this.openTrash = this.openTrash.bind(this);
-        this.delete = this.delete.bind(this); 
-        this.restore = this.restore.bind(this); 
+        this.delete = this.delete.bind(this);
+        this.restore = this.restore.bind(this);
         this.hideModalDeleteNoteConfirmation = this.hideModalDeleteNoteConfirmation.bind(this);
         this.deletePermanently = this.deletePermanently.bind(this);
         this.saveRepositorySettings = this.saveRepositorySettings.bind(this);
@@ -102,7 +108,7 @@ class App extends React.Component {
 
         this.dataSource.onClose(function(event) {
             console.log("onClose App");
-            
+
             self.beforeQuiteApp().then(function() {
                 self.dataSource.setDirty(false).then(function() {
                     self.dataSource.quit();
@@ -154,7 +160,7 @@ class App extends React.Component {
             priorityStat = await this.dataSource.getPriorityStat();
             repository = await this.dataSource.getRepository();
         }
-        
+
         //console.log("initialRepository repositorySettings=", repositorySettings);
         // console.log("initialRepository repository=", repository);
 
@@ -184,9 +190,9 @@ class App extends React.Component {
     async setAppStateFromSettings() {
         // console.log("setAppStateFromSettings treeIsInitialized=" + this.state.treeIsInitialized);
         if (this.state.treeIsInitialized &&
-            this.state.repositorySettings && 
-            this.state.repositorySettings.state && 
-            this.state.repositorySettings.state.details && 
+            this.state.repositorySettings &&
+            this.state.repositorySettings.state &&
+            this.state.repositorySettings.state.details &&
             this.state.repositorySettings.state.details.key) {
             // it's app start and there is never trash on start, so check if note in trasj
             let note = await this.dataSource.getNote(this.state.repositorySettings.state.details.key);
@@ -194,9 +200,9 @@ class App extends React.Component {
                 await this.openNoteInTreeAndDetails(this.state.repositorySettings.state.details.key);
             }
         }
-        if (this.state.repositorySettings && 
-            this.state.repositorySettings.state && 
-            this.state.repositorySettings.state.list && 
+        if (this.state.repositorySettings &&
+            this.state.repositorySettings.state &&
+            this.state.repositorySettings.state.list &&
             this.state.repositorySettings.state.list.key) {
                  // it's app start and there is never trash on start, so check if note in trasj
             let note = await this.dataSource.getNote(this.state.repositorySettings.state.list.key);
@@ -236,7 +242,7 @@ class App extends React.Component {
             return {
                 repositorySettings: newRepositorySettings
             }
-        }, () => { 
+        }, () => {
             this.saveRepositorySettings();
             this.openNoteInList();
         });
@@ -354,7 +360,7 @@ class App extends React.Component {
         }
 
         let note = await this.dataSource.getNote(key);
-        if ( (note.trash && !this.state.trash) || 
+        if ( (note.trash && !this.state.trash) ||
             (!note.trash && this.state.trash)) {
                 this.setState({
                     listParentNote: undefined,
@@ -384,7 +390,7 @@ class App extends React.Component {
         } else if (this.state.repositorySettings.filter.onlyNotDone) {
             dones.push(0);
         }
-        
+
         let searchResult = await this.dataSource.search("", 20, this.state.trash, {
             parentNotesKey: [note.key],
             types: types.length == 0 ? ["'note'", "'task'"] : types,
@@ -435,7 +441,7 @@ class App extends React.Component {
         } else if (this.state.repositorySettings.filter.onlyNotDone) {
             dones.push(0);
         }
-        
+
         let searchResult = await this.dataSource.search("", 20, this.state.trash, {
             offset: this.state.listParentNote.filteredSiblingsOffset,
             parentNotesKey: [this.state.listParentNote.key],
@@ -451,7 +457,7 @@ class App extends React.Component {
                 let filteredSiblings = [...previousState.listParentNote.filteredSiblings, ...searchResult.results];
                 let listParentNote = JSON.parse(JSON.stringify(previousState.listParentNote));
                 listParentNote.filteredSiblings = filteredSiblings;
-                listParentNote.filteredSiblingsOffset += 20; 
+                listParentNote.filteredSiblingsOffset += 20;
                 listParentNote.filteredSiblingsHasMore = searchResult.maxResults > listParentNote.filteredSiblings.length;
                 listParentNote.filteredSiblingsMaxResults = searchResult.maxResults;
                 return {
@@ -466,8 +472,8 @@ class App extends React.Component {
             longOperationProcessing: true,
         });
         let modifiedNote = await this.dataSource.modifyNote({
-            key: key, 
-            expanded: expanded	
+            key: key,
+            expanded: expanded
         });
         this.setState({
             longOperationProcessing: false,
@@ -480,8 +486,8 @@ class App extends React.Component {
 
         return new Promise(function(resolve, reject) {
             self.dataSource.modifyNote({
-                key: noteKey, 
-                description: description	
+                key: noteKey,
+                description: description
             }).then(function(modifiedNote) {
                 // don't modify state, it prevents rendering
                 console.log("handleChangeDescription modifiedNote=", modifiedNote);
@@ -491,8 +497,8 @@ class App extends React.Component {
                 resolve();
             });
         });
-        
-        
+
+
     }
 
     async handleChangeTitle(noteKey, title) {
@@ -514,8 +520,8 @@ class App extends React.Component {
             }, () => {
                 // console.log("handleChangeTitle save now");
                 self.dataSource.modifyNote({
-                    key: noteKey, 
-                    title: title	
+                    key: noteKey,
+                    title: title
                 }).then(function(modifiedNote) {
                     // console.log("handleChangeTitle modifiedNote=", modifiedNote);
                     self.setState((previousState) => {
@@ -557,8 +563,8 @@ class App extends React.Component {
         });
 
         let modifiedNote = await this.dataSource.modifyNote({
-            key: noteKey, 
-            done: done	
+            key: noteKey,
+            done: done
         });
 
         this.setState((previousState) => {
@@ -595,10 +601,10 @@ class App extends React.Component {
         });
 
         let modifiedNote = await this.dataSource.modifyNote({
-            key: noteKey, 
-            type: type	
+            key: noteKey,
+            type: type
         });
-        
+
         this.setState((previousState) => {
             let newState = {}
 
@@ -659,8 +665,8 @@ class App extends React.Component {
 
         this.treeDomRef.current.setPriority(noteKey, priority);
         await this.dataSource.modifyNote({
-            key: noteKey, 
-            priority: priority	
+            key: noteKey,
+            priority: priority
         });
 
     }
@@ -673,7 +679,7 @@ class App extends React.Component {
         let tags = await this.dataSource.addTag(noteKey, tag);
         this.treeDomRef.current.setTags(noteKey, tags);
 
-        
+
         this.setState((previousState) => {
             if (previousState.detailsNote) {
                 let note = JSON.parse(JSON.stringify(previousState.detailsNote));
@@ -695,7 +701,7 @@ class App extends React.Component {
         let tags = await this.dataSource.removeTag(noteKey, tag);
         this.treeDomRef.current.setTags(noteKey, tags);
 
-        
+
         this.setState((previousState) => {
             if (previousState.detailsNote) {
                 let note = JSON.parse(JSON.stringify(previousState.detailsNote));
@@ -752,7 +758,7 @@ class App extends React.Component {
             this.setState({
                 longOperationProcessing: true,
             });
-            
+
             // console.log("moveNoteToTrash start");
 
 
@@ -763,7 +769,7 @@ class App extends React.Component {
 
             this.setState({
                 longOperationProcessing: false,
-                
+
                 detailsNote: undefined,
             });
 
@@ -804,7 +810,7 @@ class App extends React.Component {
         this.setState({
             longOperationProcessing: false,
             detailsNote: undefined,
-        }, () => { 
+        }, () => {
             this.treeDomRef.current.reload(note.parent);
             this.openNoteInList();
         });
@@ -838,12 +844,12 @@ class App extends React.Component {
             deleteNoteKey: undefined,
 
             detailsNote: undefined,
-        }, () => { 
+        }, () => {
             // console.log("openTrash new state", this.state.trash);
             this.treeDomRef.current.reload(note.parent);
             this.openNoteInList();
         });
-        
+
     }
 
     async openTrash() {
@@ -856,13 +862,13 @@ class App extends React.Component {
                 listParentNote: undefined,
                 detailsNote: undefined,
             };
-        }, () => { 
+        }, () => {
             // console.log("openTrash new state", this.state.trash);
             this.treeDomRef.current.reload();
         });
-        
+
     }
-    
+
     hideModalDeleteNoteConfirmation() {
         // console.log("hideModalDeleteNoteConfirmation");
 
@@ -880,7 +886,7 @@ class App extends React.Component {
         });
     }
 
-  
+
 
     render() {
         console.log("App render()");
@@ -906,8 +912,8 @@ class App extends React.Component {
 
 
                 {
-                
-                    !this.state.isRepositoryInitialized ? 
+
+                    !this.state.isRepositoryInitialized ?
                     <div className='nn-center-screen'>
                         <div style={{margin: "10px 100px"}}>
                             {this.state.repositories && <List
@@ -915,8 +921,8 @@ class App extends React.Component {
                                 locale={{emptyText: "No repositories"}}
                                 dataSource={this.state.repositories}
                                 renderItem={repository => (
-                                    <List.Item 
-                                        
+                                    <List.Item
+
                                     >
                                         <List.Item.Meta
                                             title={
@@ -934,7 +940,7 @@ class App extends React.Component {
                                 onClick={(event)=> this.chooseRepositoryFolder()}
                             >Add Repository Folder</Button>
                         </div>
-                    </div> 
+                    </div>
                     :
                     <>
                         {/* <div id="nn-top-menu">
@@ -961,7 +967,7 @@ class App extends React.Component {
                             </Menu>
                         </div> */}
                         <ReflexContainer orientation="vertical">
-                    
+
                             <ReflexElement className="left-bar"
                                 minSize="200"
                                 flex={0.25}>
@@ -973,7 +979,7 @@ class App extends React.Component {
                                                 onClick={(event)=> this.addNote()}
                                             ><PlusOutlined /> Add </Button>
                                         </Space>
-                                            
+
                                     </div>
                                     <Tree
                                         ref={this.treeDomRef}
@@ -982,24 +988,24 @@ class App extends React.Component {
                                         openNoteDetails={this.openNoteDetails}
                                         addNote={this.addNote}
                                         expandNote={this.expandNote}
-                                        handleChangeDone={this.handleChangeDone} 
+                                        handleChangeDone={this.handleChangeDone}
                                         handleChangeTitle={this.handleChangeTitle}
                                         dataSource={this.dataSource}
                                         trash={this.state.trash}
                                         openNoteInList={this.openNoteInList}
-                                        openNoteInTreeAndDetails={this.openNoteInTreeAndDetails} 
+                                        openNoteInTreeAndDetails={this.openNoteInTreeAndDetails}
                                         treeIsInitialized={this.treeIsInitialized}
                                         />
                                     <div id="nn-trash">
                                         {
-                                            !this.state.trash && 
+                                            !this.state.trash &&
                                             <Button size="small" type="text" icon={<DeleteFilled />}
                                                 onClick={(event)=> this.openTrash()}>
                                                 Trash
                                             </Button>
                                         }
                                                                         {
-                                            this.state.trash && 
+                                            this.state.trash &&
                                             <Button size="small" type="text" danger icon={<DeleteFilled />}
                                                 onClick={(event)=> this.openTrash()}>
                                                 Close Trash
@@ -1010,27 +1016,27 @@ class App extends React.Component {
                                 </div>
                             </ReflexElement>
 
-                    
+
                             <ReflexSplitter propagate={true}/>
-                    
+
                             <ReflexElement className="right-bar"
                                 minSize="200"
                                 flex={0.5}>
                                 <div className='n3-bar-vertical'>
                                     <div className={`nn-header ${this.state.trash ? "nn-trash-background-color" : ""}`}>
-                                        <SearchNotes  
+                                        <SearchNotes
                                             trash={this.state.trash}
                                             dataSource={this.dataSource}
                                             openNoteInTree={this.openNoteInTree}
                                             openNoteDetails={this.openNoteDetails}
-                                            openNoteInTreeAndDetails={this.openNoteInTreeAndDetails} 
+                                            openNoteInTreeAndDetails={this.openNoteInTreeAndDetails}
                                         />
-                                        
+
                                     </div>
 
-                                    <Note 
+                                    <Note
                                         ref={this.noteDomRef}
-                                    
+
                                         dataSource={this.dataSource}
 
                                         noteTypes={noteTypes}
@@ -1038,22 +1044,22 @@ class App extends React.Component {
                                         getOtherNoteTypeLabel={this.getOtherNoteTypeLabel}
                                         priorityStat={this.state.priorityStat}
 
-                                        note={this.state.detailsNote} 
+                                        note={this.state.detailsNote}
                                         editableTitle={this.state.editableTitle}
 
-                                        handleChangeDone={this.handleChangeDone} 
-                                        handleChangeType={this.handleChangeType} 
+                                        handleChangeDone={this.handleChangeDone}
+                                        handleChangeType={this.handleChangeType}
                                         handleChangeTitle={this.handleChangeTitle}
-                                        
+
                                         handleChangeDescription={this.handleChangeDescription}
                                         handleChangePriority={this.handleChangePriority}
 
-                                        
+
                                         addNote={this.addNote}
                                         addTag={this.addTag}
                                         deleteTag={this.deleteTag}
                                         openNoteDetails={this.openNoteDetails}
-                                        openNoteInTreeAndDetails={this.openNoteInTreeAndDetails} 
+                                        openNoteInTreeAndDetails={this.openNoteInTreeAndDetails}
                                         openNoteInTree={this.openNoteInTree}
                                         openNoteInList={this.openNoteInList}
                                         delete={this.delete}
@@ -1068,22 +1074,22 @@ class App extends React.Component {
                             <ReflexSplitter propagate={true}/>
 
                             <ReflexElement minSize="200" flex={0.25}>
-                                <NotesList 
+                                <NotesList
                                     ref={this.simpleListDomRef}
 
-                                    note={this.state.listParentNote} 
+                                    note={this.state.listParentNote}
                                     loading={true && this.state.loadingList}
                                     openNoteInListLoadMore={this.openNoteInListLoadMore}
 
                                     trash={this.state.trash}
 
                                     noteTypes={noteTypes}
-                                    handleChangeDone={this.handleChangeDone} 
-                                    handleChangeType={this.handleChangeType} 
+                                    handleChangeDone={this.handleChangeDone}
+                                    handleChangeType={this.handleChangeType}
                                     handleChangePriority={this.handleChangePriority}
 
-                                    openNoteDetails={this.openNoteDetails} 
-                                    openNoteInTreeAndDetails={this.openNoteInTreeAndDetails} 
+                                    openNoteDetails={this.openNoteDetails}
+                                    openNoteInTreeAndDetails={this.openNoteInTreeAndDetails}
 
                                     setFilter={this.setFilter}
                                     filter={this.state.repositorySettings ? this.state.repositorySettings.filter : defaultFilter}
@@ -1093,7 +1099,7 @@ class App extends React.Component {
                                     getNoteTypeLabel={this.getNoteTypeLabel}
                                 />
                             </ReflexElement>
-                                        
+
                         </ReflexContainer>
 
                         <Footer repository={this.state.repository} changeRepository={this.changeRepository}/>
@@ -1121,5 +1127,3 @@ class App extends React.Component {
         )
     }
 }
-
-export {App};

@@ -1,33 +1,36 @@
-# NOW Note
 
-- Open source and free
-- tree structured
-- locally stored
-- offline only
-- full text search
-- paste files and images
-- HTML Notes
+## Install dependencies
 
-## Screenshots
+Before doing anything install dependencies.
 
-![image](https://user-images.githubusercontent.com/1867716/207042833-d34c4d21-4698-4d9b-a8d8-a40b46920eab.png)
+```bash
+npm install
+```
 
+## Starting Development
 
+Start the app in the `dev` environment:
 
-## Start for development
+```bash
+npm start
+```
 
-- npm start
+## Packaging for Production
 
+To package apps for the local platform:
 
+```bash
+npm run package
+```
 
-## Build realease
+## Testing
 
-- Install electron-builder globally:
-    - npm i -g electron-builder
-- Call
-    - npm start
-    - npm run postinstall
-    - npm run make
-    - npm run dist
+Build, start jest tests, start playwright tests
 
-The ditribution in folder 'dist'
+```bash
+rmdir /s release\app\dist
+npm run build
+npm test
+npx playwright test
+```
+

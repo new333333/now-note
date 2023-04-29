@@ -10,8 +10,8 @@ import {NoteDescription} from './NoteDescription.jsx';
 import {NoteBreadCrumbCollapse} from './NoteBreadCrumbCollapse.jsx';
 
 
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { solid, regular, brands, icon } from '@fortawesome/fontawesome-svg-core/import.macro' // <-- import styles to be used
+// import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+// import { solid, regular, brands, icon } from '@fortawesome/fontawesome-svg-core/import.macro' // <-- import styles to be used
 
 
 const {Panel} = Collapse;
@@ -25,7 +25,7 @@ class Note extends React.Component {
         super(props);
 
         this.descriptionDomRef = React.createRef();
-        
+
         this.handleChangeType = this.handleChangeType.bind(this);
         this.handleNoteMenu = this.handleNoteMenu.bind(this);
     }
@@ -75,16 +75,16 @@ class Note extends React.Component {
             this.props.showHistory(this.props.note.key);
         }
 
-        
+
     }
-    
+
 
     render() {
 
         const items = [];
         if (this.props.note) {
-            
-            if (!this.props.note.trash) { 
+
+            if (!this.props.note.trash) {
                 items.push({
                     key: 'add_note',
                     label: "Add note",
@@ -106,7 +106,7 @@ class Note extends React.Component {
                 label: this.props.note.trash ? "Delete Permanently" : "Move To Trash",
                 icon: <DeleteFilled />,
             });
-            if (this.props.note.trash) { 
+            if (this.props.note.trash) {
                 items.push({
                     key: 'restore',
                     label: "Restore",
@@ -120,20 +120,20 @@ class Note extends React.Component {
                 icon: <HistoryOutlined />,
             });
             */
-           
+
             items.push({
                 type: 'divider'
             });
-            
+
 
             items.push({
                 key: 'metadata',
                 disabled: true,
                 label: <>
-                        <div className="nn-note-metadata">Last modified: {this.props.note.updatedAt.toLocaleString()}</div> 
+                        <div className="nn-note-metadata">Last modified: {this.props.note.updatedAt.toLocaleString()}</div>
                         <div className="nn-note-metadata">Created on: {this.props.note.createdAt.toLocaleString()}</div>
-                        <div className="nn-note-metadata">Created by: {this.props.note.createdBy}</div> 
-                        <div className="nn-note-metadata">Id: {this.props.note.key}</div> 
+                        <div className="nn-note-metadata">Created by: {this.props.note.createdBy}</div>
+                        <div className="nn-note-metadata">Id: {this.props.note.key}</div>
                         </>,
             });
 
@@ -143,17 +143,17 @@ class Note extends React.Component {
             this.handleNoteMenu(key);
         };
 
-        
+
 
         return (
             <div id="nn-note">
-                {   
-                    !this.props.note && 
+                {
+                    !this.props.note &&
                     <Text type="secondary">No note selected.</Text>
                 }
 
                 {
-                    this.props.note && 
+                    this.props.note &&
                     <>
                         <div>
                             <NoteBreadCrumbCollapse parents={this.props.note.parents} handleClickNote={this.props.openNoteInTreeAndDetails} />
@@ -167,16 +167,16 @@ class Note extends React.Component {
                                 this.props.note.type == "task" &&
                                     <div style={{margin: "0 5px"}}>
                                         <Tooltip placement="bottom" title={"Mark as" + (this.props.note.done ? " NOT" : "") + " Done"}>
-                                            <Checkbox  
+                                            <Checkbox
                                                 disabled={this.props.note.trash}
-                                                checked={this.props.note.done} 
+                                                checked={this.props.note.done}
                                                 onChange={(event)=> this.handleChangeDone(event)} />
                                         </Tooltip>
                                     </div>
                             }
                             <div style={{flexBasis: "100%" }} >
-                                <NoteTitle 
-                                    note={this.props.note} 
+                                <NoteTitle
+                                    note={this.props.note}
                                     editableTitle={this.props.editableTitle}
                                     handleChangeTitle={this.props.handleChangeTitle}
                                 />
@@ -203,38 +203,38 @@ class Note extends React.Component {
                                         <Text strong>{this.props.getNoteTypeLabel(this.props.note.type)}</Text>
                                     }
                                 </span>
-                                <NotePriority 
+                                <NotePriority
                                     trash={this.props.note.trash}
                                     noteKey={this.props.note.key}
                                     priority={this.props.note.priority}
-                                    handleChangePriority={this.props.handleChangePriority} 
+                                    handleChangePriority={this.props.handleChangePriority}
                                     priorityStat={this.props.priorityStat}
                                     />
-                                <NoteTags 
+                                <NoteTags
                                     trash={this.props.note.trash}
                                     dataSource={this.props.dataSource}
 
                                     noteKey={this.props.note.key}
                                     tags={this.props.note.tags || []}
 
-                                    addTag={this.props.addTag} 
+                                    addTag={this.props.addTag}
                                     deleteTag={this.props.deleteTag}
                                     />
                         </div>
                         <Divider style={{margin: "5px 0"}} />
                         <div style={{flex: 1}}>
-                            <NoteDescription 
+                            <NoteDescription
                                 ref={this.descriptionDomRef}
                                 noteKey={this.props.note.key}
                                 description={this.props.note.description}
                                 disabled={this.props.note.trash}
-                                handleChangeDescription={this.props.handleChangeDescription} 
+                                handleChangeDescription={this.props.handleChangeDescription}
                                 dataSource={this.props.dataSource}
                                 openNoteInTreeAndDetails={this.props.openNoteInTreeAndDetails}
                             />
                         </div>
                         <div>
-                            <NoteBacklinks 
+                            <NoteBacklinks
                                 noteKey={this.props.note.key}
                                 backlinks={this.props.note.backlinks}
                                 handleClickNote={this.props.openNoteInTreeAndDetails}

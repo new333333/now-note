@@ -5,7 +5,9 @@ import { Input, Space } from 'antd';
 const { Search } = Input;
 const dayjs = require('dayjs')
 
+
 import {createTree} from 'jquery.fancytree';
+
 
 import 'jquery.fancytree/dist/skin-win8/ui.fancytree.min.css';  // CSS or LESS
 import '../css/jquery.fancytree-now-note.css';
@@ -34,17 +36,17 @@ class Tree extends React.Component {
 		this.loadTree = this.loadTree.bind(this);
     }
 
-	
+
     loadTree(key, data) {
         let self = this;
         // console.log("loadTree, key=, this.props.trash=", key, this.props.trash);
-        
+
         if (key.type == 'source') {
 
             return this.props.dataSource.getChildren(null, this.props.trash).then(function(rootNodes) {
                 return self.mapToTreeData(rootNodes);
             });
-          
+
 
         } else if (data.node) {
 
@@ -60,15 +62,15 @@ class Tree extends React.Component {
     mapToTreeData(tree) {
         tree = mapNotesToTreeNodes(tree);
         return tree;
-    
-    
+
+
         function mapNotesToTreeNodes(tree) {
             if (!tree) {
                 return tree;
             }
-    
+
             tree.forEach((node) => {
-    
+
                 node.data = node.data || {};
                 node.data.description = node.description;
                 node.data.modifiedBy = node.modifiedBy;
@@ -84,7 +86,7 @@ class Tree extends React.Component {
 				if (node.data.linkedNote) {
 					node.title = node.data.linkedNote.title;
 				}
-                
+
                 delete node.parent;
                 delete node.modifiedOn;
                 delete node.modifiedBy;
@@ -99,25 +101,25 @@ class Tree extends React.Component {
 				delete node.linkedNote;
 
                 node.lazy = true;
-                
+
 				if (node.data.linkedNote || !node.hasChildren) {
                     node.children = [];
                 }
                 setCheckBoxFromTyp(node);
-    
+
             });
-    
+
             return tree;
         }
-    
+
         function setCheckBoxFromTyp(node) {
             if (!node) {
                 return node;
             }
-    
+
             node.data = node.data || {};
             node.unselectable = node.trash;
-			
+
 			if (node.data.linkedNote) {
 				node.checkbox = node.data.linkedNote.type !== undefined && node.data.linkedNote.type === "task";
 				node.selected = node.data.linkedNote.done !== undefined && node.data.linkedNote.done;
@@ -128,7 +130,7 @@ class Tree extends React.Component {
 
             return node;
         }
-    
+
     }
 
     componentDidMount() {
@@ -241,7 +243,7 @@ class Tree extends React.Component {
 			}
 
 			console.log("addNote node", node);
-			
+
 
 			let hitMode = "over";
 			let relativeToKey = node.key;
@@ -265,8 +267,8 @@ class Tree extends React.Component {
 			});
 		});
     }
-	
-	
+
+
 	async openNotes(parents, editableTitle) {
 		let noteToOpen = parents.shift();
 
@@ -301,12 +303,12 @@ class Tree extends React.Component {
 			let self = this;
 
 			return new Promise(function(resolve) {
-	
+
 				let node = self.fancytree.getNodeByKey(key);
 				if (!node) {
 					resolve();
 				}
-	
+
 				let resetLazyResult = node.resetLazy();
 				console.log("reload, resetLazyResult=", resetLazyResult);
 				node.setExpanded(true).then(function() {
@@ -345,7 +347,7 @@ class Tree extends React.Component {
 				beforeClose: () => {
 					// Return false to prevent cancel/save (data.input is available)
 					//console.log("beforeClose");
-				},  
+				},
 				save: (event, data) => {
 					(function(event, data) {
 						setTimeout(function() {
@@ -381,9 +383,9 @@ class Tree extends React.Component {
 					console.log("Tree icon data.linkToKey", data.node.data.linkToKey);
 					return {
 						html: ReactDOMServer.renderToString(
-								<i 
+								<i
 									data-nnlinktonote={data.node.data.linkToKey}
-									className="fa-solid fa-square-up-right" 
+									className="fa-solid fa-square-up-right"
 									style={{
 										color: blue[5],
 										cursor: "pointer",
@@ -393,7 +395,7 @@ class Tree extends React.Component {
 				}
 				// return {html: ReactDOMServer.renderToString(<FontAwesomeIcon icon={solid("check")} />)}
 				return false;
-				
+
 			},
 
             // Load all lazy/unloaded child nodes
@@ -413,7 +415,7 @@ class Tree extends React.Component {
 
             activate: function(event, data) {
                 // use click insteed self.props.openNoteDetails(data.node.key);
-                
+
 			},
 
             expand: function(event, data, a, b) {
@@ -430,7 +432,7 @@ class Tree extends React.Component {
                     // Only for click and dblclick events:
                     // 'title' | 'prefix' | 'expander' | 'checkbox' | 'icon'
                     targetType = data.targetType;
-            
+
                 // we could return false to prevent default handling, i.e. generating
                 // activate, expand, or select events
 
@@ -445,7 +447,7 @@ class Tree extends React.Component {
                 self.props.handleChangeDone(data.node.key, data.node.selected, true);
 
 				data.node.data.done = data.node.selected;
-				
+
 				let parentNode = data.node;
 				while (parentNode) {
 					parentNode.renderTitle();
@@ -587,7 +589,7 @@ class Tree extends React.Component {
 					if (data.otherNode) {
 						// ignore mode, always move
 						var oldParentNote = data.otherNode.parent;
-						
+
 						// hitMode === "after" || hitMode === "before" || hitMode === "over"
 						console.log("data.hitMode", data.hitMode);
 
@@ -631,10 +633,10 @@ class Tree extends React.Component {
 							}
 
 						}
-						
+
 						data.tree.render(true, false);
 					} else if (data.files.length) {
-						
+
 						console.log("transfer files", transfer.items);
 						for (let i = 0; i < transfer.items.length; i++) {
 							let item = transfer.items[i];
@@ -657,12 +659,12 @@ class Tree extends React.Component {
 										node.parent.resetLazy();
 										node.parent.setExpanded(true);
 									}
-									
+
 								}
 
 							});
 						}
-						
+
 					} else {
 						console.log("@TODO: drop something (text or other metadata) it's not ready yet");
 						// Drop a non-node
@@ -674,9 +676,9 @@ class Tree extends React.Component {
 						console.log("transfer text", text);
 						var firstLine = text.split('\n')[0] || "";
 						newNodeData.title = firstLine.trim();
-						
 
-	
+
+
 						self.props.dataSource.addNote(data.hitMode === "over" ? node.key : node.parent.key, {
 							title: newNodeData.title,
 							type: newNodeData.type,
@@ -701,7 +703,7 @@ class Tree extends React.Component {
 
 	shouldComponentUpdate(nextProps, nextState, nextContext) {
 		// render tree only ones
-        return !this.domRef.current;       
+        return !this.domRef.current;
     }
 
     render() {

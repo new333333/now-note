@@ -27,6 +27,7 @@ npm-debug.log.*
 *.css.d.ts
 *.sass.d.ts
 *.scss.d.ts
-/test-results/
-/playwright-report/
-/playwright/.cache/
+
+# eslint ignores hidden directories by default:
+# https://github.com/eslint/eslint/issues/8429
+!.erb

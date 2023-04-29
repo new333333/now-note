@@ -1,0 +1,10 @@
+{
+  "repositories": [
+    {
+      "name": "NOW Note Main Repository",
+      "path": ".\\now-note-main-repo",
+      "type": "sqlite3",
+      "default": true
+    }
+  ]
+}
