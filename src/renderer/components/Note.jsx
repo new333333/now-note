@@ -4,9 +4,9 @@ const { TextArea } = Input;
 import Icon, {HistoryOutlined, UnorderedListOutlined, PlusOutlined, DeleteFilled, EllipsisOutlined, ApartmentOutlined} from '@ant-design/icons';
 import {NotePriority} from './NotePriority.jsx';
 import {NoteBacklinks} from './NoteBacklinks.jsx';
-import {NoteTags} from './NoteTags.jsx';
+import {NoteTags} from './NoteTags';
 import {NoteTitle} from './NoteTitle.jsx';
-import {NoteDescription} from './NoteDescription.jsx';
+import {NoteDescription} from './NoteDescription';
 import {NoteBreadCrumbCollapse} from './NoteBreadCrumbCollapse.jsx';
 
 

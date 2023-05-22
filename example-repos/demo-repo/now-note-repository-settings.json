@@ -1,0 +1,14 @@
+{
+  "filter": {
+    "onlyNotes": false,
+    "onlyTasks": false,
+    "onlyDone": false,
+    "onlyNotDone": false
+  },
+  "state": {
+    "details": {
+      "key": "0cd21c00-7f87-4abe-a96c-83821418d60e"
+    },
+    "list": {}
+  }
+}

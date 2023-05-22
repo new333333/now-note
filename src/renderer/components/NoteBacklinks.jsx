@@ -20,21 +20,21 @@ class NoteBacklinks extends React.Component {
                         Linked from &nbsp;
 
                         {this.props.backlinks &&
-                            <Badge 
-                                count={this.props.backlinks.length} 
-                                style={{ backgroundColor: blue[5] }} 
+                            <Badge
+                                count={this.props.backlinks.length}
+                                style={{ backgroundColor: blue[5] }}
                             />
-                        }  
+                        }
                     </>
                     }
                     >
-                    {this.props.backlinks && 
+                    {this.props.backlinks &&
                         (
                             <ul>
-                                {this.props.backlinks.map((backlink, index) => {
+                                {this.props.backlinks.map((note, index) => {
                                     return (
-                                        <li key={backlink.note.key}>
-                                            <NoteBreadCrumb parents={backlink.note.parents} handleClickNote={this.props.handleClickNote} />
+                                        <li key={note.key}>
+                                            <NoteBreadCrumb parents={note.parents} handleClickNote={this.props.handleClickNote} />
                                         </li>
                                     )
 

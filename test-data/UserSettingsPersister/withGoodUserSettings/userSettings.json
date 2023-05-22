@@ -1,0 +1,10 @@
+{
+  "repositories": [
+    {
+      "name": "NOW NOte Repository",
+      "path": "not_existing_repo",
+      "type": "sqlite3",
+      "default": false
+    }
+  ]
+}

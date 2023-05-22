@@ -1,0 +1,16 @@
+{
+  "filter": {
+    "onlyNotes": false,
+    "onlyTasks": false,
+    "onlyDone": false,
+    "onlyNotDone": false
+  },
+  "state": {
+    "details": {
+      "key": "c970af05-cdec-4c29-b63d-df9bfc9bb7a6"
+    },
+    "list": {
+      "key": "c970af05-cdec-4c29-b63d-df9bfc9bb7a6"
+    }
+  }
+}

@@ -9,34 +9,26 @@
  * `./src/main.js` using webpack. This gives us some performance wins.
  */
 import path from 'path';
-import { app, BrowserWindow, shell, ipcMain } from 'electron';
-// import { autoUpdater } from 'electron-updater';
+import { app, BrowserWindow, shell, ipcMain, protocol } from 'electron';
+import os from 'os';
 import log from 'electron-log';
 import MenuBuilder from './menu';
 import { resolveHtmlPath } from './util';
-import IpcHandler from './ipcHandler';
-import NowNote from './nowNote';
-import UserSettings from './user-settings';
+import IpcHandler from './IpcHandler';
+import ProtocolHandler from './ProtocolHandler';
+import NowNote from './modules/NowNote';
+import UserSettingsService from './modules/UserSettings/UserSettingsService';
+import UserSettingsPersister from './modules/UserSettings/UserSettingsPersister';
 
-const os = require('os');
+const unhandled = require('electron-unhandled');
+
+// handle all unhandled exceptions
+unhandled();
 
 // initialize the logger for any renderer processses
 log.initialize({ preload: true });
 
 let mainWindow: BrowserWindow | null = null;
-
-const userSettings = new UserSettings(
-  process.cwd(),
-  app.getPath('userData'),
-  os.userInfo().username
-);
-
-const nowNote: NowNote = new NowNote(userSettings);
-
-let n3 = {
-  isDirty: true,
-  repository: false,
-};
 
 if (process.env.NODE_ENV === 'production') {
   const sourceMapSupport = require('source-map-support');
@@ -114,8 +106,37 @@ const createWindow = async () => {
     return { action: 'deny' };
   });
 
-  const ipcHandler = new IpcHandler(nowNote, ipcMain);
-  ipcHandler.init();
+  const usetSettingsPaths = [process.cwd(), app.getPath('userData')];
+  if (process.env.USER_SETTINGS_DIR) {
+    usetSettingsPaths.unshift(
+      path.join(process.cwd(), process.env.USER_SETTINGS_DIR)
+    );
+  }
+
+  const userSettingsPersister: UserSettingsPersister =
+    new UserSettingsPersister(usetSettingsPaths);
+  const sserSettingsService: UserSettingsService = new UserSettingsService(
+    userSettingsPersister
+  );
+  const nowNote: NowNote = new NowNote(
+    sserSettingsService,
+    os.userInfo().username,
+    process.cwd()
+  );
+
+  const _ipcHandler = new IpcHandler(mainWindow, nowNote, ipcMain);
+  const _protocolHanlder = new ProtocolHandler(protocol, nowNote);
+
+  await nowNote.connectDefaultRepository();
+
+  mainWindow.on('close', (event) => {
+    log.debug('mainWindow.close');
+
+    if (nowNote.getIsDirty()) {
+      event.preventDefault();
+      mainWindow.webContents.send('wantClose');
+    }
+  });
 };
 
 /**

@@ -30,34 +30,83 @@ import { blue } from '@ant-design/colors';
 
 class Tree extends React.Component {
 
-	constructor(props) {
-        super(props);
-        this.domRef = React.createRef();
-		this.loadTree = this.loadTree.bind(this);
-    }
+  constructor(props) {
+    super(props);
+    this.domRef = React.createRef();
+    this.loadTree = this.loadTree.bind(this);
+  }
 
+  setTitle(key, title) {
+    let node = this.fancytree.getNodeByKey(key);
+    if (node) {
+        node.title = title;
 
-    loadTree(key, data) {
-        let self = this;
-        // console.log("loadTree, key=, this.props.trash=", key, this.props.trash);
-
-        if (key.type == 'source') {
-
-            return this.props.dataSource.getChildren(null, this.props.trash).then(function(rootNodes) {
-                return self.mapToTreeData(rootNodes);
-            });
-
-
-        } else if (data.node) {
-
-            data.result = this.props.dataSource.getChildren(data.node.key, this.props.trash).then(function(children) {
-                children = self.mapToTreeData(children);
-                return children;
-            });
-
+        let parentNode = node;
+        while (parentNode) {
+            parentNode.renderTitle();
+            parentNode = parentNode.parent;
         }
-
     }
+    return node;
+}
+
+setTags(key, tags) {
+  let node = this.fancytree.getNodeByKey(key);
+  node.data.tags = tags;
+}
+
+setType(key, type) {
+  let node = this.fancytree.getNodeByKey(key);
+  if (node) {
+      node.data.type = type;
+      node.checkbox = node.data.type !== undefined && node.data.type === "task";
+
+      let parentNode = node;
+      while (parentNode) {
+          parentNode.renderTitle();
+          parentNode = parentNode.parent;
+      }
+  }
+}
+
+setPriority(key, priority) {
+  let node = this.fancytree.getNodeByKey(key);
+  if (node) {
+      node.data.priority = priority;
+  }
+}
+
+setDone(key, done) {
+  let node = this.fancytree.getNodeByKey(key);
+  if (node) {
+      node.data.done = done;
+      node.setSelected(done);
+  }
+}
+
+setActive(key) {
+  let node = this.fancytree.getNodeByKey(key);
+  node.setActive();
+  return node;
+}
+
+  loadTree(key, data) {
+    const self = this;
+    if (key.type === 'source') {
+      return this.props.dataSource.ipcRenderer
+        .getChildren(null, this.props.trash)
+        .then((rootNodes) => {
+          return self.mapToTreeData(rootNodes);
+        });
+    }
+    if (data.node) {
+      data.result = this.props.dataSource.ipcRenderer
+        .getChildren(data.node.key, this.props.trash)
+        .then((children) => {
+          return self.mapToTreeData(children);
+      });
+    }
+  }
 
     mapToTreeData(tree) {
         tree = mapNotesToTreeNodes(tree);
@@ -113,22 +162,22 @@ class Tree extends React.Component {
         }
 
         function setCheckBoxFromTyp(node) {
-            if (!node) {
-                return node;
-            }
+          if (!node) {
+              return node;
+          }
 
-            node.data = node.data || {};
-            node.unselectable = node.trash;
+          node.data = node.data || {};
+          node.unselectable = node.trash;
 
-			if (node.data.linkedNote) {
-				node.checkbox = node.data.linkedNote.type !== undefined && node.data.linkedNote.type === "task";
-				node.selected = node.data.linkedNote.done !== undefined && node.data.linkedNote.done;
-			} else {
-				node.checkbox = node.data.type !== undefined && node.data.type === "task";
-				node.selected = node.data.done !== undefined && node.data.done;
-			}
+          if (node.data.linkedNote) {
+            node.checkbox = node.data.linkedNote.type !== undefined && node.data.linkedNote.type === "task";
+            node.selected = node.data.linkedNote.done !== undefined && node.data.linkedNote.done;
+          } else {
+            node.checkbox = node.data.type !== undefined && node.data.type === "task";
+            node.selected = node.data.done !== undefined && node.data.done;
+          }
 
-            return node;
+         return node;
         }
 
     }
@@ -137,11 +186,7 @@ class Tree extends React.Component {
         this.init();
     }
 
-    setActive(key) {
-        let node = this.fancytree.getNodeByKey(key);
-        node.setActive();
-        return node;
-    }
+
 
     deactiveNote() {
         let node = this.fancytree.getActiveNode();
@@ -149,53 +194,12 @@ class Tree extends React.Component {
         return node;
     }
 
-    setPriority(key, priority) {
-        let node = this.fancytree.getNodeByKey(key);
-        if (node) {
-            node.data.priority = priority;
-        }
-    }
 
-    setDone(key, done) {
-        let node = this.fancytree.getNodeByKey(key);
-        if (node) {
-            node.data.done = done;
-            node.setSelected(done);
-        }
-    }
 
-    setType(key, type) {
-        let node = this.fancytree.getNodeByKey(key);
-        if (node) {
-            node.data.type = type;
-            node.checkbox = node.data.type !== undefined && node.data.type === "task";
 
-            let parentNode = node;
-            while (parentNode) {
-                parentNode.renderTitle();
-                parentNode = parentNode.parent;
-            }
-        }
-    }
 
-    setTags(key, tags) {
-        let node = this.fancytree.getNodeByKey(key);
-        node.data.tags = tags;
-    }
 
-    setTitle(key, title) {
-        let node = this.fancytree.getNodeByKey(key);
-        if (node) {
-            node.title = title;
 
-            let parentNode = node;
-            while (parentNode) {
-                parentNode.renderTitle();
-                parentNode = parentNode.parent;
-            }
-        }
-        return node;
-    }
 
 	async delete(key) {
         console.log("delete, key=", key);
@@ -216,7 +220,7 @@ class Tree extends React.Component {
         console.log("addNote key, editableTitle", key, editableTitle);
 
 		if (key) {
-			let detailsNoteParents = await this.props.dataSource.getParents(key);
+			let detailsNoteParents = await this.props.dataSource.ipcRenderer.getParents(key);
 			await this.openNotes(detailsNoteParents);
 		}
 
@@ -248,7 +252,7 @@ class Tree extends React.Component {
 			let hitMode = "over";
 			let relativeToKey = node.key;
 
-			self.props.dataSource.addNote(node.key, {
+			self.props.dataSource.ipcRenderer.addNote(node.key, {
 				title: newNoteData.title,
 				type: newNoteData.type,
 				priority: newNoteData.priority,
@@ -318,143 +322,143 @@ class Tree extends React.Component {
 		}
 	}
 
-    init() {
-        const $domNode = $(this.domRef.current);
+  init() {
+    const $domNode = $(this.domRef.current);
+    const self = this;
+    $domNode.fancytree({
+      extensions: ['dnd5', 'contextMenu', 'edit'],
+      checkbox: true,
+      escapeTitles: true,
+      nodata: false,
+      source: this.loadTree,
+      lazyLoad: this.loadTree,
 
-        let self = this;
+      edit: {
+        adjustWidthOfs: 4, // null: don't adjust input size to content
+        inputCss: { minWidth: '3em' },
+        triggerStart: [
+          'clickActive',
+          'f2',
+          'dblclick',
+          'shift+click',
+          'mac+enter',
+        ],
+        beforeEdit: () => {
+          // Return false to prevent edit mode
+          // console.log("beforeEdit");
+        },
+        edit: () => {
+          // Editor was opened (available as data.input)
+          // console.log("edit");
+        },
+        beforeClose: () => {
+          // Return false to prevent cancel/save (data.input is available)
+          // console.log("beforeClose");
+        },
+        save: (event, data) => {
+          (function(event, data) {
+            setTimeout(() => {
+              if (event && event.type === 'save' && data.dirty) {
+                console.log('save', data.node.title);
 
-        $domNode.fancytree({
-            extensions: ["dnd5", "contextMenu", /*"glyph",*/ "edit"],
-			checkbox: true,
-			escapeTitles: true,
-            nodata: false,
-            source: this.loadTree,
-            lazyLoad: this.loadTree,
+                self.props
+                  .handleChangeTitle(data.node.key, data.node.title)
+                  .then(() => {
+                    console.log('saved');
+                  });
+              }
+            }, 500);
+          })(event, data);
+          return true;
+        }, // Save data.input.val() or return false to keep editor open
+        close: () => {
+          // Editor was removed
+          // console.log("close");
+        },
+    },
 
+    icon: function(event, data) {
+      if (data.node.statusNodeType == "loading") {
+        return false;
+      }
+      if (data.node.data.linkedNote) {
+        //return {html: ReactDOMServer.renderToString(<FontAwesomeIcon icon={solid("note-sticky")} />)}
+        console.log("Tree icon data.linkedNote", data.node.data.linkedNote);
+        console.log("Tree icon data.linkToKey", data.node.data.linkToKey);
+        return {
+          html: ReactDOMServer.renderToString(
+              <i
+                data-nnlinktonote={data.node.data.linkToKey}
+                className="fa-solid fa-square-up-right"
+                style={{
+                  color: blue[5],
+                  cursor: "pointer",
+                }}></i>
+            )
+        };
+      }
+      // return {html: ReactDOMServer.renderToString(<FontAwesomeIcon icon={solid("check")} />)}
+      return false;
 
-			edit: {
-				adjustWidthOfs: 4,   // null: don't adjust input size to content
-				inputCss: { minWidth: "3em" },
-				triggerStart: ["clickActive", "f2", "dblclick", "shift+click", "mac+enter"],
-				beforeEdit: () => {
-					// Return false to prevent edit mode
-					//console.log("beforeEdit");
-				},
-				edit: () => {
-					// Editor was opened (available as data.input)
-					//console.log("edit");
-				},
-				beforeClose: () => {
-					// Return false to prevent cancel/save (data.input is available)
-					//console.log("beforeClose");
-				},
-				save: (event, data) => {
-					(function(event, data) {
-						setTimeout(function() {
-							if (event && event.type == 'save' && data.dirty) {
-								console.log("save", data.node.title);
+    },
 
-								self.props.handleChangeTitle(data.node.key, data.node.title).then(function() {
-									console.log("saved");
-								});
-							}
-						}, 500);
-					})(event, data);
-					return true;
-				},         // Save data.input.val() or return false to keep editor open
-				close: () => {
-					// Editor was removed
-					//console.log("close");
-				},
-			},
+          // Load all lazy/unloaded child nodes
+    // (which will trigger `loadChildren` recursively)
+          loadChildren: function(event, data) {
+      data.node.visit(function(subNode) {
+        if (subNode.isUndefined() && subNode.isExpanded()) {
+          subNode.load();
+        }
+      });
+    },
 
+    init: function(event, data) {
+      // console.log(">>>>> FancyTRee initialized");
+              self.props.treeIsInitialized();
+    },
 
-			/*glyph: {
-				preset: "awesome",
-				map: {}
-			},*/
-			icon: function(event, data) {
-				if (data.node.statusNodeType == "loading") {
-					return false;
-				}
-				if (data.node.data.linkedNote) {
-					//return {html: ReactDOMServer.renderToString(<FontAwesomeIcon icon={solid("note-sticky")} />)}
-					console.log("Tree icon data.linkedNote", data.node.data.linkedNote);
-					console.log("Tree icon data.linkToKey", data.node.data.linkToKey);
-					return {
-						html: ReactDOMServer.renderToString(
-								<i
-									data-nnlinktonote={data.node.data.linkToKey}
-									className="fa-solid fa-square-up-right"
-									style={{
-										color: blue[5],
-										cursor: "pointer",
-									}}></i>
-							)
-					};
-				}
-				// return {html: ReactDOMServer.renderToString(<FontAwesomeIcon icon={solid("check")} />)}
-				return false;
+          activate: function(event, data) {
+              // use click insteed self.props.openNoteDetails(data.node.key);
 
-			},
+    },
 
-            // Load all lazy/unloaded child nodes
-			// (which will trigger `loadChildren` recursively)
-            loadChildren: function(event, data) {
-				data.node.visit(function(subNode) {
-					if (subNode.isUndefined() && subNode.isExpanded()) {
-						subNode.load();
-					}
-				});
-			},
+          expand: function(event, data, a, b) {
+              self.props.expandNote(data.node.key, true);
+    },
 
-			init: function(event, data) {
-				// console.log(">>>>> FancyTRee initialized");
-                self.props.treeIsInitialized();
-			},
+    collapse: function(event, data) {
+              self.props.expandNote(data.node.key, false);
+    },
 
-            activate: function(event, data) {
-                // use click insteed self.props.openNoteDetails(data.node.key);
+          click: function(event, data) {
+      console.log("tree click node", data.node.key, data);
+              var node = data.node,
+                  // Only for click and dblclick events:
+                  // 'title' | 'prefix' | 'expander' | 'checkbox' | 'icon'
+                  targetType = data.targetType;
 
-			},
+              // we could return false to prevent default handling, i.e. generating
+              // activate, expand, or select events
 
-            expand: function(event, data, a, b) {
-                self.props.expandNote(data.node.key, true);
-			},
+              if (data.targetType == "title") {
+                  self.props.openNoteDetails(data.node.key);
+              } else if (data.originalEvent.target.dataset.nnlinktonote) {
+        self.props.openNoteInTreeAndDetails(data.originalEvent.target.dataset.nnlinktonote, false);
+      }
+          },
 
-			collapse: function(event, data) {
-                self.props.expandNote(data.node.key, false);
-			},
+          select: function(event, data) {
+              self.props.handleChangeDone(data.node.key, data.node.selected, true);
 
-            click: function(event, data) {
-				console.log("tree click node", data.node.key, data);
-                var node = data.node,
-                    // Only for click and dblclick events:
-                    // 'title' | 'prefix' | 'expander' | 'checkbox' | 'icon'
-                    targetType = data.targetType;
+      data.node.data.done = data.node.selected;
 
-                // we could return false to prevent default handling, i.e. generating
-                // activate, expand, or select events
+      let parentNode = data.node;
+      while (parentNode) {
+        parentNode.renderTitle();
+        parentNode = parentNode.parent;
+      }
 
-                if (data.targetType == "title") {
-                    self.props.openNoteDetails(data.node.key);
-                } else if (data.originalEvent.target.dataset.nnlinktonote) {
-					self.props.openNoteInTreeAndDetails(data.originalEvent.target.dataset.nnlinktonote, false);
-				}
-            },
-
-            select: function(event, data) {
-                self.props.handleChangeDone(data.node.key, data.node.selected, true);
-
-				data.node.data.done = data.node.selected;
-
-				let parentNode = data.node;
-				while (parentNode) {
-					parentNode.renderTitle();
-					parentNode = parentNode.parent;
-				}
-
-			},
+    },
 
 			contextMenu: {
 				zIndex: 100,
@@ -606,7 +610,7 @@ class Tree extends React.Component {
 							if (data.dropEffectSuggested == "link") {
 								// create link when dragged with 'alt'
 
-								self.props.dataSource.addNote(node.key, {
+								self.props.dataSource.ipcRenderer.addNote(node.key, {
 									// title: "Link to " + key,
 									type: "link",
 									linkToKey: key,
@@ -626,7 +630,7 @@ class Tree extends React.Component {
 								});
 
 							} else {
-								self.props.dataSource.moveNote(key, from, to, data.hitMode, node.key).then(function() {
+								self.props.dataSource.ipcRenderer.moveNote(key, from, to, data.hitMode, node.key).then(function() {
 									console.log("moveNote done");
 									data.otherNode.moveTo(node, data.hitMode);
 								});
@@ -644,7 +648,7 @@ class Tree extends React.Component {
 							let entry = item.getAsFile();
 							console.log("entry as file", entry);
 
-							self.props.dataSource.addFile(data.hitMode === "over" ? node.key : node.parent.key, entry.path, data.hitMode, node.key).then(function() {
+							self.props.dataSource.ipcRenderer.addFile(data.hitMode === "over" ? node.key : node.parent.key, entry.path, data.hitMode, node.key).then(function() {
 								console.log("addFile done");
 
 								if (data.hitMode == "over") {
@@ -679,7 +683,7 @@ class Tree extends React.Component {
 
 
 
-						self.props.dataSource.addNote(data.hitMode === "over" ? node.key : node.parent.key, {
+						self.props.dataSource.ipcRenderer.addNote(data.hitMode === "over" ? node.key : node.parent.key, {
 							title: newNodeData.title,
 							type: newNodeData.type,
 							priority: newNodeData.priority,

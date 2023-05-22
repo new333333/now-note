@@ -1,0 +1,22 @@
+{
+  "repositories": [
+    {
+      "name": "Demo Repository",
+      "path": ".\\example-repos\\demo-repo",
+      "type": "sqlite3",
+      "default": false
+    },
+    {
+      "name": "Screenshots Repository",
+      "path": ".\\example-repos\\screenshots-repo",
+      "type": "sqlite3",
+      "default": false
+    },
+    {
+      "name": "Now Note Repository",
+      "path": "E:\\Projekte\\now-note-test_repositories\\repo1",
+      "type": "sqlite3",
+      "default": true
+    }
+  ]
+}

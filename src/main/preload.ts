@@ -1,76 +1,126 @@
 // Disable no-unused-vars, broken for spread args
 /* eslint no-unused-vars: off */
-import { contextBridge, ipcRenderer, IpcRendererEvent } from 'electron';
-
-export type Channels = 'ipc-example';
-export type RepositoryInfo = {
-  name: string;
-  directory: string;
-  type: string;
-  default: boolean;
-  error: string;
-};
-
-
+import { contextBridge, ipcRenderer } from 'electron';
+import { RepositorySettings } from './modules/RepositorySettings/RepositorySettingsService';
+import {
+  Error,
+  HitMode,
+  NoteDTO,
+  RepositoryDTO,
+  UserSettingsRepository,
+  Note,
+  SearchResult,
+  SearchResultOptions,
+} from '../types';
 
 const electronHandler = {
   ipcRenderer: {
-    selectRepositoryFolder: (): Promise<RepositoryInfo> =>
-      ipcRenderer.invoke('select-repository-folder'),
+    selectRepositoryFolder: (): Promise<RepositoryDTO | Error> =>
+      ipcRenderer.invoke('selectRepositoryFolder'),
 
+    isRepositoryInitialized: (): Promise<Boolean> =>
+      ipcRenderer.invoke('isRepositoryInitialized'),
 
-  // App
-  quit: () => ipcRenderer.invoke("app:quit"),
-  onClose: (callback) => ipcRenderer.on("wantClose", callback),
-  setDirty: (dirty) => ipcRenderer.invoke("app:setDirty", dirty),
+    getRepositories: (): Promise<Array<RepositoryDTO>> =>
+      ipcRenderer.invoke('getRepositories'),
 
-  // Repository
-  onChangeRepository: (callback) => ipcRenderer.on("changeRepository", callback),
-  chooseRepositoryFolder: () => ipcRenderer.invoke("app:chooseRepositoryFolder"),
-  changeRepository: (repositoryFolder) => ipcRenderer.invoke("app:changeRepository", repositoryFolder),
-  setRepositorySettings: (settings) => ipcRenderer.invoke("app:setRepositorySettings", settings),
-  getRepositorySettings: () => ipcRenderer.invoke("app:getRepositorySettings"),
-  closeRepository: () => ipcRenderer.invoke("app:closeRepository"),
-  getRepositories: () => ipcRenderer.invoke("app:getRepositories"),
-  isRepositoryInitialized: () => ipcRenderer.invoke("app:isRepositoryInitialized"),
-  getRepository: () => ipcRenderer.invoke("app:getRepository"),
+    getRepositorySettings: (): Promise<RepositorySettings | undefined> =>
+      ipcRenderer.invoke('getRepositorySettings'),
 
+    setRepositorySettings: (settings: RepositoryDTO) =>
+      ipcRenderer.invoke('setRepositorySettings', settings),
 
-  getChildren: (key, trash) => ipcRenderer.invoke("store:getChildren", key, trash),
-  addNote: (parentNoteKey, note, hitMode, relativeToKey) => ipcRenderer.invoke("store:addNote", parentNoteKey, note, hitMode, relativeToKey),
-  modifyNote: (note) => ipcRenderer.invoke("store:modifyNote", note),
-  addTag: (key, tag) => ipcRenderer.invoke("store:addTag", key, tag),
-  removeTag: (key, tag) => ipcRenderer.invoke("store:removeTag", key, tag),
-  findTag: (tag) => ipcRenderer.invoke("store:findTag", tag),
-  moveNote: (key, from, to, hitMode, relativTo) => ipcRenderer.invoke("store:moveNote", key, from, to, hitMode, relativTo),
-  moveNoteToTrash: (key) => ipcRenderer.invoke("store:moveNoteToTrash", key),
-  restore: (key) => ipcRenderer.invoke("store:restore", key),
-  deletePermanently: (key) => ipcRenderer.invoke("store:deletePermanently", key),
-  search: (searchText, limit, trash, options) => ipcRenderer.invoke("search:search", searchText, limit, trash, options),
-  getNote: (key) => ipcRenderer.invoke("store:getNote", key),
-  getNoteIndex: (key) => ipcRenderer.invoke("store:getNoteIndex", key),
-  isTrash: (key) => ipcRenderer.invoke("store:isTrash", key),
-  getParents: (key) => ipcRenderer.invoke("store:getParents", key),
-  getBacklinks: (key) => ipcRenderer.invoke("store:getBacklinks", key),
-  downloadAttachment: (url) => ipcRenderer.invoke("download-attachment", url),
-  addFile: (parentKey, path, hitMode, relativeToKey) => ipcRenderer.invoke("store:addFile", parentKey, path, hitMode, relativeToKey),
-  getPriorityStat: () => ipcRenderer.invoke("app:getPriorityStat"),
+    getCurrentRepository: (): Promise<UserSettingsRepository | undefined> =>
+      ipcRenderer.invoke('getCurrentRepository'),
 
-    sendMessage(channel: Channels, args: unknown[]) {
-      ipcRenderer.send(channel, args);
-    },
-    on(channel: Channels, func: (...args: unknown[]) => void) {
-      const subscription = (_event: IpcRendererEvent, ...args: unknown[]) =>
-        func(...args);
-      ipcRenderer.on(channel, subscription);
+    getChildren: (
+      key: string,
+      trash: boolean
+    ): Promise<Array<Note> | undefined> =>
+      ipcRenderer.invoke('getChildren', key, trash),
 
-      return () => {
-        ipcRenderer.removeListener(channel, subscription);
-      };
-    },
-    once(channel: Channels, func: (...args: unknown[]) => void) {
-      ipcRenderer.once(channel, (_event, ...args) => func(...args));
-    },
+    getNote: (key: string): Promise<Note | undefined> =>
+      ipcRenderer.invoke('getNote', key),
+
+    getParents: (key: string): Promise<Array<Note> | undefined> =>
+      ipcRenderer.invoke('getParents', key),
+
+    getBacklinks: (key: string): Promise<Array<NoteDTO>> =>
+      ipcRenderer.invoke('getBacklinks', key),
+
+    search: (
+      searchText: string,
+      limit: number,
+      trash: boolean,
+      options: SearchResultOptions
+    ): Promise<SearchResult> =>
+      ipcRenderer.invoke('search', searchText, limit, trash, options),
+
+    modifyNote: (note: NoteDTO): Promise<NoteDTO> =>
+      ipcRenderer.invoke('modifyNote', note),
+
+    connectRepository: (
+      repositoryFolder: string
+    ): Promise<UserSettingsRepository | undefined> =>
+      ipcRenderer.invoke('connectRepository', repositoryFolder),
+
+    findTag: (tag: string): Promise<String[]> =>
+      ipcRenderer.invoke('findTag', tag),
+
+    addTag: (key: string, tag: string): Promise<String[]> =>
+      ipcRenderer.invoke('addTag', key, tag),
+
+    removeTag: (key: string, tag: string): Promise<String[]> =>
+      ipcRenderer.invoke('removeTag', key, tag),
+
+    closeRepository: () => ipcRenderer.invoke('closeRepository'),
+
+    addNote: (
+      parentNoteKey: string,
+      note: NoteDTO,
+      hitMode: HitMode,
+      relativeToKey: string
+    ) =>
+      ipcRenderer.invoke(
+        'addNote',
+        parentNoteKey,
+        note,
+        hitMode,
+        relativeToKey
+      ),
+
+    moveNote: (
+      key: string,
+      from: string,
+      to: string,
+      hitMode: HitMode,
+      relativTo: string
+    ) => ipcRenderer.invoke('moveNote', key, from, to, hitMode, relativTo),
+
+    moveNoteToTrash: (key: string) =>
+      ipcRenderer.invoke('moveNoteToTrash', key),
+
+    restore: (key: string) => ipcRenderer.invoke('restore', key),
+
+    deletePermanently: (key: string) =>
+      ipcRenderer.invoke('deletePermanently', key),
+
+    getPriorityStat: () => ipcRenderer.invoke('getPriorityStat'),
+
+    addFile: (
+      parentKey: string,
+      path: string,
+      hitMode: HitMode,
+      relativeToKey: string
+    ) => ipcRenderer.invoke('addFile', parentKey, path, hitMode, relativeToKey),
+
+    openAssetFile: (url: string) => ipcRenderer.invoke('openAssetFile', url),
+
+    quit: () => ipcRenderer.invoke('quit'),
+
+    setDirty: (dirty: boolean) => ipcRenderer.invoke('setDirty', dirty),
+
+    onClose: (callback) => ipcRenderer.on('wantClose', callback),
   },
 };
 
