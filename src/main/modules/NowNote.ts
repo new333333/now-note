@@ -21,7 +21,7 @@ import RepositorySettingsService, {
   RepositorySettings,
 } from './RepositorySettings/RepositorySettingsService';
 import RepositorySQLiteSetup from './RepositorySQLite/RepositorySQLiteSetup';
-import { Note } from './DataModels';
+import { Note, Tag } from './DataModels';
 import AssetFilesService from './AssetFilesService';
 
 export default class NowNote {
@@ -216,6 +216,13 @@ export default class NowNote {
     return Promise.resolve(undefined);
   }
 
+  async getTags(key: string): Promise<Array<Tag> | undefined> {
+    if (this.currentRepository !== undefined) {
+      return this.currentRepository.getTags(key);
+    }
+    return Promise.resolve(undefined);
+  }
+
   async search(
     searchText: string,
     limit: number,
@@ -235,21 +242,21 @@ export default class NowNote {
     return Promise.resolve(undefined);
   }
 
-  async findTag(tag: string): Promise<String[] | undefined> {
+  async findTag(tag: string): Promise<Tag[] | undefined> {
     if (this.currentRepository !== undefined) {
       return this.currentRepository.findTag(tag);
     }
     return Promise.resolve(undefined);
   }
 
-  async addTag(key: string, tag: string): Promise<String[] | undefined> {
+  async addTag(key: string, tag: string): Promise<void | undefined> {
     if (this.currentRepository !== undefined) {
       return this.currentRepository.addTag(key, tag);
     }
     return Promise.resolve(undefined);
   }
 
-  async removeTag(key: string, tag: string): Promise<String[] | undefined> {
+  async removeTag(key: string, tag: string): Promise<string[] | undefined> {
     if (this.currentRepository !== undefined) {
       return this.currentRepository.removeTag(key, tag);
     }

@@ -512,7 +512,7 @@ export class RepositorySQLite implements Repository {
     }
 
     await this.#addNoteIndex(newNote);
-    const resultNote = await this.noteToNoteDTO(newNote, false, false, true);
+    const resultNote = await this.noteToNoteDTO(newNote, false, true);
     return resultNote;
   }
 
@@ -934,27 +934,19 @@ export class RepositorySQLite implements Repository {
       );
     }
 
-    return this.noteToNoteDTO(modifyNote, false, false, true);
+    return this.noteToNoteDTO(modifyNote, false, true);
   }
 
-  async addTag(key: string, tag: string): Promise<String[]> {
+  async addTag(key: string, tag: string): Promise<void> {
     await Tag.findOrCreate({
       where: {
         key,
         tag,
       },
     });
-
-    const tags = await Tag.findAll({
-      where: {
-        key,
-      },
-    });
-
-    return tags.map((currentTag) => currentTag.tag);
   }
 
-  async removeTag(key: string, tag: string): Promise<String[]> {
+  async removeTag(key: string, tag: string): Promise<string[]> {
     await Tag.destroy({
       where: {
         key,
@@ -971,7 +963,7 @@ export class RepositorySQLite implements Repository {
     return tags.map((currentTag) => currentTag.tag);
   }
 
-  async findTag(tag: string): Promise<String[]> {
+  async findTag(tag: string): Promise<Tag[]> {
     const tags: Tag[] = await Tag.findAll({
       where: {
         tag: {
@@ -981,7 +973,7 @@ export class RepositorySQLite implements Repository {
       group: ['tag'],
     });
 
-    return tags.map((currentTag) => currentTag.tag);
+    return tags;
   }
 
   // load root nodes, if key undefined
@@ -999,7 +991,6 @@ export class RepositorySQLite implements Repository {
       order: [['position', 'ASC']],
     });
 
-    const withtags: boolean = false;
     const withchildren: boolean = true;
     const withDescription: boolean = false;
     const withParents: boolean = false;
@@ -1011,7 +1002,6 @@ export class RepositorySQLite implements Repository {
       // eslint-disable-next-line no-await-in-loop
       const resultNote = await this.noteToNoteDTO(
         noteModel,
-        withtags,
         withchildren,
         withDescription,
         withParents,
@@ -1440,7 +1430,6 @@ export class RepositorySQLite implements Repository {
   }
 
   async getNote(key: string): Promise<NoteDTO | undefined> {
-    const withtags: boolean = true;
     const withchildren: boolean = false;
     const withDescription: boolean = true;
     const withParents: boolean = false;
@@ -1448,7 +1437,6 @@ export class RepositorySQLite implements Repository {
 
     return this.getNoteWith(
       key,
-      withtags,
       withchildren,
       withDescription,
       withParents,
@@ -1458,7 +1446,6 @@ export class RepositorySQLite implements Repository {
 
   async getNoteWith(
     key: string | undefined,
-    withtags: boolean,
     withchildren: boolean,
     withDescription: boolean,
     withParents: boolean,
@@ -1475,7 +1462,6 @@ export class RepositorySQLite implements Repository {
 
     return this.noteToNoteDTO(
       noteModel,
-      withtags,
       withchildren,
       withDescription,
       withParents,
@@ -1492,7 +1478,6 @@ export class RepositorySQLite implements Repository {
 
     const backlinks: Array<NoteDTO> = [];
 
-    const withtags: boolean = false;
     const withchildren: boolean = false;
     const withDescription: boolean = false;
     const withParents: boolean = true;
@@ -1502,7 +1487,6 @@ export class RepositorySQLite implements Repository {
       // eslint-disable-next-line no-await-in-loop
       const note = await this.getNoteWith(
         links[i].from,
-        withtags,
         withchildren,
         withDescription,
         withParents,
@@ -1515,6 +1499,14 @@ export class RepositorySQLite implements Repository {
     }
 
     return backlinks;
+  }
+
+  async getTags(key: string): Promise<Array<Tag>> {
+    return Tag.findAll({
+      where: {
+        key,
+      },
+    });
   }
 
   async getParents(
@@ -1748,7 +1740,6 @@ export class RepositorySQLite implements Repository {
 
   async noteToNoteDTO(
     note: Note,
-    withtags?: boolean,
     withchildren?: boolean,
     withDescription?: boolean,
     withParents?: boolean,
@@ -1774,46 +1765,14 @@ export class RepositorySQLite implements Repository {
       hasChildren = countChildren > 0;
     }
 
-    let tagsAsStrings: string[] = [];
-    if (withtags) {
-      const tags: Tag[] | null = await Tag.findAll({
-        where: {
-          key: note.key,
-        },
-      });
-      tagsAsStrings = tags.map((currentTag) => currentTag.tag);
-    }
-
     let parents: NoteDTO[] | undefined = [];
     if (withParents) {
       parents = await this.notesToNoteDTO(
         await this.getParents(note.key, undefined),
         false,
         false,
-        false,
         false
       );
-    }
-
-    let linkedNote: NoteDTO | undefined;
-    if (withLindedNote && note.type === 'link') {
-      const linkedNoteModel = await this.getNoteWith(
-        note.linkToKey,
-        withtags !== undefined ? withtags : false,
-        false,
-        withDescription !== undefined ? withDescription : false,
-        withParents !== undefined ? withParents : false,
-      );
-      if (linkedNoteModel !== undefined) {
-        linkedNote = await this.noteToNoteDTO(
-          linkedNoteModel,
-          withtags,
-          false,
-          withDescription,
-          withParents,
-          withLindedNote
-        );
-      }
     }
 
     const result: NoteDTO = {
@@ -1828,10 +1787,8 @@ export class RepositorySQLite implements Repository {
       expanded: note.expanded,
       trash: note.trash,
       linkToKey: note.linkToKey,
-      linkedNote,
       description,
       hasChildren,
-      tags: tagsAsStrings,
       parents,
       position: note.position,
     };
@@ -1840,7 +1797,6 @@ export class RepositorySQLite implements Repository {
 
   async notesToNoteDTO(
     notes: Array<Note> | undefined,
-    withtags?: boolean,
     withchildren?: boolean,
     withDescription?: boolean,
     withParents?: boolean
@@ -1852,13 +1808,7 @@ export class RepositorySQLite implements Repository {
     const results = [];
     for (let i: number = 0; i < notes.length; i += 1) {
       results.push(
-        this.noteToNoteDTO(
-          notes[i],
-          withtags,
-          withchildren,
-          withDescription,
-          withParents
-        )
+        this.noteToNoteDTO(notes[i], withchildren, withDescription, withParents)
       );
     }
 

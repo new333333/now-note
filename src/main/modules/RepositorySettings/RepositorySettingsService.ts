@@ -1,29 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-
-export interface RepositorySettings {
-  filter: {
-    onlyNotes: boolean;
-    onlyTasks: boolean;
-    onlyDone: boolean;
-    onlyNotDone: boolean;
-  };
-
-  state: {
-    details: {
-      key: string | undefined;
-    };
-    list: {
-      key: string | undefined;
-    };
-  };
-
-  // v1, don't need any more
-  filterOnlyNotes?: boolean;
-  filterOnlyTasks?: boolean;
-  filterOnlyDone?: boolean;
-  filterOnlyNotDone?: boolean;
-}
+import { RepositorySettings } from 'types';
 
 export default class RepositorySettingsService {
   private directory: string;

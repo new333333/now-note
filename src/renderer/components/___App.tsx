@@ -8,15 +8,15 @@ export default function App() {
 
   const initRepository = useCallback(() => {
     setIsRepositoryInitialized(true);
-    // let repositories = await this.dataSource.ipcRenderer.getRepositories();
+    // let repositories = await this.dataService.getRepositories();
 
     // let priorityStat = undefined;
       let repositorySettings = {};
 
     if (isRepositoryInitialized) {
         repositorySettings = await this.getRepositorySettings();
-        priorityStat = await this.dataSource.ipcRenderer.getPriorityStat();
-        repository = await this.dataSource.ipcRenderer.getCurrentRepository();
+        priorityStat = await this.dataService.getPriorityStat();
+        repository = await this.dataService.getCurrentRepository();
     }
 
     this.setState({

@@ -62,7 +62,7 @@ class SearchNotes extends React.Component {
           offset: 0,
         };
 
-        self.props.dataSource.ipcRenderer.search(searchText, 20, self.props.trash, searchResultOptions).then(function(searchResult) {
+        self.props.dataService.search(searchText, 20, self.props.trash, searchResultOptions).then(function(searchResult) {
             let options = self.resultToListOption(searchResult.results);
 
             self.setState((previousState) => {
@@ -100,7 +100,7 @@ class SearchNotes extends React.Component {
                   offset: self.state.startSearchPosition + 20,
                 };
 
-                self.props.dataSource.ipcRenderer.search(self.state.valueAutoComplete, 20, self.props.trash, searchResultOptions).then(function(searchResult) {
+                self.props.dataService.search(self.state.valueAutoComplete, 20, self.props.trash, searchResultOptions).then(function(searchResult) {
                     let newState = {
                         loading: false,
                     };

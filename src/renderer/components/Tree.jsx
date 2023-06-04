@@ -93,14 +93,14 @@ setActive(key) {
   loadTree(key, data) {
     const self = this;
     if (key.type === 'source') {
-      return this.props.dataSource.ipcRenderer
+      return this.props.dataService
         .getChildren(null, this.props.trash)
         .then((rootNodes) => {
           return self.mapToTreeData(rootNodes);
         });
     }
     if (data.node) {
-      data.result = this.props.dataSource.ipcRenderer
+      data.result = this.props.dataService
         .getChildren(data.node.key, this.props.trash)
         .then((children) => {
           return self.mapToTreeData(children);
@@ -220,7 +220,7 @@ setActive(key) {
         console.log("addNote key, editableTitle", key, editableTitle);
 
 		if (key) {
-			let detailsNoteParents = await this.props.dataSource.ipcRenderer.getParents(key);
+			let detailsNoteParents = await this.props.dataService.getParents(key);
 			await this.openNotes(detailsNoteParents);
 		}
 
@@ -252,7 +252,7 @@ setActive(key) {
 			let hitMode = "over";
 			let relativeToKey = node.key;
 
-			self.props.dataSource.ipcRenderer.addNote(node.key, {
+			self.props.dataService.addNote(node.key, {
 				title: newNoteData.title,
 				type: newNoteData.type,
 				priority: newNoteData.priority,
@@ -610,7 +610,7 @@ setActive(key) {
 							if (data.dropEffectSuggested == "link") {
 								// create link when dragged with 'alt'
 
-								self.props.dataSource.ipcRenderer.addNote(node.key, {
+								self.props.dataService.addNote(node.key, {
 									// title: "Link to " + key,
 									type: "link",
 									linkToKey: key,
@@ -630,7 +630,7 @@ setActive(key) {
 								});
 
 							} else {
-								self.props.dataSource.ipcRenderer.moveNote(key, from, to, data.hitMode, node.key).then(function() {
+								self.props.dataService.moveNote(key, from, to, data.hitMode, node.key).then(function() {
 									console.log("moveNote done");
 									data.otherNode.moveTo(node, data.hitMode);
 								});
@@ -648,7 +648,7 @@ setActive(key) {
 							let entry = item.getAsFile();
 							console.log("entry as file", entry);
 
-							self.props.dataSource.ipcRenderer.addFile(data.hitMode === "over" ? node.key : node.parent.key, entry.path, data.hitMode, node.key).then(function() {
+							self.props.dataService.addFile(data.hitMode === "over" ? node.key : node.parent.key, entry.path, data.hitMode, node.key).then(function() {
 								console.log("addFile done");
 
 								if (data.hitMode == "over") {
@@ -683,7 +683,7 @@ setActive(key) {
 
 
 
-						self.props.dataSource.ipcRenderer.addNote(data.hitMode === "over" ? node.key : node.parent.key, {
+						self.props.dataService.addNote(data.hitMode === "over" ? node.key : node.parent.key, {
 							title: newNodeData.title,
 							type: newNodeData.type,
 							priority: newNodeData.priority,

@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-vars */
 /* eslint max-classes-per-file: ["error", 99] */
 import fs from 'fs';
-import { Note } from 'main/modules/DataModels';
+import { Note, Tag } from 'main/modules/DataModels';
 import { inflateRaw } from 'zlib';
 
 
@@ -40,10 +40,37 @@ export interface UserSettings {
 // ***************************************************************************
 // ***************************************************************************
 
+export interface RepositorySettings {
+  filter: {
+    onlyNotes: boolean;
+    onlyTasks: boolean;
+    onlyDone: boolean;
+    onlyNotDone: boolean;
+  };
+
+  state: {
+    details: {
+      key: string | undefined;
+    };
+    list: {
+      key: string | undefined;
+    };
+  };
+
+  // v1, don't need any more
+  filterOnlyNotes?: boolean;
+  filterOnlyTasks?: boolean;
+  filterOnlyDone?: boolean;
+  filterOnlyNotDone?: boolean;
+}
+
+// ***************************************************************************
+// ***************************************************************************
+
 export interface RepositoryDTO {
-  name: String;
-  directory: String;
-  type: String;
+  name: string;
+  directory: string;
+  type: string;
   default: Boolean;
 }
 
@@ -76,7 +103,6 @@ export interface NoteDTO {
   linkedNote: NoteDTO | undefined;
   parents: Array<NoteDTO> | undefined;
   position: number | undefined;
-  tags: string[] | undefined;
   hasChildren: boolean | undefined;
 }
 
@@ -95,6 +121,7 @@ export interface Repository {
     parents: Array<Note> | undefined
   ): Promise<Array<Note> | undefined>;
   getBacklinks(key: string): Promise<Array<NoteDTO>>;
+  getTags(key: string): Promise<Array<Tag>>;
   search(
     searchText: string,
     limit: number,
@@ -105,9 +132,9 @@ export interface Repository {
     note: NoteDTO,
     skipVersioning?: boolean | undefined
   ): Promise<NoteDTO | undefined>;
-  findTag(tag: string): Promise<String[]>;
-  addTag(key: string, tag: string): Promise<String[]>;
-  removeTag(key: string, tag: string): Promise<String[]>;
+  findTag(tag: string): Promise<Tag[]>;
+  addTag(key: string, tag: string): Promise<void>;
+  removeTag(key: string, tag: string): Promise<string[]>;
   addNote(
     parentNoteKey: string,
     note: NoteDTO,
@@ -142,3 +169,10 @@ export interface Repository {
 
 // ***************************************************************************
 // ***************************************************************************
+
+export interface TagService {
+  getTags(key: string): Promise<Array<Tag>>;
+  findTag(tag: string): Promise<Tag[]>;
+  addTag(key: string, tag: string): Promise<void>;
+  removeTag(key: string, tag: string): Promise<string[]>;
+}

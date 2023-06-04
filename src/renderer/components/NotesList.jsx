@@ -47,7 +47,7 @@ class NotesList extends React.Component {
         }
     }
 
-    
+
 
     async setFilterOnlyTasks() {
 
@@ -57,8 +57,8 @@ class NotesList extends React.Component {
         let filter = {...this.props.filter, ...{
             onlyTasks: (!prevFilterOnlyTasks && !prevFilterOnlyNotes) ? true : (
                                 (prevFilterOnlyTasks && !prevFilterOnlyNotes) ? false : (
-                                    (!prevFilterOnlyTasks && prevFilterOnlyNotes) ? true : false)), 
-            onlyNotes: false, 
+                                    (!prevFilterOnlyTasks && prevFilterOnlyNotes) ? true : false)),
+            onlyNotes: false,
         }};
 
 
@@ -71,10 +71,10 @@ class NotesList extends React.Component {
         let prevFilterOnlyNotes = this.props.filter.onlyNotes;
 
         let filter = {...this.props.filter, ...{
-            onlyTasks: false, 
+            onlyTasks: false,
             onlyNotes: (!prevFilterOnlyTasks && !prevFilterOnlyNotes) ? true : (
                 (prevFilterOnlyTasks && !prevFilterOnlyNotes) ? true : (
-                    (!prevFilterOnlyTasks && prevFilterOnlyNotes) ? false : false)),    
+                    (!prevFilterOnlyTasks && prevFilterOnlyNotes) ? false : false)),
         }};
 
 
@@ -88,8 +88,8 @@ class NotesList extends React.Component {
         let filter = {...this.props.filter, ...{
             onlyDone: (!prevFilterOnlyDone && !prevFilterOnlyNotDone) ? true : (
                                 (prevFilterOnlyDone && !prevFilterOnlyNotDone) ? false : (
-                                    (!prevFilterOnlyDone && prevFilterOnlyNotDone) ? true : false)), 
-            onlyNotDone: false, 
+                                    (!prevFilterOnlyDone && prevFilterOnlyNotDone) ? true : false)),
+            onlyNotDone: false,
         }};
 
         this.props.setFilter(filter);
@@ -100,10 +100,10 @@ class NotesList extends React.Component {
         let prevFilterOnlyNotDone = this.props.filter.onlyNotDone;
 
         let filter = {...this.props.filter, ...{
-            onlyDone: false, 
+            onlyDone: false,
             onlyNotDone: (!prevFilterOnlyDone && !prevFilterOnlyNotDone) ? true : (
                 (prevFilterOnlyDone && !prevFilterOnlyNotDone) ? true : (
-                    (!prevFilterOnlyDone && prevFilterOnlyNotDone) ? false : false)),    
+                    (!prevFilterOnlyDone && prevFilterOnlyNotDone) ? false : false)),
         }};
 
         this.props.setFilter(filter);
@@ -231,7 +231,7 @@ class NotesList extends React.Component {
 
                         <div>
                             {
-                                !this.props.note && 
+                                !this.props.note &&
                                 <Text type="secondary">No note selected.</Text>
                             }
                             {
@@ -249,9 +249,9 @@ class NotesList extends React.Component {
                                         locale={{emptyText: "No Children Notes"}}
                                         bordered
                                         size="small"
-                                        dataSource={this.props.note.filteredSiblings}
+                                        dataService={this.props.note.filteredSiblings}
                                         renderItem={(note, index) => (
-                                            <List.Item 
+                                            <List.Item
                                             size="small"
                                             >
                                                 <List.Item.Meta
@@ -268,10 +268,10 @@ class NotesList extends React.Component {
                                                                 <Text strong type="secondary" style={{paddingRight: "5px"}}>{index + 1}.</Text>
                                                                 {
                                                                     note.type == "task" &&
-                                                                        <Checkbox 
+                                                                        <Checkbox
                                                                             style={{paddingRight: "5px"}}
-                                                                            disabled={this.props.trash} 
-                                                                            checked={note.done} 
+                                                                            disabled={this.props.trash}
+                                                                            checked={note.done}
                                                                             onChange={(event)=> this.handleChangeDone(note.key, event)} />
                                                                 }
                                                                 {/*<Dropdown menu={noteMenu} trigger={['contextMenu']}>*/}
@@ -302,13 +302,13 @@ class NotesList extends React.Component {
                                                                 }
                                                                 {
                                                                     !this.props.trash &&
-                                                                    <InputNumber 
+                                                                    <InputNumber
                                                                         disabled={this.props.trash}
                                                                         style={{width: "70px"}}
-                                                                        min={0} 
+                                                                        min={0}
                                                                         size="small"
-                                                                        value={note.priority} 
-                                                                        onChange={(event)=> this.props.handleChangePriority(note.key, event)} 
+                                                                        value={note.priority}
+                                                                        onChange={(event)=> this.props.handleChangePriority(note.key, event)}
                                                                     />
                                                                 }
                                                             </span>
@@ -322,12 +322,12 @@ class NotesList extends React.Component {
                             }
 
                         </div>
-                    </Spin> 
+                    </Spin>
                 </div>
-                
+
             </div>
-            
-            
+
+
         );
     }
 }

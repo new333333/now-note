@@ -1,8 +1,8 @@
-import { UserSettingsRepository } from '../types';
-import UserSettingsPersister from '../main/modules/UserSettings/UserSettingsPersister';
-import UserSettingsService from '../main/modules/UserSettings/UserSettingsService';
+import { UserSettingsRepository } from '../../types';
+import UserSettingsPersister from '../../main/modules/UserSettings/UserSettingsPersister';
+import UserSettingsService from '../../main/modules/UserSettings/UserSettingsService';
 
-jest.mock('../main/modules/UserSettingsPersister');
+jest.mock('../../main/modules/UserSettings/UserSettingsPersister');
 
 beforeEach(() => {
   // Clear all instances and calls to constructor and all methods:

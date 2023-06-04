@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
-import { UserSettings } from '../types';
-import UserSettingsPersister from '../main/modules/UserSettings/UserSettingsPersister';
+import { UserSettings } from '../../types';
+import UserSettingsPersister from '../../main/modules/UserSettings/UserSettingsPersister';
 
 async function removeNewCreatedUserSettingsFile() {
   try {

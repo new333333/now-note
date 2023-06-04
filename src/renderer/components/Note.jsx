@@ -1,21 +1,14 @@
 import React from 'react';
-import {Dropdown, Menu, Divider, Checkbox, Tooltip, Collapse, Typography, Button, Input} from 'antd';
-const { TextArea } = Input;
-import Icon, {HistoryOutlined, UnorderedListOutlined, PlusOutlined, DeleteFilled, EllipsisOutlined, ApartmentOutlined} from '@ant-design/icons';
-import {NotePriority} from './NotePriority.jsx';
-import {NoteBacklinks} from './NoteBacklinks.jsx';
-import {NoteTags} from './NoteTags';
-import {NoteTitle} from './NoteTitle.jsx';
-import {NoteDescription} from './NoteDescription';
-import {NoteBreadCrumbCollapse} from './NoteBreadCrumbCollapse.jsx';
+import { Dropdown, Divider, Checkbox, Tooltip, Typography, Button } from 'antd';
+import Icon, { UnorderedListOutlined, PlusOutlined, DeleteFilled, EllipsisOutlined, ApartmentOutlined } from '@ant-design/icons';
+import { NotePriority } from './NotePriority.jsx';
+import { NoteBacklinks } from './NoteBacklinks.jsx';
+import { NoteTitle } from './NoteTitle.jsx';
+import { NoteDescription } from './NoteDescription';
+import { NoteBreadCrumbCollapse } from './NoteBreadCrumbCollapse.jsx';
+import NoteTags from './NoteTags';
 
-
-// import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-// import { solid, regular, brands, icon } from '@fortawesome/fontawesome-svg-core/import.macro' // <-- import styles to be used
-
-
-const {Panel} = Collapse;
-const {Text, Link, Paragraph} = Typography;
+const { Text, Link } = Typography;
 
 
 
@@ -211,15 +204,10 @@ class Note extends React.Component {
                                     priorityStat={this.props.priorityStat}
                                     />
                                 <NoteTags
-                                    trash={this.props.note.trash}
-                                    dataSource={this.props.dataSource}
-
-                                    noteKey={this.props.note.key}
-                                    tags={this.props.note.tags || []}
-
-                                    addTag={this.props.addTag}
-                                    deleteTag={this.props.deleteTag}
-                                    />
+                                  readOnly={this.props.note.trash}
+                                  noteKey={this.props.note.key}
+                                  tagService={this.props.dataService}
+                                />
                         </div>
                         <Divider style={{margin: "5px 0"}} />
                         <div style={{flex: 1}}>
@@ -229,7 +217,7 @@ class Note extends React.Component {
                                 description={this.props.note.description}
                                 disabled={this.props.note.trash}
                                 handleChangeDescription={this.props.handleChangeDescription}
-                                dataSource={this.props.dataSource}
+                                dataService={this.props.dataService}
                                 openNoteInTreeAndDetails={this.props.openNoteInTreeAndDetails}
                             />
                         </div>

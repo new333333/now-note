@@ -101,7 +101,7 @@ class NoteDescription extends React.Component {
         if (e.srcElement) {
 
             if (e.srcElement.tagName == "A" && e.srcElement.href && e.srcElement.href.startsWith("nn-asset:")) {
-              this.props.dataSource.ipcRenderer.openAssetFile(e.srcElement.href);
+              this.props.dataService.openAssetFile(e.srcElement.href);
                 // window.open(e.srcElement.href, '_blank');
             }
 
@@ -131,10 +131,10 @@ class NoteDescription extends React.Component {
             onAction: function(autocompleteApi, rng, key) {
                 editor.selection.setRng(rng);
 
-                self.props.dataSource.ipcRenderer.getNote(key).then(function(linkToNote) {
+                self.props.dataService.getNote(key).then(function(linkToNote) {
 
                     // console.log("getNote", key, linkToNote);
-                    self.props.dataSource.ipcRenderer.getParents(key).then(function(parents) {
+                    self.props.dataService.getParents(key).then(function(parents) {
                         let path = "";
                         let sep = "";
                         if (parents) {
@@ -161,7 +161,7 @@ class NoteDescription extends React.Component {
                       sortBy: '',
                       offset: 0,
                     }
-                    self.props.dataSource.ipcRenderer.search(pattern, 20, false, searchResultOptions).then(function(searchResults) {
+                    self.props.dataService.search(pattern, 20, false, searchResultOptions).then(function(searchResults) {
                         showAutocomplete(searchResults.results, resolve);
                     });
 

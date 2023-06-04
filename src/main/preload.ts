@@ -8,12 +8,17 @@ import {
   NoteDTO,
   RepositoryDTO,
   UserSettingsRepository,
-  Note,
   SearchResult,
   SearchResultOptions,
+  TagService,
 } from '../types';
+import { Note, Tag } from './modules/DataModels';
 
-const electronHandler = {
+export interface DataService {
+  ipcRenderer: TagService | any;
+}
+
+const electronHandler: DataService = {
   ipcRenderer: {
     selectRepositoryFolder: (): Promise<RepositoryDTO | Error> =>
       ipcRenderer.invoke('selectRepositoryFolder'),
@@ -64,13 +69,16 @@ const electronHandler = {
     ): Promise<UserSettingsRepository | undefined> =>
       ipcRenderer.invoke('connectRepository', repositoryFolder),
 
-    findTag: (tag: string): Promise<String[]> =>
+    getTags: (key: string): Promise<Array<Tag>> =>
+      ipcRenderer.invoke('getTags', key),
+
+    findTag: (tag: string): Promise<Tag[]> =>
       ipcRenderer.invoke('findTag', tag),
 
-    addTag: (key: string, tag: string): Promise<String[]> =>
+    addTag: (key: string, tag: string): Promise<void> =>
       ipcRenderer.invoke('addTag', key, tag),
 
-    removeTag: (key: string, tag: string): Promise<String[]> =>
+    removeTag: (key: string, tag: string): Promise<string[]> =>
       ipcRenderer.invoke('removeTag', key, tag),
 
     closeRepository: () => ipcRenderer.invoke('closeRepository'),
@@ -126,4 +134,3 @@ const electronHandler = {
 
 contextBridge.exposeInMainWorld('electron', electronHandler);
 
-export type ElectronHandler = typeof electronHandler;

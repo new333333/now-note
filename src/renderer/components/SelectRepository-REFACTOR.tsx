@@ -9,7 +9,7 @@ export default function SelectRepository({ initRepository }) {
 
   async function selectRepositoryFolder() {
     const repositoryOrError: RepositoryInfo =
-      await window.dataSource.ipcRenderer.selectRepositoryFolder();
+      await window.dataService.selectRepositoryFolder();
     log.debug('selectRepositoryFolder repositoryOrError:', repositoryOrError);
     if (repositoryOrError.error) {
       messageApi.open({
@@ -29,7 +29,7 @@ export default function SelectRepository({ initRepository }) {
           <List
             bordered
             locale={{ emptyText: 'No repositories' }}
-            dataSource={repositories}
+            dataService={repositories}
             renderItem={(repository) => (
               <List.Item>
                 <List.Item.Meta

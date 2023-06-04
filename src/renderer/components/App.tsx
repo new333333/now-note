@@ -14,9 +14,9 @@ import {
 import './App.scss';
 import { ReflexContainer, ReflexSplitter, ReflexElement } from 'react-reflex';
 import 'react-reflex/styles.css';
-import { ElectronHandler } from 'main/preload';
+import { DataService } from 'main/preload';
 import { RepositorySettings } from 'main/modules/RepositorySettings/RepositorySettingsService';
-import { UserSettingsRepository, PriorityStatDTO, SearchResultOptions, NoteDTO } from 'types';
+import { UserSettingsRepository, PriorityStatDTO, SearchResultOptions, NoteDTO, TagService } from 'types';
 import { Tree } from './Tree.jsx';
 import { NotesList } from './NotesList.jsx';
 import { Note } from './Note.jsx';
@@ -29,91 +29,92 @@ window.jQuery = $;
 window.$ = $;
 
 let noteTypes = [
-    {
-        label: "Note",
-        key: "note",
-    },
-    {
-        label: "Task",
-        key: "task",
-    },
-    {
-        label: "Link",
-        key: "link",
-    }
+  {
+    label: "Note",
+    key: "note",
+  },
+  {
+    label: "Task",
+    key: "task",
+  },
+  {
+    label: "Link",
+    key: "link",
+  },
 ];
 
 export default class App extends React.Component {
-  private dataSource: ElectronHandler;
+  private dataService: TagService;
 
-    constructor(props) {
-      super(props);
-      this.dataSource = window.electron;
+  constructor(props) {
+    super(props);
+    this.dataService = window.electron.ipcRenderer;
 
-        this.state = {
-            longOperationProcessing: false,
-            trash: false,
+      this.state = {
+          longOperationProcessing: false,
+          trash: false,
 
-            detailsNote: undefined,
-            listParentNote: undefined,
+          detailsNote: undefined,
+          detailsNoteTags: undefined,
 
-            repositorySettings: undefined,
+          listParentNote: undefined,
 
-            showDeleteNoteConfirmationModal: false,
-            openHistory: false,
-        };
+          repositorySettings: undefined,
 
-        this.openNoteDetails = this.openNoteDetails.bind(this);
-        this.openNoteInTree = this.openNoteInTree.bind(this);
-        this.openNoteInTreeAndDetails = this.openNoteInTreeAndDetails.bind(this);
-        this.openNoteInList = this.openNoteInList.bind(this);
-        this.openNoteInListLoadMore = this.openNoteInListLoadMore.bind(this);
+          showDeleteNoteConfirmationModal: false,
+          openHistory: false,
+      };
 
-
-        this.expandNote = this.expandNote.bind(this);
-        this.handleChangeDone = this.handleChangeDone.bind(this);
-        this.handleChangeType = this.handleChangeType.bind(this);
-        this.handleChangeDescription = this.handleChangeDescription.bind(this);
-        this.handleChangePriority = this.handleChangePriority.bind(this);
-        this.setFilter = this.setFilter.bind(this);
-        this.addTag = this.addTag.bind(this);
-        this.deleteTag = this.deleteTag.bind(this);
-        this.handleChangeTitle = this.handleChangeTitle.bind(this);
-        this.getNoteTypeLabel = this.getNoteTypeLabel.bind(this);
-        this.getOtherNoteTypeLabel = this.getOtherNoteTypeLabel.bind(this);
-        this.addNote = this.addNote.bind(this);
-        this.openTrash = this.openTrash.bind(this);
-        this.delete = this.delete.bind(this);
-        this.restore = this.restore.bind(this);
-        this.hideModalDeleteNoteConfirmation = this.hideModalDeleteNoteConfirmation.bind(this);
-        this.deletePermanently = this.deletePermanently.bind(this);
-        this.saveRepositorySettings = this.saveRepositorySettings.bind(this);
-        this.changeRepository = this.changeRepository.bind(this);
-        this.treeIsInitialized = this.treeIsInitialized.bind(this);
-        this.showHistory = this.showHistory.bind(this);
-
-        this.treeDomRef = React.createRef();
-        this.simpleListDomRef = React.createRef();
-        this.noteDomRef = React.createRef();
-
-        let self = this;
-
-        this.dataSource.ipcRenderer.onClose(function(event) {
-            console.log("onClose App");
-
-            self.beforeQuiteApp().then(function() {
-                self.dataSource.ipcRenderer.setDirty(false).then(function() {
-                    self.dataSource.ipcRenderer.quit();
-                });
-            });
-
-        });
+      this.openNoteDetails = this.openNoteDetails.bind(this);
+      this.openNoteInTree = this.openNoteInTree.bind(this);
+      this.openNoteInTreeAndDetails = this.openNoteInTreeAndDetails.bind(this);
+      this.openNoteInList = this.openNoteInList.bind(this);
+      this.openNoteInListLoadMore = this.openNoteInListLoadMore.bind(this);
 
 
-        this.initialRepository();
+      this.expandNote = this.expandNote.bind(this);
+      this.handleChangeDone = this.handleChangeDone.bind(this);
+      this.handleChangeType = this.handleChangeType.bind(this);
+      this.handleChangeDescription = this.handleChangeDescription.bind(this);
+      this.handleChangePriority = this.handleChangePriority.bind(this);
+      this.setFilter = this.setFilter.bind(this);
 
-        // console.log("App ready");
-    }
+      this.handleChangeTitle = this.handleChangeTitle.bind(this);
+      this.getNoteTypeLabel = this.getNoteTypeLabel.bind(this);
+      this.getOtherNoteTypeLabel = this.getOtherNoteTypeLabel.bind(this);
+      this.addNote = this.addNote.bind(this);
+      this.openTrash = this.openTrash.bind(this);
+      this.delete = this.delete.bind(this);
+      this.restore = this.restore.bind(this);
+      this.hideModalDeleteNoteConfirmation = this.hideModalDeleteNoteConfirmation.bind(this);
+      this.deletePermanently = this.deletePermanently.bind(this);
+      this.saveRepositorySettings = this.saveRepositorySettings.bind(this);
+      this.changeRepository = this.changeRepository.bind(this);
+      this.treeIsInitialized = this.treeIsInitialized.bind(this);
+      this.showHistory = this.showHistory.bind(this);
+
+      this.treeDomRef = React.createRef();
+      this.simpleListDomRef = React.createRef();
+      this.noteDomRef = React.createRef();
+
+      let self = this;
+
+      this.dataService.onClose(function(event) {
+          console.log("onClose App");
+
+          self.beforeQuiteApp().then(function() {
+              self.dataService.setDirty(false).then(function() {
+                  self.dataService.quit();
+              });
+          });
+
+      });
+
+
+      this.initialRepository();
+
+      // console.log("App ready");
+  }
 
 
     async beforeQuiteApp() {
@@ -122,14 +123,14 @@ export default class App extends React.Component {
             await this.noteDomRef.current.saveChanges();
         }
         console.log("closeRepository");
-        await this.dataSource.ipcRenderer.closeRepository();
+        await this.dataService.closeRepository();
     }
 
     async changeRepository() {
         await this.noteDomRef.current.saveChanges();
-        await this.dataSource.ipcRenderer.closeRepository();
+        await this.dataService.closeRepository();
 
-        let repositories = await this.dataSource.ipcRenderer.getRepositories();
+        let repositories = await this.dataService.getRepositories();
 
         this.setState({
             repositories: repositories,
@@ -141,8 +142,8 @@ export default class App extends React.Component {
   async initialRepository() {
     // console.log("initialRepository start");
     const isRepositoryInitialized: boolean =
-      await this.dataSource.ipcRenderer.isRepositoryInitialized();
-    const repositories: Array<UserSettingsRepository> | undefined = await this.dataSource.ipcRenderer.getRepositories();
+      await this.dataService.isRepositoryInitialized();
+    const repositories: Array<UserSettingsRepository> | undefined = await this.dataService.getRepositories();
     console.log(
       'initialRepository isRepositoryInitialized=',
       isRepositoryInitialized
@@ -154,9 +155,9 @@ export default class App extends React.Component {
 
     if (isRepositoryInitialized) {
       repositorySettings =
-        await this.dataSource.ipcRenderer.getRepositorySettings();
-      priorityStat = await this.dataSource.ipcRenderer.getPriorityStat();
-      repository = await this.dataSource.ipcRenderer.getCurrentRepository();
+        await this.dataService.getRepositorySettings();
+      priorityStat = await this.dataService.getPriorityStat();
+      repository = await this.dataService.getCurrentRepository();
     }
 
     console.log('initialRepository repositorySettings=', repositorySettings);
@@ -170,6 +171,7 @@ export default class App extends React.Component {
         repositorySettings,
         repository,
         detailsNote: undefined,
+        detailsNoteTags: undefined,
         listParentNote: undefined,
       },
       () => {
@@ -188,7 +190,7 @@ export default class App extends React.Component {
 
   async handleClickRepository(repositoryFolder: string) {
     const repository: UserSettingsRepository | undefined =
-      await this.dataSource.ipcRenderer.connectRepository(repositoryFolder);
+      await this.dataService.connectRepository(repositoryFolder);
     if (repository !== undefined) {
       await this.initialRepository();
     }
@@ -202,7 +204,7 @@ export default class App extends React.Component {
             this.state.repositorySettings.state.details &&
             this.state.repositorySettings.state.details.key) {
             // it's app start and there is never trash on start, so check if note in trasj
-            let note = await this.dataSource.ipcRenderer.getNote(this.state.repositorySettings.state.details.key);
+            let note = await this.dataService.getNote(this.state.repositorySettings.state.details.key);
             if (note && !note.trash) {
                 await this.openNoteInTreeAndDetails(this.state.repositorySettings.state.details.key);
             }
@@ -212,7 +214,7 @@ export default class App extends React.Component {
             this.state.repositorySettings.state.list &&
             this.state.repositorySettings.state.list.key) {
                  // it's app start and there is never trash on start, so check if note in trasj
-            let note = await this.dataSource.ipcRenderer.getNote(this.state.repositorySettings.state.list.key);
+            let note = await this.dataService.getNote(this.state.repositorySettings.state.list.key);
             if (note && !note.trash) {
                 await this.openNoteInList(this.state.repositorySettings.state.list.key);
             }
@@ -224,7 +226,7 @@ export default class App extends React.Component {
     async saveRepositorySettings() {
         // console.log("saveRepositorySettings,this.state.repositorySettings=", this.state.repositorySettings);
 
-        this.dataSource.ipcRenderer.setRepositorySettings(this.state.repositorySettings);
+        this.dataService.setRepositorySettings(this.state.repositorySettings);
     }
 
 
@@ -249,7 +251,7 @@ export default class App extends React.Component {
     }
 
     async selectRepositoryFolder() {
-        let repositoryChoosenOK = await this.dataSource.ipcRenderer.selectRepositoryFolder();
+        let repositoryChoosenOK = await this.dataService.selectRepositoryFolder();
 console.log('selectRepositoryFolder', repositoryChoosenOK);
         if (repositoryChoosenOK) {
             await this.initialRepository();
@@ -275,12 +277,13 @@ console.log('selectRepositoryFolder', repositoryChoosenOK);
         }
         if (key) {
 
-            let detailsNote = await this.dataSource.ipcRenderer.getNote(key);
+            let detailsNote = await this.dataService.getNote(key);
             if (detailsNote.type == "link") {
                 detailsNote = detailsNote.linkedNote;
             }
-            let detailsNoteParents = await this.dataSource.ipcRenderer.getParents(detailsNote.key, undefined);
-            let detailsNoteBacklinks = await this.dataSource.ipcRenderer.getBacklinks(detailsNote.key);
+            let detailsNoteParents = await this.dataService.getParents(detailsNote.key, undefined);
+            let detailsNoteBacklinks = await this.dataService.getBacklinks(detailsNote.key);
+            let detailsNoteTags = await this.dataService.getTags(detailsNote.key);
 
             detailsNote.parents = detailsNoteParents;
             detailsNote.backlinks = detailsNoteBacklinks;
@@ -293,6 +296,7 @@ console.log('selectRepositoryFolder', repositoryChoosenOK);
                 repositorySettings.state.details.key = detailsNote.key;
                 return {
                     detailsNote: detailsNote,
+                    detailsNoteTags: detailsNoteTags,
                     repositorySettings: repositorySettings,
                     editableTitle: editableTitle
                 }
@@ -309,6 +313,7 @@ console.log('selectRepositoryFolder', repositoryChoosenOK);
                 delete repositorySettings.state.details.key;
                 return {
                     detailsNote: undefined,
+                    detailsNoteTags: undefined,
                     repositorySettings: repositorySettings,
                     editableTitle: false
                 }
@@ -322,7 +327,7 @@ console.log('selectRepositoryFolder', repositoryChoosenOK);
     async openNoteInTree(key, editableTitle) {
         // console.log("openNoteInTree", key, editableTitle);
 
-        let detailsNoteParents = await this.dataSource.ipcRenderer.getParents(key);
+        let detailsNoteParents = await this.dataService.getParents(key);
 
         // console.log("openNoteInTree, detailsNoteParents=", detailsNoteParents);
 
@@ -355,7 +360,7 @@ console.log('selectRepositoryFolder', repositoryChoosenOK);
             return;
         }
 
-        let note = await this.dataSource.ipcRenderer.getNote(key);
+        let note = await this.dataService.getNote(key);
         if ( (note.trash && !this.state.trash) ||
             (!note.trash && this.state.trash)) {
                 this.setState({
@@ -364,7 +369,7 @@ console.log('selectRepositoryFolder', repositoryChoosenOK);
                 });
                 return;
         }
-        let parents = await this.dataSource.ipcRenderer.getParents(key);
+        let parents = await this.dataService.getParents(key);
         note.parents = parents;
 
         let types = [];
@@ -394,7 +399,7 @@ console.log('selectRepositoryFolder', repositoryChoosenOK);
           sortBy: "priority desc",
           offset: 0,
         };
-        let searchResult = await this.dataSource.ipcRenderer.search("", 20, this.state.trash, searchResultOptions);
+        let searchResult = await this.dataService.search("", 20, this.state.trash, searchResultOptions);
 
         note.filteredSiblings = searchResult.results;
         note.filteredSiblingsOffset = 20;
@@ -447,7 +452,7 @@ console.log('selectRepositoryFolder', repositoryChoosenOK);
           dones: dones.length == 0 ? [0, 1] : dones,
           sortBy: "priority desc"
         };
-        let searchResult = await this.dataSource.ipcRenderer.search("", 20, this.state.trash, searchResultOptions);
+        let searchResult = await this.dataService.search("", 20, this.state.trash, searchResultOptions);
 
         // note.filteredSiblings = searchResult.results;
 
@@ -470,7 +475,7 @@ console.log('selectRepositoryFolder', repositoryChoosenOK);
         this.setState({
             longOperationProcessing: true,
         });
-        let modifiedNote = await this.dataSource.ipcRenderer.modifyNote({
+        let modifiedNote = await this.dataService.modifyNote({
             key: key,
             expanded: expanded
         });
@@ -484,7 +489,7 @@ console.log('selectRepositoryFolder', repositoryChoosenOK);
         let self = this;
 
         return new Promise(function(resolve, reject) {
-            self.dataSource.ipcRenderer.modifyNote({
+            self.dataService.modifyNote({
                 key: noteKey,
                 description: description
             }).then(function(modifiedNote) {
@@ -518,7 +523,7 @@ console.log('selectRepositoryFolder', repositoryChoosenOK);
                 }
             }, () => {
                 // console.log("handleChangeTitle save now");
-                self.dataSource.ipcRenderer.modifyNote({
+                self.dataService.modifyNote({
                     key: noteKey,
                     title: title
                 }).then(function(modifiedNote) {
@@ -561,7 +566,7 @@ console.log('selectRepositoryFolder', repositoryChoosenOK);
             longOperationProcessing: true,
         });
 
-        let modifiedNote = await this.dataSource.ipcRenderer.modifyNote({
+        let modifiedNote = await this.dataService.modifyNote({
             key: noteKey,
             done: done
         });
@@ -599,7 +604,7 @@ console.log('selectRepositoryFolder', repositoryChoosenOK);
             longOperationProcessing: true,
         });
 
-        let modifiedNote = await this.dataSource.ipcRenderer.modifyNote({
+        let modifiedNote = await this.dataService.modifyNote({
             key: noteKey,
             type: type
         });
@@ -637,7 +642,7 @@ console.log('selectRepositoryFolder', repositoryChoosenOK);
       });
 
       let self = this;
-      this.dataSource.ipcRenderer.getPriorityStat().then(function(priorityStat) {
+      this.dataService.getPriorityStat().then(function(priorityStat) {
           self.setState({
               priorityStat: priorityStat
           });
@@ -666,55 +671,11 @@ console.log('selectRepositoryFolder', repositoryChoosenOK);
       });
 
       this.treeDomRef.current.setPriority(noteKey, priority);
-      await this.dataSource.ipcRenderer.modifyNote({
+      await this.dataService.modifyNote({
           key: noteKey,
           priority: priority
       });
 
-    }
-
-    async addTag(noteKey, tag) {
-        this.setState({
-            longOperationProcessing: true,
-        });
-
-        let tags = await this.dataSource.ipcRenderer.addTag(noteKey, tag);
-        console.log("addTag", tag, tags);
-        this.treeDomRef.current.setTags(noteKey, tags);
-
-
-        this.setState((previousState) => {
-            if (previousState.detailsNote) {
-                let note = JSON.parse(JSON.stringify(previousState.detailsNote));
-                note.tags = tags;
-                return {
-                    detailsNote: note,
-                    longOperationProcessing: false,
-                };
-            }
-        });
-
-    }
-
-    async deleteTag(noteKey, tag) {
-        this.setState({
-            longOperationProcessing: true,
-        });
-
-        let tags = await this.dataSource.ipcRenderer.removeTag(noteKey, tag);
-        this.treeDomRef.current.setTags(noteKey, tags);
-
-
-        this.setState((previousState) => {
-            if (previousState.detailsNote) {
-                let note = JSON.parse(JSON.stringify(previousState.detailsNote));
-                note.tags = tags;
-                return {
-                    detailsNote: note,
-                    longOperationProcessing: false,
-                };
-            }
-        });
     }
 
     getNoteTypeLabel(type) {
@@ -742,7 +703,7 @@ console.log('selectRepositoryFolder', repositoryChoosenOK);
             return;
         }
 
-        let note = await this.dataSource.ipcRenderer.getNote(key);
+        let note = await this.dataService.getNote(key);
         // console.log("delete, note=", note);
 
         if (!note) {
@@ -767,7 +728,7 @@ console.log('selectRepositoryFolder', repositoryChoosenOK);
 
 
 
-            await this.dataSource.ipcRenderer.moveNoteToTrash(key);
+            await this.dataService.moveNoteToTrash(key);
             // console.log("moveNoteToTrash done");
 
             this.setState({
@@ -793,7 +754,7 @@ console.log('selectRepositoryFolder', repositoryChoosenOK);
             return;
         }
 
-        let note = await this.dataSource.ipcRenderer.getNote(key);
+        let note = await this.dataService.getNote(key);
         // console.log("restore, note=", note);
 
         if (!note) {
@@ -806,7 +767,7 @@ console.log('selectRepositoryFolder', repositoryChoosenOK);
         });
 
         // console.log("restore start");
-        await this.dataSource.ipcRenderer.restore(key);
+        await this.dataService.restore(key);
         // console.log("restore done");
 
 
@@ -827,7 +788,7 @@ console.log('selectRepositoryFolder', repositoryChoosenOK);
             return;
         }
 
-        let note = await this.dataSource.ipcRenderer.getNote(this.state.deleteNoteKey);
+        let note = await this.dataService.getNote(this.state.deleteNoteKey);
         // console.log("deletePermanently, note=", note);
 
         if (!note) {
@@ -840,7 +801,7 @@ console.log('selectRepositoryFolder', repositoryChoosenOK);
             showDeleteNoteConfirmationModal: false,
         });
 
-        await this.dataSource.ipcRenderer.deletePermanently(this.state.deleteNoteKey);
+        await this.dataService.deletePermanently(this.state.deleteNoteKey);
 
         this.setState({
             longOperationProcessing: false,
@@ -922,7 +883,7 @@ console.log('selectRepositoryFolder', repositoryChoosenOK);
                             {this.state.repositories && <List
                                 bordered
                                 locale={{emptyText: "No repositories"}}
-                                dataSource={this.state.repositories}
+                                dataService={this.state.repositories}
                                 renderItem={repository => (
                                     <List.Item
 
@@ -993,7 +954,7 @@ console.log('selectRepositoryFolder', repositoryChoosenOK);
                                         expandNote={this.expandNote}
                                         handleChangeDone={this.handleChangeDone}
                                         handleChangeTitle={this.handleChangeTitle}
-                                        dataSource={this.dataSource}
+                                        dataService={this.dataService}
                                         trash={this.state.trash}
                                         openNoteInList={this.openNoteInList}
                                         openNoteInTreeAndDetails={this.openNoteInTreeAndDetails}
@@ -1029,7 +990,7 @@ console.log('selectRepositoryFolder', repositoryChoosenOK);
                                     <div className={`nn-header ${this.state.trash ? "nn-trash-background-color" : ""}`}>
                                         <SearchNotes
                                             trash={this.state.trash}
-                                            dataSource={this.dataSource}
+                                            dataService={this.dataService}
                                             openNoteInTree={this.openNoteInTree}
                                             openNoteDetails={this.openNoteDetails}
                                             openNoteInTreeAndDetails={this.openNoteInTreeAndDetails}
@@ -1040,7 +1001,7 @@ console.log('selectRepositoryFolder', repositoryChoosenOK);
                                     <Note
                                         ref={this.noteDomRef}
 
-                                        dataSource={this.dataSource}
+                                        dataService={this.dataService}
 
                                         noteTypes={noteTypes}
                                         getNoteTypeLabel={this.getNoteTypeLabel}
@@ -1048,6 +1009,8 @@ console.log('selectRepositoryFolder', repositoryChoosenOK);
                                         priorityStat={this.state.priorityStat}
 
                                         note={this.state.detailsNote}
+                                        noteTags={this.state.detailsNoteTags}
+
                                         editableTitle={this.state.editableTitle}
 
                                         handleChangeDone={this.handleChangeDone}
@@ -1059,8 +1022,7 @@ console.log('selectRepositoryFolder', repositoryChoosenOK);
 
 
                                         addNote={this.addNote}
-                                        addTag={this.addTag}
-                                        deleteTag={this.deleteTag}
+
                                         openNoteDetails={this.openNoteDetails}
                                         openNoteInTreeAndDetails={this.openNoteInTreeAndDetails}
                                         openNoteInTree={this.openNoteInTree}
