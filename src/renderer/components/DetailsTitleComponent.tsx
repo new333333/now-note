@@ -18,9 +18,14 @@ const { Paragraph } = Typography;
 interface Props {
   readOnly: boolean;
   noteKey: string;
+  initValue: string;
 }
 
-export default function DetailsTitleComponent({ readOnly, noteKey }: Props) {
+export default function DetailsTitleComponent({
+  readOnly,
+  noteKey,
+  initValue,
+}: Props) {
   const [title, setTitle] = useState('');
   const titleDomRef = useRef(null);
 
@@ -57,8 +62,12 @@ export default function DetailsTitleComponent({ readOnly, noteKey }: Props) {
   );
 
   useEffect(() => {
-    fetchTitle();
-  }, [fetchTitle]);
+    if (initValue !== undefined) {
+      setTitle(initValue);
+    } else {
+      fetchTitle();
+    }
+  }, [fetchTitle, initValue]);
 
   return (
     <>

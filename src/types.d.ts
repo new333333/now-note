@@ -211,11 +211,15 @@ export interface PriorityService {
   getPriorityStat(): Promise<PriorityStatDTO>;
 }
 
-export interface DataService extends NoteService, TagService, PriorityService {}
-
 export type ListenerWhen = 'before' | 'after';
 
 export interface DataServiceListener {
   subscribe(title: string, when: ListenerWhen, callback: Function): void;
   unsubscribe(title: string, when: ListenerWhen, callback: Function): void;
 }
+
+export interface DataService
+  extends NoteService,
+    TagService,
+    PriorityService,
+    DataServiceListener {}

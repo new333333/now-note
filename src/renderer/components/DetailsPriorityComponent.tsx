@@ -11,11 +11,12 @@ const { Text } = Typography;
 interface Props {
   readOnly: boolean;
   noteKey: string;
+  initValue: number;
 }
 
 type PriorityMenuKeys = 'minimum' | 'average' | 'mediana' | 'maximum';
 
-export default function DetailsTagsComponent({ readOnly, noteKey }: Props) {
+export default function DetailsTagsComponent({ readOnly, noteKey, initValue }: Props) {
   const [priority, setPriority] = useState<number>(0);
   const [priorityStat, setPriorityStat] = useState<PriorityStatDTO | null>(
     null
@@ -24,16 +25,24 @@ export default function DetailsTagsComponent({ readOnly, noteKey }: Props) {
   const { dataService }: { dataService: DataService } =
     useContext(DataServiceContext);
 
-  const fetchInitialData = useCallback(async () => {
+  const fetchPriority = useCallback(async () => {
     const note: Note | undefined = await dataService.getNote(noteKey);
     const newPriority = note !== undefined ? note.priority : 0;
     setPriority(newPriority);
-    setPriorityStat(await dataService.getPriorityStat());
   }, [dataService, noteKey]);
 
+  const fetchPriorityStat = useCallback(async () => {
+    setPriorityStat(await dataService.getPriorityStat());
+  }, [dataService]);
+
   useEffect(() => {
-    fetchInitialData();
-  }, [fetchInitialData]);
+    if (initValue !== undefined) {
+      setPriority(initValue);
+    } else {
+      fetchPriority();
+    }
+    fetchPriorityStat();
+  }, [fetchPriority, fetchPriorityStat, initValue]);
 
   const handleChangePriority = useCallback(
     async (value: number | null) => {
@@ -68,7 +77,7 @@ export default function DetailsTagsComponent({ readOnly, noteKey }: Props) {
     medianaPriority = priorityStat.mediana;
   }
 
-  const onClick: MenuProps['onClick'] = async ({ key }) => {
+  const handleClickMenu: MenuProps['onClick'] = async ({ key }) => {
     if (priorityStat !== null) {
       const newPririty = priorityStat[key as PriorityMenuKeys];
       setPriority(newPririty);
@@ -79,7 +88,7 @@ export default function DetailsTagsComponent({ readOnly, noteKey }: Props) {
     }
   };
 
-  const items: MenuProps['items'] = [
+  const menuItems: MenuProps['items'] = [
     {
       key: 'minimum',
       label: `Set: ${minimumPriority} (Minimum)`,
@@ -102,7 +111,7 @@ export default function DetailsTagsComponent({ readOnly, noteKey }: Props) {
     <span style={{ marginRight: '5px' }}>
       <span style={{ marginRight: '5px' }}>Priority:</span>
       {!readOnly && (
-        <Dropdown menu={{ items, onClick }}>
+        <Dropdown menu={{ items: menuItems, onClick: handleClickMenu }}>
           <InputNumber
             disabled
             min={0}

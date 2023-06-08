@@ -171,6 +171,7 @@ class Note extends React.Component {
                                 <DetailsTitleComponent
                                   readOnly={this.props.note.trash}
                                   noteKey={this.props.note.key}
+                                  initValue={this.props.note.title}
                                 />
                             </div>
                             <div>
@@ -198,15 +199,8 @@ class Note extends React.Component {
                                 <DetailsPriorityComponent
                                   readOnly={this.props.note.trash}
                                   noteKey={this.props.note.key}
-
-                                    trash={this.props.note.trash}
-                                    noteKey={this.props.note.key}
-
-
-                                    priority={this.props.note.priority}
-                                    handleChangePriority={this.props.handleChangePriority}
-                                    priorityStat={this.props.priorityStat}
-                                    />
+                                  initValue={this.props.note.priority}
+                                />
                                 <DetailsTagsComponent
                                   readOnly={this.props.note.trash}
                                   noteKey={this.props.note.key}

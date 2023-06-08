@@ -16,7 +16,7 @@ import { ReflexContainer, ReflexSplitter, ReflexElement } from 'react-reflex';
 import 'react-reflex/styles.css';
 import { DataService } from 'main/preload';
 import { RepositorySettings } from 'main/modules/RepositorySettings/RepositorySettingsService';
-import { UserSettingsRepository, PriorityStatDTO, SearchResultOptions, NoteDTO, TagService } from 'types';
+import { UserSettingsRepository, SearchResultOptions, NoteDTO, TagService } from 'types';
 import { Tree } from './Tree.jsx';
 import { NotesList } from './NotesList.jsx';
 import { Note } from './Note.jsx';
@@ -147,14 +147,12 @@ export default class App extends React.Component {
       isRepositoryInitialized
     );
     console.log('initialRepository repositories=', repositories);
-    let priorityStat: PriorityStatDTO;
     let repositorySettings: RepositorySettings | undefined;
     let repository;
 
     if (isRepositoryInitialized) {
       repositorySettings =
         await this.dataService.getRepositorySettings();
-      priorityStat = await this.dataService.getPriorityStat();
       repository = await this.dataService.getCurrentRepository();
     }
 
@@ -165,7 +163,6 @@ export default class App extends React.Component {
       {
         isRepositoryInitialized,
         repositories,
-        priorityStat,
         repositorySettings,
         repository,
         detailsNote: undefined,
@@ -575,51 +572,6 @@ console.log('selectRepositoryFolder', repositoryChoosenOK);
         this.treeDomRef.current.setType(noteKey, type);
     }
 
-    async handleChangePriority(noteKey: string, priority: string) {
-      if (priority === undefined || priority === null) {
-        return;
-      }
-      this.setState({
-          longOperationProcessing: true,
-      });
-
-      let self = this;
-      this.dataService.getPriorityStat().then(function(priorityStat) {
-          self.setState({
-              priorityStat: priorityStat
-          });
-      });
-
-
-      this.setState((previousState) => {
-          let newState = {}
-
-          if (previousState.detailsNote && previousState.detailsNote.key == noteKey) {
-              let note = JSON.parse(JSON.stringify(previousState.detailsNote));
-              note.priority = priority;
-              newState.detailsNote = note;
-          }
-
-          if (previousState.listParentNote) {
-              newState.listParentNote = JSON.parse(JSON.stringify(previousState.listParentNote));
-              newState.listParentNote.filteredSiblings.forEach((note) => {
-                  if (note.key === noteKey) {
-                      note.priority = priority;
-                  }
-              });
-          }
-          newState.longOperationProcessing = false;
-          return newState;
-      });
-
-      this.treeDomRef.current.setPriority(noteKey, priority);
-      await this.dataService.modifyNote({
-          key: noteKey,
-          priority: priority
-      });
-
-    }
-
     getNoteTypeLabel(type) {
         let foundType =  noteTypes.find(function(noteType) {
             return noteType.key === type;
@@ -947,7 +899,6 @@ console.log('selectRepositoryFolder', repositoryChoosenOK);
                                         noteTypes={noteTypes}
                                         getNoteTypeLabel={this.getNoteTypeLabel}
                                         getOtherNoteTypeLabel={this.getOtherNoteTypeLabel}
-                                        priorityStat={this.state.priorityStat}
 
                                         note={this.state.detailsNote}
                                         noteTags={this.state.detailsNoteTags}
@@ -958,8 +909,6 @@ console.log('selectRepositoryFolder', repositoryChoosenOK);
                                         handleChangeType={this.handleChangeType}
 
                                         handleChangeDescription={this.handleChangeDescription}
-                                        handleChangePriority={this.handleChangePriority}
-
 
                                         addNote={this.addNote}
 
@@ -991,7 +940,6 @@ console.log('selectRepositoryFolder', repositoryChoosenOK);
                                     noteTypes={noteTypes}
                                     handleChangeDone={this.handleChangeDone}
                                     handleChangeType={this.handleChangeType}
-                                    handleChangePriority={this.handleChangePriority}
 
                                     openNoteDetails={this.openNoteDetails}
                                     openNoteInTreeAndDetails={this.openNoteInTreeAndDetails}

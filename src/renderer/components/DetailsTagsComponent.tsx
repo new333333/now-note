@@ -11,7 +11,7 @@ import { PlusOutlined } from '@ant-design/icons';
 import { Input, Tag, Tooltip, AutoComplete } from 'antd';
 import { Tag as TagDataModel } from 'main/modules/DataModels';
 import { DataServiceContext } from 'renderer/DataServiceContext';
-import { TagService } from 'types';
+import { DataService } from 'types';
 
 declare type AutoCompleteOption = {
   label: string;
@@ -34,7 +34,7 @@ export default function DetailsTagsComponent({ readOnly, noteKey }: Props) {
     AutoCompleteOption[]
   >([]);
 
-  const { dataService }: { dataService: TagService } =
+  const { dataService }: { dataService: DataService } =
     useContext(DataServiceContext);
 
   const fetchTags = useCallback(async () => {
@@ -92,7 +92,9 @@ export default function DetailsTagsComponent({ readOnly, noteKey }: Props) {
 
   const onSearchAutoComplete = useCallback(
     async (searchText: string) => {
-      const matchingTags: TagDataModel[] = await dataService.findTag(searchText);
+      const matchingTags: TagDataModel[] = await dataService.findTag(
+        searchText
+      );
       let found = false;
       const options: AutoCompleteOption[] = matchingTags.map((currentTag) => {
         if (currentTag.dataValues.tag === searchText) {
