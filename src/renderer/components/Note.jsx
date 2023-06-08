@@ -7,8 +7,9 @@ import DetailsTitleComponent from './DetailsTitleComponent';
 import { NoteDescription } from './NoteDescription';
 import { NoteBreadCrumbCollapse } from './NoteBreadCrumbCollapse.jsx';
 import DetailsTagsComponent from './DetailsTagsComponent';
+import DetailsNoteType from './DetailsNoteType';
 
-const { Text, Link } = Typography;
+const { Text } = Typography;
 
 
 
@@ -19,20 +20,11 @@ class Note extends React.Component {
 
         this.descriptionDomRef = React.createRef();
 
-        this.handleChangeType = this.handleChangeType.bind(this);
         this.handleNoteMenu = this.handleNoteMenu.bind(this);
     }
 
     handleChangeDone(event) {
         this.props.handleChangeDone(this.props.note.key, event.target.checked);
-    }
-
-    handleChangeType() {
-        let self = this;
-        let foundTypeIdx = this.props.noteTypes.findIndex(function(noteType) {
-            return noteType.key === self.props.note.type;
-        });
-        this.props.handleChangeType(this.props.note.key, this.props.noteTypes[foundTypeIdx == 0 ? 1 : 0].key );
     }
 
     async saveChanges() {
@@ -182,20 +174,11 @@ class Note extends React.Component {
                         </div>
                         <Divider style={{margin: "5px 0"}} />
                         <div style={{padding: "5px 0"}}>
-                                <span style={{marginRight: "5px"}}>
-                                    {
-                                        !this.props.note.trash &&
-                                        <Tooltip placement="bottom" title={"Change to " + this.props.getOtherNoteTypeLabel(this.props.note.type)}>
-                                            <Link strong onClick={(event)=> this.handleChangeType()}>
-                                                {this.props.getNoteTypeLabel(this.props.note.type)}
-                                            </Link>
-                                        </Tooltip>
-                                    }
-                                    {
-                                        this.props.note.trash &&
-                                        <Text strong>{this.props.getNoteTypeLabel(this.props.note.type)}</Text>
-                                    }
-                                </span>
+                                <DetailsNoteType
+                                  readOnly={this.props.note.trash}
+                                  noteKey={this.props.note.key}
+                                  initValue={this.props.note.type}
+                                />
                                 <DetailsPriorityComponent
                                   readOnly={this.props.note.trash}
                                   noteKey={this.props.note.key}

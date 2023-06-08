@@ -28,20 +28,6 @@ const $ = require('jquery');
 window.jQuery = $;
 window.$ = $;
 
-let noteTypes = [
-  {
-    label: "Note",
-    key: "note",
-  },
-  {
-    label: "Task",
-    key: "task",
-  },
-  {
-    label: "Link",
-    key: "link",
-  },
-];
 
 export default class App extends React.Component {
   private dataService: TagService;
@@ -74,12 +60,9 @@ export default class App extends React.Component {
 
       this.expandNote = this.expandNote.bind(this);
       this.handleChangeDone = this.handleChangeDone.bind(this);
-      this.handleChangeType = this.handleChangeType.bind(this);
       this.handleChangeDescription = this.handleChangeDescription.bind(this);
       this.setFilter = this.setFilter.bind(this);
 
-      this.getNoteTypeLabel = this.getNoteTypeLabel.bind(this);
-      this.getOtherNoteTypeLabel = this.getOtherNoteTypeLabel.bind(this);
       this.addNote = this.addNote.bind(this);
       this.openTrash = this.openTrash.bind(this);
       this.delete = this.delete.bind(this);
@@ -538,57 +521,6 @@ console.log('selectRepositoryFolder', repositoryChoosenOK);
 
     }
 
-    async handleChangeType(noteKey, type) {
-        this.setState({
-            longOperationProcessing: true,
-        });
-
-        let modifiedNote = await this.dataService.modifyNote({
-            key: noteKey,
-            type: type
-        });
-
-        this.setState((previousState) => {
-            let newState = {}
-
-            if (previousState.detailsNote && previousState.detailsNote.key == noteKey) {
-                let note = JSON.parse(JSON.stringify(previousState.detailsNote));
-                note.type = type;
-                newState.detailsNote = note;
-            }
-
-            if (previousState.listParentNote) {
-                newState.listParentNote = JSON.parse(JSON.stringify(previousState.listParentNote));
-                newState.listParentNote.filteredSiblings.forEach((note) => {
-                    if (note.key === noteKey) {
-                        note.type = type;
-                    }
-                });
-            }
-            newState.longOperationProcessing = false;
-            return newState;
-        });
-
-        this.treeDomRef.current.setType(noteKey, type);
-    }
-
-    getNoteTypeLabel(type) {
-        let foundType =  noteTypes.find(function(noteType) {
-            return noteType.key === type;
-        });
-        if (!foundType) {
-            throw new Error(`Unknown note type: '${type}'.`);
-        }
-        return foundType.label;
-    }
-
-    getOtherNoteTypeLabel(type) {
-        let otherType =  noteTypes.find(function(noteType) {
-            return noteType.key !== type;
-        });
-        return otherType.label;
-    }
-
     async delete(key) {
         // console.log("delete, key=", key);
 
@@ -896,17 +828,12 @@ console.log('selectRepositoryFolder', repositoryChoosenOK);
 
                                         dataService={this.dataService}
 
-                                        noteTypes={noteTypes}
-                                        getNoteTypeLabel={this.getNoteTypeLabel}
-                                        getOtherNoteTypeLabel={this.getOtherNoteTypeLabel}
-
                                         note={this.state.detailsNote}
                                         noteTags={this.state.detailsNoteTags}
 
                                         editableTitle={this.state.editableTitle}
 
                                         handleChangeDone={this.handleChangeDone}
-                                        handleChangeType={this.handleChangeType}
 
                                         handleChangeDescription={this.handleChangeDescription}
 
@@ -937,9 +864,7 @@ console.log('selectRepositoryFolder', repositoryChoosenOK);
 
                                     trash={this.state.trash}
 
-                                    noteTypes={noteTypes}
                                     handleChangeDone={this.handleChangeDone}
-                                    handleChangeType={this.handleChangeType}
 
                                     openNoteDetails={this.openNoteDetails}
                                     openNoteInTreeAndDetails={this.openNoteInTreeAndDetails}
@@ -949,7 +874,6 @@ console.log('selectRepositoryFolder', repositoryChoosenOK);
                                     openNoteInTree={this.openNoteInTree}
                                     openNoteInList={this.openNoteInList}
 
-                                    getNoteTypeLabel={this.getNoteTypeLabel}
                                 />
                             </ReflexElement>
 
