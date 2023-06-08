@@ -1,12 +1,12 @@
 import React from 'react';
 import { Dropdown, Divider, Checkbox, Tooltip, Typography, Button } from 'antd';
 import Icon, { UnorderedListOutlined, PlusOutlined, DeleteFilled, EllipsisOutlined, ApartmentOutlined } from '@ant-design/icons';
-import { NotePriority } from './NotePriority.jsx';
+import DetailsPriorityComponent from './DetailsPriorityComponent';
 import { NoteBacklinks } from './NoteBacklinks.jsx';
-import { NoteTitle } from './NoteTitle.jsx';
+import DetailsTitleComponent from './DetailsTitleComponent';
 import { NoteDescription } from './NoteDescription';
 import { NoteBreadCrumbCollapse } from './NoteBreadCrumbCollapse.jsx';
-import NoteTags from './NoteTags';
+import DetailsTagsComponent from './DetailsTagsComponent';
 
 const { Text, Link } = Typography;
 
@@ -168,10 +168,9 @@ class Note extends React.Component {
                                     </div>
                             }
                             <div style={{flexBasis: "100%" }} >
-                                <NoteTitle
-                                    note={this.props.note}
-                                    editableTitle={this.props.editableTitle}
-                                    handleChangeTitle={this.props.handleChangeTitle}
+                                <DetailsTitleComponent
+                                  readOnly={this.props.note.trash}
+                                  noteKey={this.props.note.key}
                                 />
                             </div>
                             <div>
@@ -196,17 +195,21 @@ class Note extends React.Component {
                                         <Text strong>{this.props.getNoteTypeLabel(this.props.note.type)}</Text>
                                     }
                                 </span>
-                                <NotePriority
+                                <DetailsPriorityComponent
+                                  readOnly={this.props.note.trash}
+                                  noteKey={this.props.note.key}
+
                                     trash={this.props.note.trash}
                                     noteKey={this.props.note.key}
+
+
                                     priority={this.props.note.priority}
                                     handleChangePriority={this.props.handleChangePriority}
                                     priorityStat={this.props.priorityStat}
                                     />
-                                <NoteTags
+                                <DetailsTagsComponent
                                   readOnly={this.props.note.trash}
                                   noteKey={this.props.note.key}
-                                  tagService={this.props.dataService}
                                 />
                         </div>
                         <Divider style={{margin: "5px 0"}} />

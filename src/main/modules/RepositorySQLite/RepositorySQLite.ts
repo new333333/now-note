@@ -511,8 +511,11 @@ export class RepositorySQLite implements Repository {
       });
     }
 
+    log.debug("this.#addNoteIndex(newNote) start");
     await this.#addNoteIndex(newNote);
+    log.debug("this.#addNoteIndex(newNote) done");
     const resultNote = await this.noteToNoteDTO(newNote, false, true);
+    log.debug("this.noteToNoteDTO(newNote) done");
     return resultNote;
   }
 
@@ -535,7 +538,7 @@ export class RepositorySQLite implements Repository {
       {
         replacements: {
           key: newNote.key,
-          notesPath: notesPath || '',
+          path: notesPath || '',
           parents: parentsKeys || '',
           title: newNote.title || '',
           descriptionAsText: $description.text(),
@@ -544,7 +547,7 @@ export class RepositorySQLite implements Repository {
           priority: newNote.priority,
           trash: newNote.trash,
         },
-        type: QueryTypes.SELECT,
+        type: QueryTypes.INSERT, // ignore this error, this is the right type
       }
     );
   }
@@ -578,7 +581,7 @@ export class RepositorySQLite implements Repository {
               title: note.title || '',
               tags: tagsAsString,
               descriptionAsText: $description.text(),
-              type: note.type,
+              noteType: note.type,
               done: note.done,
               priority: note.priority,
               trash: note.trash,

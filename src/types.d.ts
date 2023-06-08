@@ -88,22 +88,22 @@ export interface PriorityStatDTO {
 }
 
 export interface NoteDTO {
-  key: string | undefined;
-  title: string | undefined;
-  description: string | undefined;
-  type: string | undefined;
-  createdBy: string | undefined;
-  createdAt: Date | undefined;
-  updatedAt: Date | undefined;
-  done: boolean | undefined;
-  priority: number | undefined;
-  expanded: boolean | undefined;
-  trash: boolean | undefined;
-  linkToKey: string | undefined;
-  linkedNote: NoteDTO | undefined;
-  parents: Array<NoteDTO> | undefined;
-  position: number | undefined;
-  hasChildren: boolean | undefined;
+  key?: string | undefined;
+  title?: string | undefined;
+  description?: string | undefined;
+  type?: string | undefined;
+  createdBy?: string | undefined;
+  createdAt?: Date | undefined;
+  updatedAt?: Date | undefined;
+  done?: boolean | undefined;
+  priority?: number | undefined;
+  expanded?: boolean | undefined;
+  trash?: boolean | undefined;
+  linkToKey?: string | undefined;
+  linkedNote?: NoteDTO | undefined;
+  parents?: Array<NoteDTO> | undefined;
+  position?: number | undefined;
+  hasChildren?: boolean | undefined;
 }
 
 // ***************************************************************************
@@ -170,9 +170,52 @@ export interface Repository {
 // ***************************************************************************
 // ***************************************************************************
 
+export interface NoteService {
+  getNote(key: string): Promise<Note | undefined>;
+  getChildren(key: string, trash: boolean): Promise<Array<Note> | undefined>;
+  getParents(key: string): Promise<Array<Note> | undefined>;
+  getBacklinks(key: string): Promise<Array<NoteDTO>>;
+  search(
+    searchText: string,
+    limit: number,
+    trash: boolean,
+    options: SearchResultOptions
+  ): Promise<SearchResult>;
+  modifyNote(note: NoteDTO): Promise<NoteDTO>;
+  addNote(
+    parentNoteKey: string,
+    note: NoteDTO,
+    hitMode: HitMode,
+    relativeToKey: string
+  ): Promise<NoteDTO | undefined>;
+  moveNote(
+    key: string,
+    from: string,
+    to: string,
+    hitMode: HitMode,
+    relativTo: string
+  ): Promise<void>;
+  moveNoteToTrash(key: string): Promise<boolean | undefined>;
+  restore(key: string): Promise<boolean | undefined>;
+  deletePermanently(key: string): Promise<boolean | undefined>;
+}
+
 export interface TagService {
   getTags(key: string): Promise<Array<Tag>>;
   findTag(tag: string): Promise<Tag[]>;
   addTag(key: string, tag: string): Promise<void>;
   removeTag(key: string, tag: string): Promise<string[]>;
+}
+
+export interface PriorityService {
+  getPriorityStat(): Promise<PriorityStatDTO>;
+}
+
+export interface DataService extends NoteService, TagService, PriorityService {}
+
+export type ListenerWhen = 'before' | 'after';
+
+export interface DataServiceListener {
+  subscribe(title: string, when: ListenerWhen, callback: Function): void;
+  unsubscribe(title: string, when: ListenerWhen, callback: Function): void;
 }

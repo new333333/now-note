@@ -362,7 +362,7 @@ setActive(key) {
                 console.log('save', data.node.title);
 
                 self.props
-                  .handleChangeTitle(data.node.key, data.node.title)
+                  .handleChangeTitle(data.node.key, data.node.title) // TODO: handleChangeTitle no more there, refactor
                   .then(() => {
                     console.log('saved');
                   });

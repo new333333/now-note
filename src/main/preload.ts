@@ -11,11 +11,12 @@ import {
   SearchResult,
   SearchResultOptions,
   TagService,
+  NoteService,
 } from '../types';
 import { Note, Tag } from './modules/DataModels';
 
 export interface DataService {
-  ipcRenderer: TagService | any;
+  ipcRenderer: TagService | NoteService | any;
 }
 
 const electronHandler: DataService = {
@@ -88,7 +89,7 @@ const electronHandler: DataService = {
       note: NoteDTO,
       hitMode: HitMode,
       relativeToKey: string
-    ) =>
+    ): Promise<NoteDTO | undefined> =>
       ipcRenderer.invoke(
         'addNote',
         parentNoteKey,
@@ -103,14 +104,16 @@ const electronHandler: DataService = {
       to: string,
       hitMode: HitMode,
       relativTo: string
-    ) => ipcRenderer.invoke('moveNote', key, from, to, hitMode, relativTo),
+    ): Promise<void> =>
+      ipcRenderer.invoke('moveNote', key, from, to, hitMode, relativTo),
 
-    moveNoteToTrash: (key: string) =>
+    moveNoteToTrash: (key: string): Promise<boolean | undefined> =>
       ipcRenderer.invoke('moveNoteToTrash', key),
 
-    restore: (key: string) => ipcRenderer.invoke('restore', key),
+    restore: (key: string): Promise<boolean | undefined> =>
+      ipcRenderer.invoke('restore', key),
 
-    deletePermanently: (key: string) =>
+    deletePermanently: (key: string): Promise<boolean | undefined> =>
       ipcRenderer.invoke('deletePermanently', key),
 
     getPriorityStat: () => ipcRenderer.invoke('getPriorityStat'),

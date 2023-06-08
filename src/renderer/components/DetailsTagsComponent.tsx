@@ -1,7 +1,16 @@
-import { useRef, useState, useEffect, useCallback, KeyboardEvent } from 'react';
+import log from 'electron-log';
+import {
+  useRef,
+  useState,
+  useEffect,
+  useContext,
+  useCallback,
+  KeyboardEvent,
+} from 'react';
 import { PlusOutlined } from '@ant-design/icons';
 import { Input, Tag, Tooltip, AutoComplete } from 'antd';
 import { Tag as TagDataModel } from 'main/modules/DataModels';
+import { DataServiceContext } from 'renderer/DataServiceContext';
 import { TagService } from 'types';
 
 declare type AutoCompleteOption = {
@@ -12,12 +21,10 @@ declare type AutoCompleteOption = {
 interface Props {
   readOnly: boolean;
   noteKey: string;
-  tagService: TagService;
 }
 
-export default function NoteTags({ readOnly, noteKey, tagService }: Props) {
+export default function DetailsTagsComponent({ readOnly, noteKey }: Props) {
   const inputRefAutoComplete = useRef<AutoComplete>(null);
-
   const [tags, setTags] = useState<TagDataModel[]>([]);
 
   const [inputAutoCompleteVisible, setInputAutoCompleteVisible] =
@@ -26,6 +33,33 @@ export default function NoteTags({ readOnly, noteKey, tagService }: Props) {
   const [optionsAutoComplete, setOptionsAutoComplete] = useState<
     AutoCompleteOption[]
   >([]);
+
+  const { dataService }: { dataService: TagService } =
+    useContext(DataServiceContext);
+
+  const fetchTags = useCallback(async () => {
+    setTags(await dataService.getTags(noteKey));
+  }, [dataService, noteKey]);
+
+  // listen to tag's changes
+  const tagChangeListener = useCallback(
+    async (key: string) => {
+      log.debug(`I'm listener to tag changes on note(key: ${key})`);
+      if (key === noteKey) {
+        await fetchTags();
+      }
+    },
+    [fetchTags, noteKey]
+  );
+
+  useEffect(() => {
+    dataService.subscribe('addTag', 'after', tagChangeListener);
+    dataService.subscribe('removeTag', 'after', tagChangeListener);
+    return () => {
+      dataService.unsubscribe('addTag', 'after', tagChangeListener);
+      dataService.unsubscribe('removeTag', 'after', tagChangeListener);
+    };
+  }, [tagChangeListener, dataService]);
 
   const onBlurAutoComplete = useCallback(async () => {
     setInputAutoCompleteVisible(false);
@@ -42,14 +76,9 @@ export default function NoteTags({ readOnly, noteKey, tagService }: Props) {
     [onBlurAutoComplete]
   );
 
-  const fetchTags = useCallback(async () => {
-    setTags(await tagService.getTags(noteKey));
-  }, [noteKey, tagService]);
-
   const onSelectAutoComplete = useCallback(
     async (newTag: string) => {
-      await tagService.addTag(noteKey, newTag);
-      await fetchTags();
+      await dataService.addTag(noteKey, newTag);
 
       setInputAutoCompleteVisible(false);
       setValueAutoComplete('');
@@ -58,21 +87,20 @@ export default function NoteTags({ readOnly, noteKey, tagService }: Props) {
         inputRefAutoComplete.current.focus();
       }
     },
-    [tagService, fetchTags, noteKey]
+    [dataService, noteKey]
   );
 
   const onSearchAutoComplete = useCallback(
     async (searchText: string) => {
-      const matchingTags: TagDataModel[] = await tagService.findTag(searchText);
-
+      const matchingTags: TagDataModel[] = await dataService.findTag(searchText);
       let found = false;
       const options: AutoCompleteOption[] = matchingTags.map((currentTag) => {
-        if (currentTag.tag === searchText) {
+        if (currentTag.dataValues.tag === searchText) {
           found = true;
         }
         return {
-          label: currentTag.tag,
-          value: currentTag.tag,
+          label: currentTag.dataValues.tag,
+          value: currentTag.dataValues.tag,
         };
       });
 
@@ -84,7 +112,7 @@ export default function NoteTags({ readOnly, noteKey, tagService }: Props) {
       }
       setOptionsAutoComplete(options);
     },
-    [tagService]
+    [dataService]
   );
 
   const onChangeAutoComplete = useCallback(async (data: string) => {
@@ -92,8 +120,7 @@ export default function NoteTags({ readOnly, noteKey, tagService }: Props) {
   }, []);
 
   async function handleCloseTag(tag: string) {
-    await tagService.removeTag(noteKey, tag);
-    await fetchTags();
+    await dataService.removeTag(noteKey, tag);
   }
 
   const showInputAutoComplete = useCallback(async () => {

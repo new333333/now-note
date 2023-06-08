@@ -76,10 +76,8 @@ export default class App extends React.Component {
       this.handleChangeDone = this.handleChangeDone.bind(this);
       this.handleChangeType = this.handleChangeType.bind(this);
       this.handleChangeDescription = this.handleChangeDescription.bind(this);
-      this.handleChangePriority = this.handleChangePriority.bind(this);
       this.setFilter = this.setFilter.bind(this);
 
-      this.handleChangeTitle = this.handleChangeTitle.bind(this);
       this.getNoteTypeLabel = this.getNoteTypeLabel.bind(this);
       this.getOtherNoteTypeLabel = this.getOtherNoteTypeLabel.bind(this);
       this.addNote = this.addNote.bind(this);
@@ -505,62 +503,6 @@ console.log('selectRepositoryFolder', repositoryChoosenOK);
 
     }
 
-    async handleChangeTitle(noteKey, title) {
-        // console.log("handleChangeTitle noteKey=, title=", noteKey, title);
-
-        title = title.replaceAll("/", "");
-
-        let self = this;
-        return new Promise(function(resolve, reject) {
-
-            self.setState((previousState) => {
-                let note = JSON.parse(JSON.stringify(previousState.detailsNote));
-                note.title = title;
-                return {
-                    longOperationProcessing: true,
-                    // prevents update old title for a short time
-                    detailsNote: note
-                }
-            }, () => {
-                // console.log("handleChangeTitle save now");
-                self.dataService.modifyNote({
-                    key: noteKey,
-                    title: title
-                }).then(function(modifiedNote) {
-                    // console.log("handleChangeTitle modifiedNote=", modifiedNote);
-                    self.setState((previousState) => {
-                        if (previousState.detailsNote) {
-                            let newState = {}
-                            if (previousState.detailsNote && previousState.detailsNote.key == noteKey) {
-                                let note = JSON.parse(JSON.stringify(previousState.detailsNote));
-                                note.title = modifiedNote.title;
-                                if (note.parents) {
-                                    note.parents[note.parents.length - 1].title = title;
-                                }
-                                newState.detailsNote = note;
-                            }
-                            // console.log("handleChangeTitle listParentNote");
-                            if (previousState.listParentNote) {
-                                newState.listParentNote = JSON.parse(JSON.stringify(previousState.listParentNote));
-                                newState.listParentNote.filteredSiblings.forEach((note) => {
-                                    if (note.key === noteKey) {
-                                        note.title = title;
-                                    }
-                                });
-                            }
-                            // console.log("handleChangeTitle listParentNote done");
-                            newState.longOperationProcessing = false;
-                            return newState;
-                        }
-                    }, () => {
-                        self.treeDomRef.current.setTitle(noteKey, title);
-                        resolve();
-                    });
-                });
-            });
-        });
-    }
-
     async handleChangeDone(noteKey, done, fromTree) {
         this.setState({
             longOperationProcessing: true,
@@ -953,7 +895,6 @@ console.log('selectRepositoryFolder', repositoryChoosenOK);
                                         addNote={this.addNote}
                                         expandNote={this.expandNote}
                                         handleChangeDone={this.handleChangeDone}
-                                        handleChangeTitle={this.handleChangeTitle}
                                         dataService={this.dataService}
                                         trash={this.state.trash}
                                         openNoteInList={this.openNoteInList}
@@ -1015,7 +956,6 @@ console.log('selectRepositoryFolder', repositoryChoosenOK);
 
                                         handleChangeDone={this.handleChangeDone}
                                         handleChangeType={this.handleChangeType}
-                                        handleChangeTitle={this.handleChangeTitle}
 
                                         handleChangeDescription={this.handleChangeDescription}
                                         handleChangePriority={this.handleChangePriority}
