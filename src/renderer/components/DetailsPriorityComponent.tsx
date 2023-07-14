@@ -2,8 +2,8 @@ import log from 'electron-log';
 import { useState, useContext, useCallback, useEffect } from 'react';
 import { Dropdown, InputNumber, Typography } from 'antd';
 import type { MenuProps } from 'antd';
-import { DataService, PriorityStatDTO } from 'types';
-import { DataServiceContext } from 'renderer/DataServiceContext';
+import { UIController, PriorityStatDTO } from 'types';
+import { UIControllerContext } from 'renderer/UIControllerContext';
 import { Note } from 'main/modules/DataModels';
 
 const { Text } = Typography;
@@ -22,18 +22,18 @@ export default function DetailsTagsComponent({ readOnly, noteKey, initValue }: P
     null
   );
 
-  const { dataService }: { dataService: DataService } =
-    useContext(DataServiceContext);
+  const { uiController }: { uiController: UIController } =
+    useContext(UIControllerContext);
 
   const fetchPriority = useCallback(async () => {
-    const note: Note | undefined = await dataService.getNote(noteKey);
+    const note: Note | undefined = await uiController.getNote(noteKey);
     const newPriority = note !== undefined ? note.priority : 0;
     setPriority(newPriority);
-  }, [dataService, noteKey]);
+  }, [uiController, noteKey]);
 
   const fetchPriorityStat = useCallback(async () => {
-    setPriorityStat(await dataService.getPriorityStat());
-  }, [dataService]);
+    setPriorityStat(await uiController.getPriorityStat());
+  }, [uiController]);
 
   useEffect(() => {
     if (initValue !== undefined) {
@@ -48,13 +48,13 @@ export default function DetailsTagsComponent({ readOnly, noteKey, initValue }: P
     async (value: number | null) => {
       if (value != null) {
         setPriority(value);
-        await dataService.modifyNote({
+        await uiController.modifyNote({
           key: noteKey,
           priority: value,
         });
       }
     },
-    [dataService, noteKey]
+    [uiController, noteKey]
   );
 
   let minimumPriority = 0;
@@ -81,7 +81,7 @@ export default function DetailsTagsComponent({ readOnly, noteKey, initValue }: P
     if (priorityStat !== null) {
       const newPririty = priorityStat[key as PriorityMenuKeys];
       setPriority(newPririty);
-      await dataService.modifyNote({
+      await uiController.modifyNote({
         key: noteKey,
         priority: newPririty,
       });

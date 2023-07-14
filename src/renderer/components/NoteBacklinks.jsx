@@ -2,7 +2,7 @@ import React from 'react';
 import { Collapse, Badge } from 'antd';
 const { Panel } = Collapse;
 import { HomeOutlined, DownOutlined } from '@ant-design/icons';
-import {NoteBreadCrumb} from './NoteBreadCrumb.jsx';
+import NoteBreadCrumb from './NoteBreadCrumb';
 import { blue } from '@ant-design/colors';
 
 

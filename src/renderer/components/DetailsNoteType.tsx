@@ -2,8 +2,8 @@ import log from 'electron-log';
 import { useState, useEffect, useContext, useCallback } from 'react';
 import { Typography, Dropdown } from 'antd';
 import type { MenuProps } from 'antd';
-import { DataServiceContext } from 'renderer/DataServiceContext';
-import { DataService } from 'types';
+import { UIControllerContext } from 'renderer/UIControllerContext';
+import { UIController } from 'types';
 
 const { Text, Link } = Typography;
 
@@ -19,14 +19,14 @@ export default function DetailsNoteType({
   initValue,
 }: Props) {
   const [type, setType] = useState<string | null>(initValue);
-  const { dataService }: { dataService: DataService } =
-    useContext(DataServiceContext);
+  const { uiController }: { uiController: UIController } =
+    useContext(UIControllerContext);
 
   const fetchType = useCallback(async () => {
-    const note = await dataService.getNote(noteKey);
+    const note = await uiController.getNote(noteKey);
     const newType = note !== undefined ? note.type : null;
     setType(newType);
-  }, [dataService, noteKey]);
+  }, [uiController, noteKey]);
 
   useEffect(() => {
     fetchType();
@@ -59,7 +59,7 @@ export default function DetailsNoteType({
 
   const handleClickMenu: MenuProps['onClick'] = async ({ key }) => {
     setType(key);
-    await dataService.modifyNote({
+    await uiController.modifyNote({
       key: noteKey,
       type: key,
     });

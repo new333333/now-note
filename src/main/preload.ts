@@ -1,7 +1,6 @@
 // Disable no-unused-vars, broken for spread args
 /* eslint no-unused-vars: off */
 import { contextBridge, ipcRenderer } from 'electron';
-import { RepositorySettings } from './modules/RepositorySettings/RepositorySettingsService';
 import {
   Error,
   HitMode,
@@ -10,16 +9,16 @@ import {
   UserSettingsRepository,
   SearchResult,
   SearchResultOptions,
-  TagService,
-  NoteService,
+  Repository,
+  RepositorySettings,
 } from '../types';
 import { Note, Tag } from './modules/DataModels';
 
-export interface DataService {
-  ipcRenderer: TagService | NoteService | any;
+export interface ElectronIPCRenderer {
+  ipcRenderer: Repository;
 }
 
-const electronHandler: DataService = {
+const electronHandler: ElectronIPCRenderer = {
   ipcRenderer: {
     selectRepositoryFolder: (): Promise<RepositoryDTO | Error> =>
       ipcRenderer.invoke('selectRepositoryFolder'),
@@ -88,7 +87,7 @@ const electronHandler: DataService = {
       parentNoteKey: string,
       note: NoteDTO,
       hitMode: HitMode,
-      relativeToKey: string
+      relativeToKey?: string
     ): Promise<NoteDTO | undefined> =>
       ipcRenderer.invoke(
         'addNote',

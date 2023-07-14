@@ -139,7 +139,7 @@ export interface Repository {
     parentNoteKey: string,
     note: NoteDTO,
     hitMode: HitMode,
-    relativeToKey: string
+    relativeToKey?: string
   ): Promise<NoteDTO | undefined>;
   moveNote(
     key: string,
@@ -170,7 +170,7 @@ export interface Repository {
 // ***************************************************************************
 // ***************************************************************************
 
-export interface NoteService {
+export interface NoteController {
   getNote(key: string): Promise<Note | undefined>;
   getChildren(key: string, trash: boolean): Promise<Array<Note> | undefined>;
   getParents(key: string): Promise<Array<Note> | undefined>;
@@ -183,10 +183,11 @@ export interface NoteService {
   ): Promise<SearchResult>;
   modifyNote(note: NoteDTO): Promise<NoteDTO>;
   addNote(
+    trigger: string,
     parentNoteKey: string,
     note: NoteDTO,
     hitMode: HitMode,
-    relativeToKey: string
+    relativeToKey?: string
   ): Promise<NoteDTO | undefined>;
   moveNote(
     key: string,
@@ -200,26 +201,26 @@ export interface NoteService {
   deletePermanently(key: string): Promise<boolean | undefined>;
 }
 
-export interface TagService {
+export interface TagController {
   getTags(key: string): Promise<Array<Tag>>;
   findTag(tag: string): Promise<Tag[]>;
   addTag(key: string, tag: string): Promise<void>;
   removeTag(key: string, tag: string): Promise<string[]>;
 }
 
-export interface PriorityService {
+export interface PriorityController {
   getPriorityStat(): Promise<PriorityStatDTO>;
 }
 
 export type ListenerWhen = 'before' | 'after';
 
-export interface DataServiceListener {
+export interface UIControllerListener {
   subscribe(title: string, when: ListenerWhen, callback: Function): void;
   unsubscribe(title: string, when: ListenerWhen, callback: Function): void;
 }
 
-export interface DataService
-  extends NoteService,
-    TagService,
-    PriorityService,
-    DataServiceListener {}
+export interface UIController
+  extends NoteController,
+    TagController,
+    PriorityController,
+    UIControllerListener {}

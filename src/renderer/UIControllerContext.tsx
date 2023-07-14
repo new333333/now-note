@@ -2,9 +2,9 @@ import log from 'electron-log';
 import { Note, Tag } from 'main/modules/DataModels';
 import { createContext } from 'react';
 import {
-  DataServiceListener,
+  UIControllerListener,
   ListenerWhen,
-  DataService,
+  UIController,
   HitMode,
   NoteDTO,
   SearchResult,
@@ -12,14 +12,14 @@ import {
   PriorityStatDTO,
 } from 'types';
 
-export class DataServiceContextImpl
-  implements DataService, DataServiceListener
+export class UIControllerContextImpl
+  implements UIController, UIControllerListener
 {
-  private îpcRenderer: DataService;
+  private îpcRenderer: UIController;
 
   private listeners: Map<string, Function[]> = new Map<string, Function[]>();
 
-  constructor(îpcRenderer: DataService) {
+  constructor(îpcRenderer: UIController) {
     this.îpcRenderer = îpcRenderer;
   }
 
@@ -63,8 +63,31 @@ export class DataServiceContextImpl
     return note;
   }
 
-  async addNote(parentNoteKey: string, note: NoteDTO, hitMode: HitMode, relativeToKey: string): Promise<NoteDTO | undefined> {
-    throw new Error('Method not implemented.');
+  async addNote(
+    trigger: string,
+    parentNoteKey: string,
+    note: NoteDTO,
+    hitMode: HitMode,
+    relativeToKey?: string
+  ): Promise<NoteDTO | undefined> {
+    await this.notify('addNote', 'before', trigger, note);
+    const newNote: NoteDTO | undefined = await this.îpcRenderer.addNote(
+      parentNoteKey,
+      note,
+      hitMode,
+      relativeToKey
+    );
+    await this.notify(
+      'addNote',
+      'after',
+      trigger,
+      parentNoteKey,
+      note,
+      hitMode,
+      relativeToKey,
+      newNote
+    );
+    return note;
   }
 
   async moveNote(key: string, from: string, to: string, hitMode: HitMode, relativTo: string): Promise<void> {
@@ -157,8 +180,8 @@ export class DataServiceContextImpl
   }
 }
 
-const dataService = new DataServiceContextImpl(window.electron.ipcRenderer);
+const uiController = new UIControllerContextImpl(window.electron.ipcRenderer);
 
-export const DataServiceContext = createContext({
-  dataService,
+export const UIControllerContext = createContext({
+  uiController,
 });

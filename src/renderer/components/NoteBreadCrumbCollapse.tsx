@@ -1,6 +1,7 @@
 import React from 'react';
 import { Collapse, Tooltip } from 'antd';
-import {NoteBreadCrumb} from './NoteBreadCrumb.jsx';
+import NoteBreadCrumb from './NoteBreadCrumb';
+
 const { Panel } = Collapse;
 
 class NoteBreadCrumbCollapse extends React.Component {
@@ -14,9 +15,9 @@ class NoteBreadCrumbCollapse extends React.Component {
         return (
                 <>
                 {
-                    this.props.parents && 
+                    this.props.parents &&
                     <Collapse bordered={false} ghost style={{overflow: "hidden", whiteSpace: "nowrap"}}>
-                        
+
                         <Panel header={
                             <Tooltip placement="bottomLeft" title={
                                 this.props.parents.map((parent, index) => {

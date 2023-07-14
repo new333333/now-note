@@ -397,7 +397,7 @@ export class RepositorySQLite implements Repository {
     parentNoteKey: string,
     note: NoteDTO,
     hitMode: HitMode,
-    relativeToKey: string
+    relativeToKey?: string
   ): Promise<NoteDTO | undefined> {
     let parent: string | null = parentNoteKey.startsWith('root_')
       ? null
@@ -1703,7 +1703,7 @@ export class RepositorySQLite implements Repository {
           parents: undefined,
           position: undefined,
           tags: undefined,
-          hasChildren: undefined
+          hasChildren: undefined,
         },
         hitMode,
         relativeToKey

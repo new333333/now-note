@@ -1,3 +1,4 @@
+import log from 'electron-log';
 import {
   useState,
   useRef,
@@ -8,8 +9,8 @@ import {
   ChangeEvent,
 } from 'react';
 import { Input, Typography } from 'antd';
-import { DataServiceContext } from 'renderer/DataServiceContext';
-import { NoteService } from 'types';
+import { UIControllerContext } from 'renderer/UIControllerContext';
+import { HitMode, NoteDTO, UIController } from 'types';
 import { Note } from 'main/modules/DataModels';
 
 const { TextArea } = Input;
@@ -29,21 +30,21 @@ export default function DetailsTitleComponent({
   const [title, setTitle] = useState('');
   const titleDomRef = useRef(null);
 
-  const { dataService }: { dataService: NoteService } =
-    useContext(DataServiceContext);
+  const { uiController }: { uiController: UIController } =
+    useContext(UIControllerContext);
 
   const fetchTitle = useCallback(async () => {
-    const note: Note | undefined = await dataService.getNote(noteKey);
+    const note: Note | undefined = await uiController.getNote(noteKey);
     const updateTitle = note !== undefined ? note.title : '';
     setTitle(updateTitle);
-  }, [dataService, noteKey]);
+  }, [uiController, noteKey]);
 
   const handleChangeTitle = useCallback(async () => {
-    await dataService.modifyNote({
+    await uiController.modifyNote({
       key: noteKey,
       title,
     });
-  }, [dataService, noteKey, title]);
+  }, [uiController, noteKey, title]);
 
   const handleKeydown = useCallback(
     async (event: KeyboardEvent) => {
@@ -68,6 +69,30 @@ export default function DetailsTitleComponent({
       fetchTitle();
     }
   }, [fetchTitle, initValue]);
+
+  const titleChangeListener = useCallback(
+    async (
+      trigger: string,
+      parentNoteKey: string,
+      note: NoteDTO,
+      hitMode: HitMode,
+      relativeToKey: string,
+      newNote: NoteDTO
+    ) => {
+      log.debug(
+        `I'm listener to add note (trigger: ${trigger}, parentNoteKey: ${parentNoteKey}, note: ${note}, hitMode: ${hitMode}, relativeToKey: ${relativeToKey}, newNote: ${newNote})`
+      );
+      // TODO: set focus on title
+    },
+    []
+  );
+
+  useEffect(() => {
+    uiController.subscribe('addNote', 'after', titleChangeListener);
+    return () => {
+      uiController.unsubscribe('addNote', 'after', titleChangeListener);
+    };
+  }, [titleChangeListener, uiController]);
 
   return (
     <>

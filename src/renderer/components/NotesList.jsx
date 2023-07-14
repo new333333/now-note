@@ -2,7 +2,7 @@ import React from 'react';
 
 import { Input, Space, Tooltip, Badge, List, InputNumber, Typography, Button, Dropdown, Menu, Spin, Checkbox, Divider } from 'antd';
 import { DownOutlined, UnorderedListOutlined, PlusOutlined, DeleteFilled } from '@ant-design/icons';
-import {NoteBreadCrumbCollapse} from './NoteBreadCrumbCollapse.jsx';
+import {NoteBreadCrumbCollapse} from './NoteBreadCrumbCollapse';
 import InfiniteScroll from 'react-infinite-scroll-component';
 
 const { Text, Link } = Typography;

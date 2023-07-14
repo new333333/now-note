@@ -10,8 +10,8 @@ import {
 import { PlusOutlined } from '@ant-design/icons';
 import { Input, Tag, Tooltip, AutoComplete } from 'antd';
 import { Tag as TagDataModel } from 'main/modules/DataModels';
-import { DataServiceContext } from 'renderer/DataServiceContext';
-import { DataService } from 'types';
+import { UIControllerContext } from 'renderer/UIControllerContext';
+import { UIController } from 'types';
 
 declare type AutoCompleteOption = {
   label: string;
@@ -34,12 +34,12 @@ export default function DetailsTagsComponent({ readOnly, noteKey }: Props) {
     AutoCompleteOption[]
   >([]);
 
-  const { dataService }: { dataService: DataService } =
-    useContext(DataServiceContext);
+  const { uiController }: { uiController: UIController } =
+    useContext(UIControllerContext);
 
   const fetchTags = useCallback(async () => {
-    setTags(await dataService.getTags(noteKey));
-  }, [dataService, noteKey]);
+    setTags(await uiController.getTags(noteKey));
+  }, [uiController, noteKey]);
 
   // listen to tag's changes
   const tagChangeListener = useCallback(
@@ -53,13 +53,13 @@ export default function DetailsTagsComponent({ readOnly, noteKey }: Props) {
   );
 
   useEffect(() => {
-    dataService.subscribe('addTag', 'after', tagChangeListener);
-    dataService.subscribe('removeTag', 'after', tagChangeListener);
+    uiController.subscribe('addTag', 'after', tagChangeListener);
+    uiController.subscribe('removeTag', 'after', tagChangeListener);
     return () => {
-      dataService.unsubscribe('addTag', 'after', tagChangeListener);
-      dataService.unsubscribe('removeTag', 'after', tagChangeListener);
+      uiController.unsubscribe('addTag', 'after', tagChangeListener);
+      uiController.unsubscribe('removeTag', 'after', tagChangeListener);
     };
-  }, [tagChangeListener, dataService]);
+  }, [tagChangeListener, uiController]);
 
   const onBlurAutoComplete = useCallback(async () => {
     setInputAutoCompleteVisible(false);
@@ -78,7 +78,7 @@ export default function DetailsTagsComponent({ readOnly, noteKey }: Props) {
 
   const onSelectAutoComplete = useCallback(
     async (newTag: string) => {
-      await dataService.addTag(noteKey, newTag);
+      await uiController.addTag(noteKey, newTag);
 
       setInputAutoCompleteVisible(false);
       setValueAutoComplete('');
@@ -87,12 +87,12 @@ export default function DetailsTagsComponent({ readOnly, noteKey }: Props) {
         inputRefAutoComplete.current.focus();
       }
     },
-    [dataService, noteKey]
+    [uiController, noteKey]
   );
 
   const onSearchAutoComplete = useCallback(
     async (searchText: string) => {
-      const matchingTags: TagDataModel[] = await dataService.findTag(
+      const matchingTags: TagDataModel[] = await uiController.findTag(
         searchText
       );
       let found = false;
@@ -114,7 +114,7 @@ export default function DetailsTagsComponent({ readOnly, noteKey }: Props) {
       }
       setOptionsAutoComplete(options);
     },
-    [dataService]
+    [uiController]
   );
 
   const onChangeAutoComplete = useCallback(async (data: string) => {
@@ -122,7 +122,7 @@ export default function DetailsTagsComponent({ readOnly, noteKey }: Props) {
   }, []);
 
   async function handleCloseTag(tag: string) {
-    await dataService.removeTag(noteKey, tag);
+    await uiController.removeTag(noteKey, tag);
   }
 
   const showInputAutoComplete = useCallback(async () => {

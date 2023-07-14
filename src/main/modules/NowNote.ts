@@ -17,9 +17,7 @@ import {
   SearchResult,
   SearchResultOptions,
 } from '../../types';
-import RepositorySettingsService, {
-  RepositorySettings,
-} from './RepositorySettings/RepositorySettingsService';
+import RepositorySettingsService from './RepositorySettings/RepositorySettingsService';
 import RepositorySQLiteSetup from './RepositorySQLite/RepositorySQLiteSetup';
 import { Note, Tag } from './DataModels';
 import AssetFilesService from './AssetFilesService';
@@ -274,7 +272,7 @@ export default class NowNote {
     parentNoteKey: string,
     note: NoteDTO,
     hitMode: HitMode,
-    relativeToKey: string
+    relativeToKey?: string
   ): Promise<NoteDTO | undefined> {
     if (this.currentRepository !== undefined) {
       return this.currentRepository.addNote(

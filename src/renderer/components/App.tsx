@@ -14,9 +14,12 @@ import {
 import './App.scss';
 import { ReflexContainer, ReflexSplitter, ReflexElement } from 'react-reflex';
 import 'react-reflex/styles.css';
-import { DataService } from 'main/preload';
-import { RepositorySettings } from 'main/modules/RepositorySettings/RepositorySettingsService';
-import { UserSettingsRepository, SearchResultOptions, NoteDTO, TagService } from 'types';
+import {
+  UserSettingsRepository,
+  SearchResultOptions,
+  NoteDTO,
+  TagController,
+} from 'types';
 import { Tree } from './Tree.jsx';
 import { NotesList } from './NotesList.jsx';
 import { Note } from './Note.jsx';
@@ -30,7 +33,7 @@ window.$ = $;
 
 
 export default class App extends React.Component {
-  private dataService: TagService;
+  private dataService: TagController;
 
   constructor(props) {
     super(props);
@@ -41,8 +44,6 @@ export default class App extends React.Component {
           trash: false,
 
           detailsNote: undefined,
-          detailsNoteTags: undefined,
-
           listParentNote: undefined,
 
           repositorySettings: undefined,
@@ -149,7 +150,6 @@ export default class App extends React.Component {
         repositorySettings,
         repository,
         detailsNote: undefined,
-        detailsNoteTags: undefined,
         listParentNote: undefined,
       },
       () => {
@@ -183,7 +183,7 @@ export default class App extends React.Component {
             this.state.repositorySettings.state.details.key) {
             // it's app start and there is never trash on start, so check if note in trasj
             let note = await this.dataService.getNote(this.state.repositorySettings.state.details.key);
-            if (note && !note.trash) {
+            if (note && !this.state.trash) {
                 await this.openNoteInTreeAndDetails(this.state.repositorySettings.state.details.key);
             }
         }
@@ -193,7 +193,7 @@ export default class App extends React.Component {
             this.state.repositorySettings.state.list.key) {
                  // it's app start and there is never trash on start, so check if note in trasj
             let note = await this.dataService.getNote(this.state.repositorySettings.state.list.key);
-            if (note && !note.trash) {
+            if (note && !this.state.trash) {
                 await this.openNoteInList(this.state.repositorySettings.state.list.key);
             }
         }
@@ -250,6 +250,7 @@ console.log('selectRepositoryFolder', repositoryChoosenOK);
 
 
     async openNoteDetails(key, editableTitle) {
+      console.log('openNoteDetails(key: ' + key +')');
         if (this.state.detailsNote != undefined && key == this.state.detailsNote.key) {
             return;
         }
@@ -261,7 +262,6 @@ console.log('selectRepositoryFolder', repositoryChoosenOK);
             }
             let detailsNoteParents = await this.dataService.getParents(detailsNote.key, undefined);
             let detailsNoteBacklinks = await this.dataService.getBacklinks(detailsNote.key);
-            let detailsNoteTags = await this.dataService.getTags(detailsNote.key);
 
             detailsNote.parents = detailsNoteParents;
             detailsNote.backlinks = detailsNoteBacklinks;
@@ -274,7 +274,6 @@ console.log('selectRepositoryFolder', repositoryChoosenOK);
                 repositorySettings.state.details.key = detailsNote.key;
                 return {
                     detailsNote: detailsNote,
-                    detailsNoteTags: detailsNoteTags,
                     repositorySettings: repositorySettings,
                     editableTitle: editableTitle
                 }
@@ -291,7 +290,6 @@ console.log('selectRepositoryFolder', repositoryChoosenOK);
                 delete repositorySettings.state.details.key;
                 return {
                     detailsNote: undefined,
-                    detailsNoteTags: undefined,
                     repositorySettings: repositorySettings,
                     editableTitle: false
                 }
@@ -643,7 +641,7 @@ console.log('selectRepositoryFolder', repositoryChoosenOK);
     }
 
     async openTrash() {
-        // console.log("openTrash", this.state.trash);
+        console.log("openTrash", this.state.trash);
 
         this.setState((previousState) => {
             // console.log("openTrash previousState", previousState);
@@ -829,7 +827,6 @@ console.log('selectRepositoryFolder', repositoryChoosenOK);
                                         dataService={this.dataService}
 
                                         note={this.state.detailsNote}
-                                        noteTags={this.state.detailsNoteTags}
 
                                         editableTitle={this.state.editableTitle}
 
