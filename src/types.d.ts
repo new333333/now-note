@@ -171,6 +171,9 @@ export interface Repository {
 // ***************************************************************************
 
 export interface NoteController {
+  // TODO: probably this method need refactoring
+  openNote(key: string): Promise<Note | undefined>;
+
   getNote(key: string): Promise<Note | undefined>;
   getChildren(key: string, trash: boolean): Promise<Array<Note> | undefined>;
   getParents(key: string): Promise<Array<Note> | undefined>;

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { PlusOutlined, DeleteFilled } from '@ant-design/icons';
 import {
   ConfigProvider,
@@ -34,6 +34,27 @@ window.$ = $;
 
 export default class App extends React.Component {
   private dataService: TagController;
+
+  // TODO listen to openNode click
+  /*
+    MOVE this code to this component, read https://react.dev/reference/react/useContext
+    export const UIControllerContext = createContext({
+      uiController,
+  });
+  */
+  /*
+
+  this is probably wrong idea, put note as state in UIControllerContext
+
+  // UIControllerContextImpl: await this.notify('openNote', 'after', key, note);
+  const openNoteListener = useCallback(
+    async (key: string) => {
+      log.debug(`I'm listener to open note on note(key: ${key})`);
+        await openNote();
+    },
+    [openNote]
+  );
+  */
 
   constructor(props) {
     super(props);
@@ -257,8 +278,9 @@ console.log('selectRepositoryFolder', repositoryChoosenOK);
         if (key) {
 
             let detailsNote = await this.dataService.getNote(key);
-            if (detailsNote.type == "link") {
-                detailsNote = detailsNote.linkedNote;
+            console.log('openNoteDetails detailsNote=', detailsNote);
+            if (detailsNote.type === 'link') {
+                detailsNote = detailsNote.linkedNote; // TODO: there is no linkedNote, onyl linkToKey
             }
             let detailsNoteParents = await this.dataService.getParents(detailsNote.key, undefined);
             let detailsNoteBacklinks = await this.dataService.getBacklinks(detailsNote.key);

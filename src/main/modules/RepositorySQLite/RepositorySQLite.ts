@@ -507,15 +507,15 @@ export class RepositorySQLite implements Repository {
       await Link.create({
         from: newNote.key,
         to: newNote.linkToKey,
-        type: 'note'
+        type: 'note',
       });
     }
 
-    log.debug("this.#addNoteIndex(newNote) start");
+    log.debug('this.#addNoteIndex(newNote) start');
     await this.#addNoteIndex(newNote);
-    log.debug("this.#addNoteIndex(newNote) done");
+    log.debug('this.#addNoteIndex(newNote) done');
     const resultNote = await this.noteToNoteDTO(newNote, false, true);
-    log.debug("this.noteToNoteDTO(newNote) done");
+    log.debug('this.noteToNoteDTO(newNote) done');
     return resultNote;
   }
 

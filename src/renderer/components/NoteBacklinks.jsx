@@ -34,7 +34,10 @@ class NoteBacklinks extends React.Component {
                                 {this.props.backlinks.map((note, index) => {
                                     return (
                                         <li key={note.key}>
-                                            <NoteBreadCrumb parents={note.parents} handleClickNote={this.props.handleClickNote} />
+                                            <NoteBreadCrumb
+                                              initValue={note.parents}
+                                              noteKey={note.key}
+                                            />
                                         </li>
                                     )
 

@@ -23,6 +23,14 @@ export class UIControllerContextImpl
     this.îpcRenderer = îpcRenderer;
   }
 
+  // TODO: this is probably bad idea, look at comments in App.tsx
+  async openNote(key: string): Promise<Note | undefined> {
+    await this.notify('openNote', 'before', key);
+    const note: Note | undefined = await this.îpcRenderer.getNote(key);
+    await this.notify('openNote', 'after', key, note);
+    return note;
+  }
+
   async getPriorityStat(): Promise<PriorityStatDTO> {
     await this.notify('getPriorityStat', 'before');
     const priorityStat: PriorityStatDTO =
@@ -43,7 +51,10 @@ export class UIControllerContextImpl
   }
 
   async getParents(key: string): Promise<Note[] | undefined> {
-    throw new Error('Method not implemented.');
+    await this.notify('getParents', 'before', key);
+    const parents: Note[] | undefined = await this.îpcRenderer.getParents(key);
+    await this.notify('getParents', 'after', key, parents);
+    return parents;
   }
 
   async getBacklinks(key: string): Promise<NoteDTO[]> {

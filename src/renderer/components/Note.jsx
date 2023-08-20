@@ -41,7 +41,10 @@ class Note extends React.Component {
               this.props.note &&
               <>
                 <div>
-                    <NoteBreadCrumb parents={this.props.note.parents} handleClickNote={this.props.openNoteInTreeAndDetails} />
+                  <NoteBreadCrumb
+                    initValue={this.props.note.parents}
+                    noteKey={this.props.note.key}
+                  />
                 </div>
                 <Divider style={{margin: "5px 0"}} />
                 <div style={{display: "flex", alignItems: "center" }}>

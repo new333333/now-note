@@ -2,7 +2,7 @@ import React from 'react';
 
 import { Input, Space, Tooltip, Badge, List, InputNumber, Typography, Button, Dropdown, Menu, Spin, Checkbox, Divider } from 'antd';
 import { DownOutlined, UnorderedListOutlined, PlusOutlined, DeleteFilled } from '@ant-design/icons';
-import {NoteBreadCrumbCollapse} from './NoteBreadCrumbCollapse';
+import NoteBreadCrumbCollapse from './NoteBreadCrumbCollapse';
 import InfiniteScroll from 'react-infinite-scroll-component';
 
 const { Text, Link } = Typography;
@@ -226,7 +226,10 @@ class NotesList extends React.Component {
                         <div>
                             {
                                 this.props.note &&
-                                <NoteBreadCrumbCollapse parents={this.props.note.parents} handleClickNote={this.props.openNoteInList} />}
+                                <NoteBreadCrumbCollapse
+                                  noteKey={this.props.note.key}
+                                  initValue={this.props.note.parents}
+                                />}
                         </div>
 
                         <div>

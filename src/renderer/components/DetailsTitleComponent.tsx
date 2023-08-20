@@ -82,7 +82,7 @@ export default function DetailsTitleComponent({
       log.debug(
         `I'm listener to add note (trigger: ${trigger}, parentNoteKey: ${parentNoteKey}, note: ${note}, hitMode: ${hitMode}, relativeToKey: ${relativeToKey}, newNote: ${newNote})`
       );
-      // TODO: set focus on title
+      // TODO: set focus on title?
     },
     []
   );
