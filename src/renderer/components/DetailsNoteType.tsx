@@ -1,4 +1,3 @@
-import log from 'electron-log';
 import { useState, useEffect, useContext, useCallback } from 'react';
 import { Typography, Dropdown } from 'antd';
 import type { MenuProps } from 'antd';
@@ -10,7 +9,7 @@ const { Text, Link } = Typography;
 interface Props {
   readOnly: boolean;
   noteKey: string;
-  initValue: string;
+  initValue?: string | undefined;
 }
 
 export default function DetailsNoteType({
@@ -18,13 +17,13 @@ export default function DetailsNoteType({
   noteKey,
   initValue,
 }: Props) {
-  const [type, setType] = useState<string | null>(initValue);
+  const [type, setType] = useState<string | undefined>(initValue);
   const { uiController }: { uiController: UIController } =
     useContext(UIControllerContext);
 
   const fetchType = useCallback(async () => {
     const note = await uiController.getNote(noteKey);
-    const newType = note !== undefined ? note.type : null;
+    const newType = note !== undefined ? note.type : undefined;
     setType(newType);
   }, [uiController, noteKey]);
 
@@ -47,7 +46,7 @@ export default function DetailsNoteType({
     },
   ];
 
-  function getNoteTypeLabel(t: string | null) {
+  function getNoteTypeLabel(t: string | null | undefined) {
     const foundType = menuItems?.find((menuItem) => {
       return menuItem?.key === t;
     });
@@ -78,3 +77,7 @@ export default function DetailsNoteType({
     </span>
   );
 }
+
+DetailsNoteType.defaultProps = {
+  initValue: undefined,
+};

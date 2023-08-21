@@ -100,6 +100,7 @@ export interface NoteDTO {
   expanded?: boolean | undefined;
   trash?: boolean | undefined;
   linkToKey?: string | undefined;
+  // TODO: not in use?
   linkedNote?: NoteDTO | undefined;
   parents?: Array<NoteDTO> | undefined;
   position?: number | undefined;
@@ -177,7 +178,7 @@ export interface NoteController {
   getNote(key: string): Promise<Note | undefined>;
   getChildren(key: string, trash: boolean): Promise<Array<Note> | undefined>;
   getParents(key: string): Promise<Array<Note> | undefined>;
-  getBacklinks(key: string): Promise<Array<NoteDTO>>;
+  getBacklinks(key: string): Promise<Array<Note>>;
   search(
     searchText: string,
     limit: number,

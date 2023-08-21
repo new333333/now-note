@@ -11,12 +11,16 @@ const { Text } = Typography;
 interface Props {
   readOnly: boolean;
   noteKey: string;
-  initValue: number;
+  initValue?: number | undefined;
 }
 
 type PriorityMenuKeys = 'minimum' | 'average' | 'mediana' | 'maximum';
 
-export default function DetailsTagsComponent({ readOnly, noteKey, initValue }: Props) {
+export default function DetailsTagsComponent({
+  readOnly,
+  noteKey,
+  initValue,
+}: Props) {
   const [priority, setPriority] = useState<number>(0);
   const [priorityStat, setPriorityStat] = useState<PriorityStatDTO | null>(
     null
@@ -125,3 +129,7 @@ export default function DetailsTagsComponent({ readOnly, noteKey, initValue }: P
     </span>
   );
 }
+
+DetailsTagsComponent.defaultProps = {
+  initValue: undefined,
+};

@@ -19,7 +19,7 @@ const { Paragraph } = Typography;
 interface Props {
   readOnly: boolean;
   noteKey: string;
-  initValue: string;
+  initValue?: string | undefined;
 }
 
 export default function DetailsTitleComponent({
@@ -118,3 +118,7 @@ export default function DetailsTitleComponent({
     </>
   );
 }
+
+DetailsTitleComponent.defaultProps = {
+  initValue: undefined,
+};

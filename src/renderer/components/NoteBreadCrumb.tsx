@@ -6,8 +6,9 @@ import { UIControllerContext } from 'renderer/UIControllerContext';
 
 interface Props {
   noteKey: string;
-  initValue: NoteDataModel[];
+  initValue?: NoteDataModel[] | undefined;
 }
+
 
 export default function NoteBreadCrumb({ noteKey, initValue }: Props) {
   const [parents, setParent] = useState<NoteDataModel[] | undefined>([]);
@@ -44,3 +45,7 @@ export default function NoteBreadCrumb({ noteKey, initValue }: Props) {
     </Breadcrumb>
   );
 }
+
+NoteBreadCrumb.defaultProps = {
+  initValue: undefined,
+};

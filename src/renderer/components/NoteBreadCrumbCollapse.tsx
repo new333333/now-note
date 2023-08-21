@@ -9,7 +9,7 @@ const { Panel } = Collapse;
 
 interface Props {
   noteKey: string;
-  initValue: NoteDataModel[];
+  initValue?: NoteDataModel[] | undefined;
 }
 
 export default function NoteBreadCrumbCollapse({ noteKey, initValue }: Props) {
@@ -76,3 +76,7 @@ export default function NoteBreadCrumbCollapse({ noteKey, initValue }: Props) {
     </div>
   );
 }
+
+NoteBreadCrumbCollapse.defaultProps = {
+  initValue: undefined,
+};

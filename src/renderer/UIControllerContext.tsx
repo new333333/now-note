@@ -57,12 +57,38 @@ export class UIControllerContextImpl
     return parents;
   }
 
-  async getBacklinks(key: string): Promise<NoteDTO[]> {
-    throw new Error('Method not implemented.');
+  async getBacklinks(key: string): Promise<Note[]> {
+    await this.notify('getBacklinks', 'before', key);
+    const backlinks: Note[] | undefined = await this.îpcRenderer.getBacklinks(
+      key
+    );
+    await this.notify('getBacklinks', 'after', key, backlinks);
+    return backlinks;
   }
 
-  async search(searchText: string, limit: number, trash: boolean, options: SearchResultOptions): Promise<SearchResult> {
-    throw new Error('Method not implemented.');
+  async search(
+    searchText: string,
+    limit: number,
+    trash: boolean,
+    options: SearchResultOptions
+  ): Promise<SearchResult> {
+    await this.notify('search', 'before', searchText, limit, trash, options);
+    const searchResult: SearchResult = await this.îpcRenderer.search(
+      searchText,
+      limit,
+      trash,
+      options
+    );
+    await this.notify(
+      'search',
+      'after',
+      searchText,
+      limit,
+      trash,
+      options,
+      searchResult
+    );
+    return searchResult;
   }
 
   async modifyNote(note: NoteDTO): Promise<NoteDTO> {

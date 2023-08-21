@@ -1,147 +1,139 @@
-import { PlusOutlined } from '@ant-design/icons';
-import { Input, Tag, Tooltip, AutoComplete } from 'antd';
-import React from 'react';
+import { useState, useEffect, useContext, useCallback } from 'react';
+import { Input, AutoComplete } from 'antd';
+import { SearchResultOptions, UIController } from 'types';
+import { UIControllerContext } from 'renderer/UIControllerContext';
 
-class SearchNotes extends React.Component {
+interface Props {
+  trash: boolean;
+}
 
-    constructor(props) {
-        super(props);
+export default function SearchNotes({ trash }: Props) {
+  const [loading, setLoading] = useState<boolean>(false);
+  const [valueAutoComplete, setValueAutoComplete] = useState<string>('');
+  const [optionsAutoComplete, setOptionsAutoComplete] = useState([]); // TODO: type
+  const [startSearchPosition, setStartSearchPosition] = useState<number>(0);
 
-        this.onSelectAutoComplete = this.onSelectAutoComplete.bind(this);
-        this.onSearchAutoComplete = this.onSearchAutoComplete.bind(this);
-        this.onChangeAutoComplete = this.onChangeAutoComplete.bind(this);
-        this.onPopupScroll = this.onPopupScroll.bind(this);
+  function resultToListOption(results) {
+    return results.map((note) => {
+      return {
+        label: (
+          <div className="nn-search-option">
+            <div className="nn-search-title">{note.title}</div>
+            <div className="nn-search-breadCrumb">{note.path}</div>
+          </div>
+        ),
+        value: note.key,
+      };
+    });
+  }
 
-        this.state = {
-            valueAutoComplete: "",
-            optionsAutoComplete: [],
-            startSearchPosition: 0,
-        };
-    }
+  const { uiController }: { uiController: UIController } =
+    useContext(UIControllerContext);
 
-    async onSelectAutoComplete(key) {
-        console.log("onSelectAutoComplete", key);
+  const openNote = useCallback(
+    async (noteKey: string) => {
+      await uiController.openNote(noteKey);
+    },
+    [uiController]
+  );
 
-        this.setState({
-            valueAutoComplete: "",
-            optionsAutoComplete: [],
-            startSearchPosition: 0,
-        }, () => {
-            this.props.openNoteInTreeAndDetails(key);
-        });
-    }
+  const onSelectAutoComplete = useCallback(
+    async (noteKey: string) => {
+      setValueAutoComplete('');
+      setOptionsAutoComplete([]);
+      setStartSearchPosition(0);
 
+      openNote(noteKey);
+    },
+    [openNote]
+  );
 
-    resultToListOption(results) {
+  const onChangeAutoComplete = useCallback(async (data: string) => {
+    setValueAutoComplete(data);
+  }, []);
 
-        return results.map(function(note) {
-            return {
-                label:
-                    <div className="nn-search-option">
-                        <div className="nn-search-title">
-                            {note.title}
-                        </div>
-                        <div className="nn-search-breadCrumb">
-                            {note.path}
-                        </div>
-                    </div>,
-                value: note.key,
-            };
-        });
+  const onSearchAutoComplete = useCallback(
+    async (searchText: string) => {
+      const searchResultOptions: SearchResultOptions = {
+        parentNotesKey: [],
+        types: [],
+        dones: [],
+        sortBy: '',
+        offset: 0,
+      };
 
-    }
+      const searchResult = await uiController.search(
+        searchText,
+        20,
+        trash,
+        searchResultOptions
+      );
 
-    async onSearchAutoComplete(searchText) {
-        let self = this;
+      const options = resultToListOption(searchResult.results);
 
+      setOptionsAutoComplete(options);
+      setStartSearchPosition(20);
+    },
+    [trash, uiController]
+  );
+
+  const onPopupScroll = useCallback(
+    async (event) => {
+      if (
+        !loading &&
+        event.target.scrollTop + event.target.offsetHeight + 1 >=
+          event.target.scrollHeight
+      ) {
+        setLoading(true);
+        event.target.scrollTo(0, event.target.scrollHeight);
         const searchResultOptions: SearchResultOptions = {
           parentNotesKey: [],
           types: [],
           dones: [],
           sortBy: '',
-          offset: 0,
+          offset: startSearchPosition + 20,
         };
 
-        self.props.dataService.search(searchText, 20, self.props.trash, searchResultOptions).then(function(searchResult) {
-            let options = self.resultToListOption(searchResult.results);
-
-            self.setState((previousState) => {
-                return {
-                    optionsAutoComplete: options,
-                    startSearchPosition: 20,
-                }
-            });
-        });
-
-    }
-
-    onChangeAutoComplete(data) {
-        this.setState({
-            valueAutoComplete: data,
-        });
-    }
-
-
-
-    onPopupScroll(event) {
-        let self = this;
-        let target = event.target;
-        if (!this.state.loading && (event.target.scrollTop + event.target.offsetHeight + 1 >= event.target.scrollHeight)) {
-
-            self.setState({loading: true}, ()=>{
-
-                target.scrollTo(0, target.scrollHeight);
-
-                const searchResultOptions: SearchResultOptions = {
-                  parentNotesKey: [],
-                  types: [],
-                  dones: [],
-                  sortBy: '',
-                  offset: self.state.startSearchPosition + 20,
-                };
-
-                self.props.dataService.search(self.state.valueAutoComplete, 20, self.props.trash, searchResultOptions).then(function(searchResult) {
-                    let newState = {
-                        loading: false,
-                    };
-
-                    if (searchResult.results.length > 0) {
-                        let options = self.resultToListOption(searchResult.results);
-
-                        let newOptions = [...self.state.optionsAutoComplete, ...options];
-
-                        newState.optionsAutoComplete = newOptions;
-                        newState.startSearchPosition = self.state.startSearchPosition + options.length;
-                    }
-
-                    self.setState(newState);
-
-                });
-            });
-        }
-    }
-
-    render() {
-        return (
-            <>
-                <AutoComplete
-                    dropdownMatchSelectWidth={500}
-                    value={this.state.valueAutoComplete}
-                    options={this.state.optionsAutoComplete}
-                    style={{ width: "100%" }}
-                    onSelect={this.onSelectAutoComplete}
-                    onSearch={this.onSearchAutoComplete}
-                    onChange={this.onChangeAutoComplete}
-                    onPopupScroll={this.onPopupScroll}
-                >
-                    <Input.Search size="small" placeholder="Search" />
-                </AutoComplete>
-            </>
+        const searchResult = await uiController.search(
+          valueAutoComplete,
+          20,
+          trash,
+          searchResultOptions
         );
-    }
+
+        if (searchResult.results.length > 0) {
+          const options = resultToListOption(searchResult.results);
+          const newOptions = [...optionsAutoComplete, ...options];
+
+          setOptionsAutoComplete(newOptions);
+          setStartSearchPosition(startSearchPosition + options.length);
+        }
+
+        setLoading(false);
+      }
+    },
+    [
+      loading,
+      optionsAutoComplete,
+      startSearchPosition,
+      trash,
+      uiController,
+      valueAutoComplete,
+    ]
+  );
+
+  return (
+    <AutoComplete
+      dropdownMatchSelectWidth={500}
+      value={valueAutoComplete}
+      options={optionsAutoComplete}
+      style={{ width: '100%' }}
+      onSelect={onSelectAutoComplete}
+      onSearch={onSearchAutoComplete}
+      onChange={onChangeAutoComplete}
+      onPopupScroll={onPopupScroll}
+    >
+      <Input.Search size="small" placeholder="Search" />
+    </AutoComplete>
+  );
 }
-
-export {SearchNotes};
-
-
-

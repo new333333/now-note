@@ -21,9 +21,8 @@ import {
   TagController,
 } from 'types';
 import { Tree } from './Tree.jsx';
-import { NotesList } from './NotesList.jsx';
-import { Note } from './Note.jsx';
-import { SearchNotes } from './SearchNotes';
+import Note from './Note';
+import SearchNotes from './SearchNotes';
 import Footer from './Footer';
 
 const $ = require('jquery');
@@ -282,11 +281,6 @@ console.log('selectRepositoryFolder', repositoryChoosenOK);
             if (detailsNote.type === 'link') {
                 detailsNote = detailsNote.linkedNote; // TODO: there is no linkedNote, onyl linkToKey
             }
-            let detailsNoteParents = await this.dataService.getParents(detailsNote.key, undefined);
-            let detailsNoteBacklinks = await this.dataService.getBacklinks(detailsNote.key);
-
-            detailsNote.parents = detailsNoteParents;
-            detailsNote.backlinks = detailsNoteBacklinks;
 
             this.setState((prevState) => {
 
@@ -367,9 +361,6 @@ console.log('selectRepositoryFolder', repositoryChoosenOK);
                 });
                 return;
         }
-        let parents = await this.dataService.getParents(key);
-        note.parents = parents;
-
         let types = [];
         if (!this.state.repositorySettings.filter.onlyTasks && !this.state.repositorySettings.filter.onlyNotes) {
             types.push("'task'");
@@ -753,29 +744,6 @@ console.log('selectRepositoryFolder', repositoryChoosenOK);
                     </div>
                     :
                     <>
-                        {/* <div id="nn-top-menu">
-                            <Menu mode="horizontal" defaultSelectedKeys={['mail']}>
-                                <Menu.Item key="mail">
-                                Navigation One
-                                </Menu.Item>
-                                <Menu.SubMenu key="SubMenu" title="Navigation Two - Submenu">
-                                <Menu.Item key="two" >
-                                    Navigation Two
-                                </Menu.Item>
-                                <Menu.Item key="three" >
-                                    Navigation Three
-                                </Menu.Item>
-                                <Menu.ItemGroup title="Item Group">
-                                    <Menu.Item key="four" >
-                                    Navigation Four
-                                    </Menu.Item>
-                                    <Menu.Item key="five" >
-                                    Navigation Five
-                                    </Menu.Item>
-                                </Menu.ItemGroup>
-                                </Menu.SubMenu>
-                            </Menu>
-                        </div> */}
                         <ReflexContainer orientation="vertical">
 
                             <ReflexElement className="left-bar"
@@ -830,70 +798,46 @@ console.log('selectRepositoryFolder', repositoryChoosenOK);
 
                             <ReflexElement className="right-bar"
                                 minSize="200"
-                                flex={0.5}>
+                                flex={0.75}>
                                 <div className='n3-bar-vertical'>
                                     <div className={`nn-header ${this.state.trash ? "nn-trash-background-color" : ""}`}>
                                         <SearchNotes
                                             trash={this.state.trash}
-                                            dataService={this.dataService}
-                                            openNoteInTree={this.openNoteInTree}
-                                            openNoteDetails={this.openNoteDetails}
-                                            openNoteInTreeAndDetails={this.openNoteInTreeAndDetails}
                                         />
 
                                     </div>
 
                                     <Note
-                                        ref={this.noteDomRef}
+                                      noteKey={this.state.detailsNote && this.state.detailsNote.key}
+                                      note={this.state.detailsNote}
+                                      trash={this.state.trash}
 
-                                        dataService={this.dataService}
 
-                                        note={this.state.detailsNote}
+                                      ref={this.noteDomRef}
 
-                                        editableTitle={this.state.editableTitle}
+                                      dataService={this.dataService}
 
-                                        handleChangeDone={this.handleChangeDone}
 
-                                        handleChangeDescription={this.handleChangeDescription}
 
-                                        addNote={this.addNote}
+                                      editableTitle={this.state.editableTitle}
 
-                                        openNoteDetails={this.openNoteDetails}
-                                        openNoteInTreeAndDetails={this.openNoteInTreeAndDetails}
-                                        openNoteInTree={this.openNoteInTree}
-                                        openNoteInList={this.openNoteInList}
-                                        delete={this.delete}
-                                        restore={this.restore}
-                                        showHistory={this.showHistory}
+                                      handleChangeDone={this.handleChangeDone}
 
-                                        trash={this.state.trash}
+                                      handleChangeDescription={this.handleChangeDescription}
+
+                                      addNote={this.addNote}
+
+                                      openNoteDetails={this.openNoteDetails}
+                                      openNoteInTreeAndDetails={this.openNoteInTreeAndDetails}
+                                      openNoteInTree={this.openNoteInTree}
+                                      openNoteInList={this.openNoteInList}
+                                      delete={this.delete}
+                                      restore={this.restore}
+                                      showHistory={this.showHistory}
+
+
                                     />
                                 </div>
-                            </ReflexElement>
-
-                            <ReflexSplitter propagate={true}/>
-
-                            <ReflexElement minSize="200" flex={0.25}>
-                                <NotesList
-                                    ref={this.simpleListDomRef}
-
-                                    note={this.state.listParentNote}
-                                    loading={true && this.state.loadingList}
-                                    openNoteInListLoadMore={this.openNoteInListLoadMore}
-
-                                    trash={this.state.trash}
-
-                                    handleChangeDone={this.handleChangeDone}
-
-                                    openNoteDetails={this.openNoteDetails}
-                                    openNoteInTreeAndDetails={this.openNoteInTreeAndDetails}
-
-                                    setFilter={this.setFilter}
-                                    filter={this.state.repositorySettings !== undefined && this.state.repositorySettings.filter !== undefined ? this.state.repositorySettings.filter : {}}
-                                    openNoteInTree={this.openNoteInTree}
-                                    openNoteInList={this.openNoteInList}
-
-                                />
                             </ReflexElement>
 
                         </ReflexContainer>
