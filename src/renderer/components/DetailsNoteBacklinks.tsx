@@ -13,7 +13,7 @@ interface Props {
   initValue?: NoteDataModel[];
 }
 
-export default function NoteBacklinks({ noteKey, initValue }: Props) {
+export default function DetailsNoteBacklinks({ noteKey, initValue }: Props) {
   const [backlinks, setBacklinks] = useState<NoteDataModel[] | undefined>([]);
 
   const { uiController }: { uiController: UIController } =
@@ -62,6 +62,6 @@ export default function NoteBacklinks({ noteKey, initValue }: Props) {
   );
 }
 
-NoteBacklinks.defaultProps = {
+DetailsNoteBacklinks.defaultProps = {
   initValue: undefined,
 };

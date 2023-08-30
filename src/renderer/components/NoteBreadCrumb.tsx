@@ -1,4 +1,4 @@
-import React, { useCallback, useContext, useEffect, useState } from 'react';
+import { useCallback, useContext, useEffect, useState } from 'react';
 import { Breadcrumb } from 'antd';
 import { Note as NoteDataModel } from 'main/modules/DataModels';
 import { UIController } from 'types';

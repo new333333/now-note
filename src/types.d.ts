@@ -176,7 +176,10 @@ export interface NoteController {
   openNote(key: string): Promise<Note | undefined>;
 
   getNote(key: string): Promise<Note | undefined>;
-  getChildren(key: string, trash: boolean): Promise<Array<Note> | undefined>;
+  getChildren(
+    key: string | null,
+    trash: boolean
+  ): Promise<Array<Note> | undefined>;
   getParents(key: string): Promise<Array<Note> | undefined>;
   getBacklinks(key: string): Promise<Array<Note>>;
   search(

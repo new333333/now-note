@@ -12,18 +12,17 @@ import { Input, Tag, Tooltip, AutoComplete } from 'antd';
 import { Tag as TagDataModel } from 'main/modules/DataModels';
 import { UIControllerContext } from 'renderer/UIControllerContext';
 import { UIController } from 'types';
+import useNoteStore from 'renderer/NoteStore';
 
 declare type AutoCompleteOption = {
   label: string;
   value: string;
 };
 
-interface Props {
-  readOnly: boolean;
-  noteKey: string;
-}
 
-export default function DetailsTagsComponent({ readOnly, noteKey }: Props) {
+export default function DetailsTagsComponent() {
+  const [note] = useNoteStore((state) => [state.detailsNote]);
+
   const inputRefAutoComplete = useRef<AutoComplete>(null);
   const [tags, setTags] = useState<TagDataModel[]>([]);
 
@@ -38,18 +37,20 @@ export default function DetailsTagsComponent({ readOnly, noteKey }: Props) {
     useContext(UIControllerContext);
 
   const fetchTags = useCallback(async () => {
-    setTags(await uiController.getTags(noteKey));
-  }, [uiController, noteKey]);
+    if (note !== undefined) {
+      setTags(await uiController.getTags(note.key));
+    }
+  }, [uiController, note]);
 
-  // listen to tag's changes
+  // listen to note's tag changes
   const tagChangeListener = useCallback(
     async (key: string) => {
       log.debug(`I'm listener to tag changes on note(key: ${key})`);
-      if (key === noteKey) {
+      if (note !== undefined && key === note.key) {
         await fetchTags();
       }
     },
-    [fetchTags, noteKey]
+    [fetchTags, note]
   );
 
   useEffect(() => {
@@ -78,16 +79,19 @@ export default function DetailsTagsComponent({ readOnly, noteKey }: Props) {
 
   const onSelectAutoComplete = useCallback(
     async (newTag: string) => {
-      await uiController.addTag(noteKey, newTag);
+      if (note !== undefined) {
+        await uiController.addTag(note.key, newTag);
+        setTags(await uiController.getTags(note.key));
 
-      setInputAutoCompleteVisible(false);
-      setValueAutoComplete('');
-      setOptionsAutoComplete([]);
-      if (inputRefAutoComplete.current) {
-        inputRefAutoComplete.current.focus();
+        setInputAutoCompleteVisible(false);
+        setValueAutoComplete('');
+        setOptionsAutoComplete([]);
+        if (inputRefAutoComplete.current) {
+          inputRefAutoComplete.current.focus();
+        }
       }
     },
-    [uiController, noteKey]
+    [uiController, note]
   );
 
   const onSearchAutoComplete = useCallback(
@@ -122,71 +126,77 @@ export default function DetailsTagsComponent({ readOnly, noteKey }: Props) {
   }, []);
 
   async function handleCloseTag(tag: string) {
-    await uiController.removeTag(noteKey, tag);
+    if (note !== undefined) {
+      await uiController.removeTag(note.key, tag);
+    }
   }
 
   const showInputAutoComplete = useCallback(async () => {
     setInputAutoCompleteVisible(true);
   }, []);
 
+
   useEffect(() => {
+    console.log('DetailsTagsComponent note changed');
     fetchTags();
-  }, [fetchTags]);
+  }, [note]);
 
   return (
     <>
-      {tags.map((tag) => {
-        const isLongTag = tag.dataValues.tag.length > 20;
-        const tagElem = (
-          <Tag
-            className="nn-edit-tag"
-            key={tag.dataValues.tag}
-            closable={!readOnly}
-            onClose={() => handleCloseTag(tag.dataValues.tag)}
-          >
-            <span>
-              {isLongTag
-                ? `${tag.dataValues.tag.slice(0, 20)}...`
-                : tag.dataValues.tag}
-            </span>
-          </Tag>
-        );
-
-        return isLongTag ? (
-          <Tooltip title={tag.dataValues.tag} key={tag.dataValues.tag}>
-            {tagElem}
-          </Tooltip>
-        ) : (
-          tagElem
-        );
-      })}
-
-      {!readOnly &&
-        <>
-          {inputAutoCompleteVisible && (
-            <AutoComplete
-              autoFocus
-              ref={inputRefAutoComplete}
-              defaultActiveFirstOption
-              value={valueAutoComplete}
-              options={optionsAutoComplete}
-              style={{ width: 200 }}
-              onSelect={onSelectAutoComplete}
-              onBlur={onBlurAutoComplete}
-              onKeyDown={onKeyDownAutoComplete}
-              onSearch={onSearchAutoComplete}
-              onChange={onChangeAutoComplete}
+      {note && <>
+        {tags.map((tag) => {
+          const isLongTag = tag.dataValues.tag.length > 20;
+          const tagElem = (
+            <Tag
+              className="nn-edit-tag"
+              key={tag.dataValues.tag}
+              closable={!note.trash}
+              onClose={() => handleCloseTag(tag.dataValues.tag)}
             >
-              <Input.Search size="small" placeholder="" />
-            </AutoComplete>
-          )}
-          {!inputAutoCompleteVisible && (
-            <Tag className="nn-site-tag-plus" onClick={showInputAutoComplete}>
-              <PlusOutlined /> New Tag
+              <span>
+                {isLongTag
+                  ? `${tag.dataValues.tag.slice(0, 20)}...`
+                  : tag.dataValues.tag}
+              </span>
             </Tag>
-          )}
-        </>
-      }
+          );
+
+          return isLongTag ? (
+            <Tooltip title={tag.dataValues.tag} key={tag.dataValues.tag}>
+              {tagElem}
+            </Tooltip>
+          ) : (
+            tagElem
+          );
+        })}
+
+        {!note.trash &&
+          <>
+            {inputAutoCompleteVisible && (
+              <AutoComplete
+                autoFocus
+                ref={inputRefAutoComplete}
+                defaultActiveFirstOption
+                value={valueAutoComplete}
+                options={optionsAutoComplete}
+                style={{ width: 200 }}
+                onSelect={onSelectAutoComplete}
+                onBlur={onBlurAutoComplete}
+                onKeyDown={onKeyDownAutoComplete}
+                onSearch={onSearchAutoComplete}
+                onChange={onChangeAutoComplete}
+              >
+                <Input.Search size="small" placeholder="" />
+              </AutoComplete>
+            )}
+            {!inputAutoCompleteVisible && (
+              <Tag className="nn-site-tag-plus" onClick={showInputAutoComplete}>
+                <PlusOutlined /> New Tag
+              </Tag>
+            )}
+          </>
+        }
+      </>}
     </>
   );
 }

@@ -1,35 +1,20 @@
-import { useState, useEffect, useContext, useCallback } from 'react';
+import { useContext } from 'react';
 import { Typography, Dropdown } from 'antd';
 import type { MenuProps } from 'antd';
 import { UIControllerContext } from 'renderer/UIControllerContext';
 import { UIController } from 'types';
+import useNoteStore from 'renderer/NoteStore';
 
 const { Text, Link } = Typography;
 
-interface Props {
-  readOnly: boolean;
-  noteKey: string;
-  initValue?: string | undefined;
-}
+export default function DetailsNoteType() {
+  const [note, setType] = useNoteStore((state) => [
+    state.detailsNote,
+    state.setType,
+  ]);
 
-export default function DetailsNoteType({
-  readOnly,
-  noteKey,
-  initValue,
-}: Props) {
-  const [type, setType] = useState<string | undefined>(initValue);
   const { uiController }: { uiController: UIController } =
     useContext(UIControllerContext);
-
-  const fetchType = useCallback(async () => {
-    const note = await uiController.getNote(noteKey);
-    const newType = note !== undefined ? note.type : undefined;
-    setType(newType);
-  }, [uiController, noteKey]);
-
-  useEffect(() => {
-    fetchType();
-  }, [fetchType]);
 
   const menuItems: MenuProps['items'] = [
     {
@@ -58,26 +43,28 @@ export default function DetailsNoteType({
 
   const handleClickMenu: MenuProps['onClick'] = async ({ key }) => {
     setType(key);
-    await uiController.modifyNote({
-      key: noteKey,
-      type: key,
-    });
+    if (note !== undefined) {
+      await uiController.modifyNote({
+        key: note.key,
+        type: key,
+      });
+    }
   };
 
   return (
-    <span style={{ marginRight: '5px' }}>
-      {!readOnly && (
-        <Dropdown menu={{ items: menuItems, onClick: handleClickMenu }}>
-          <Link strong href="#">
-            {getNoteTypeLabel(type)}
-          </Link>
-        </Dropdown>
-      )}
-      {readOnly && <Text strong>{getNoteTypeLabel(type)}</Text>}
-    </span>
+    <>
+      {note &&
+        <span style={{ marginRight: '5px' }}>
+          {!note.trash && (
+            <Dropdown menu={{ items: menuItems, onClick: handleClickMenu }}>
+              <Link strong href="#">
+                {getNoteTypeLabel(note.type)}
+              </Link>
+            </Dropdown>
+          )}
+          {note.trash && <Text strong>{getNoteTypeLabel(note.type)}</Text>}
+        </span>
+      }
+    </>
   );
 }
-
-DetailsNoteType.defaultProps = {
-  initValue: undefined,
-};

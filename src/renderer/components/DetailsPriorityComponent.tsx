@@ -1,27 +1,21 @@
-import log from 'electron-log';
 import { useState, useContext, useCallback, useEffect } from 'react';
 import { Dropdown, InputNumber, Typography } from 'antd';
 import type { MenuProps } from 'antd';
 import { UIController, PriorityStatDTO } from 'types';
 import { UIControllerContext } from 'renderer/UIControllerContext';
-import { Note } from 'main/modules/DataModels';
+import useNoteStore from 'renderer/NoteStore';
 
 const { Text } = Typography;
 
-interface Props {
-  readOnly: boolean;
-  noteKey: string;
-  initValue?: number | undefined;
-}
 
 type PriorityMenuKeys = 'minimum' | 'average' | 'mediana' | 'maximum';
 
-export default function DetailsTagsComponent({
-  readOnly,
-  noteKey,
-  initValue,
-}: Props) {
-  const [priority, setPriority] = useState<number>(0);
+export default function DetailsTagsComponent() {
+  const [note, setPriority] = useNoteStore((state) => [
+    state.detailsNote,
+    state.setPriority,
+  ]);
+
   const [priorityStat, setPriorityStat] = useState<PriorityStatDTO | null>(
     null
   );
@@ -29,36 +23,25 @@ export default function DetailsTagsComponent({
   const { uiController }: { uiController: UIController } =
     useContext(UIControllerContext);
 
-  const fetchPriority = useCallback(async () => {
-    const note: Note | undefined = await uiController.getNote(noteKey);
-    const newPriority = note !== undefined ? note.priority : 0;
-    setPriority(newPriority);
-  }, [uiController, noteKey]);
-
   const fetchPriorityStat = useCallback(async () => {
     setPriorityStat(await uiController.getPriorityStat());
   }, [uiController]);
 
   useEffect(() => {
-    if (initValue !== undefined) {
-      setPriority(initValue);
-    } else {
-      fetchPriority();
-    }
     fetchPriorityStat();
-  }, [fetchPriority, fetchPriorityStat, initValue]);
+  }, [fetchPriorityStat]);
 
   const handleChangePriority = useCallback(
     async (value: number | null) => {
-      if (value != null) {
+      if (note !== undefined && value !== null) {
         setPriority(value);
         await uiController.modifyNote({
-          key: noteKey,
+          key: note.key,
           priority: value,
         });
       }
     },
-    [uiController, noteKey]
+    [uiController, note, setPriority]
   );
 
   let minimumPriority = 0;
@@ -85,10 +68,12 @@ export default function DetailsTagsComponent({
     if (priorityStat !== null) {
       const newPririty = priorityStat[key as PriorityMenuKeys];
       setPriority(newPririty);
-      await uiController.modifyNote({
-        key: noteKey,
-        priority: newPririty,
-      });
+      if (note !== undefined) {
+        await uiController.modifyNote({
+          key: note.key,
+          priority: newPririty,
+        });
+      }
     }
   };
 
@@ -112,24 +97,22 @@ export default function DetailsTagsComponent({
   ];
 
   return (
-    <span style={{ marginRight: '5px' }}>
-      <span style={{ marginRight: '5px' }}>Priority:</span>
-      {!readOnly && (
-        <Dropdown menu={{ items: menuItems, onClick: handleClickMenu }}>
-          <InputNumber
-            disabled
-            min={0}
-            size="small"
-            value={priority}
-            onChange={handleChangePriority}
-          />
-        </Dropdown>
-      )}
-      {readOnly && <Text strong>{priority}</Text>}
-    </span>
+    <>
+      {note && <span style={{ marginRight: '5px' }}>
+        <span style={{ marginRight: '5px' }}>Priority:</span>
+        {!note.trash && (
+          <Dropdown menu={{ items: menuItems, onClick: handleClickMenu }}>
+            <InputNumber
+              disabled
+              min={0}
+              size="small"
+              value={note.priority}
+              onChange={handleChangePriority}
+            />
+          </Dropdown>
+        )}
+        {note.trash && <Text strong>{note.priority}</Text>}
+      </span>}
+    </>
   );
 }
-
-DetailsTagsComponent.defaultProps = {
-  initValue: undefined,
-};

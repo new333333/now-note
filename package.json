@@ -101,6 +101,7 @@
     "@ant-design/icons": "^5.0.1",
     "@fortawesome/fontawesome-free": "^6.4.0",
     "@tinymce/tinymce-react": "^4.3.0",
+    "@types/jquery.fancytree": "^0.0.7",
     "@types/node": "^20.2.0",
     "antd": "^5.4.4",
     "babel-plugin-macros": "^3.1.0",
@@ -119,11 +120,14 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-infinite-scroll-component": "^6.1.0",
+    "react-quill": "^2.0.0",
     "react-reflex": "^4.0.12",
     "react-router-dom": "^6.8.1",
     "sequelize": "^6.31.0",
     "umzug": "^3.2.1",
-    "util": "^0.12.5"
+    "use-debounce": "^9.0.4",
+    "util": "^0.12.5",
+    "zustand": "^4.4.1"
   },
   "devDependencies": {
     "@electron/notarize": "^1.2.3",
@@ -135,6 +139,7 @@
     "@testing-library/jest-dom": "^5.16.5",
     "@testing-library/react": "^13.4.0",
     "@types/jest": "^29.4.0",
+    "@types/jquery": "^3.5.17",
     "@types/react": "^18.0.27",
     "@types/react-dom": "^18.0.10",
     "@types/react-test-renderer": "^18.0.0",

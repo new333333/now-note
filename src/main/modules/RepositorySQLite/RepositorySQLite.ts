@@ -552,6 +552,7 @@ export class RepositorySQLite implements Repository {
     );
   }
 
+  // TODO: refactor reindexing tree to UPDATE PATH in SQL
   private async modifyNoteIndex(
     note: Note | null,
     reindexTree: boolean,

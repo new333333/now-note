@@ -47,7 +47,13 @@ export class UIControllerContextImpl
   }
 
   async getChildren(key: string, trash: boolean): Promise<Note[] | undefined> {
-    throw new Error('Method not implemented.');
+    await this.notify('getChildren', 'before', key, trash);
+    const children: Note[] | undefined = await this.îpcRenderer.getChildren(
+      key,
+      trash
+    );
+    await this.notify('getChildren', 'after', key, trash, children);
+    return children;
   }
 
   async getParents(key: string): Promise<Note[] | undefined> {
@@ -217,7 +223,9 @@ export class UIControllerContextImpl
   }
 }
 
-const uiController = new UIControllerContextImpl(window.electron.ipcRenderer);
+export const uiController = new UIControllerContextImpl(
+  window.electron.ipcRenderer
+);
 
 export const UIControllerContext = createContext({
   uiController,

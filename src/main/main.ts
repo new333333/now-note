@@ -115,11 +115,11 @@ const createWindow = async () => {
 
   const userSettingsPersister: UserSettingsPersister =
     new UserSettingsPersister(usetSettingsPaths);
-  const sserSettingsService: UserSettingsService = new UserSettingsService(
+  const userSettingsService: UserSettingsService = new UserSettingsService(
     userSettingsPersister
   );
   const nowNote: NowNote = new NowNote(
-    sserSettingsService,
+    userSettingsService,
     os.userInfo().username,
     process.cwd()
   );
@@ -129,6 +129,7 @@ const createWindow = async () => {
 
   await nowNote.connectDefaultRepository();
 
+  // TODO: no dirty any more??? the remove it
   mainWindow.on('close', (event) => {
     log.debug('mainWindow.close');
 

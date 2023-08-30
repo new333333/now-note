@@ -1,124 +1,100 @@
-import log from 'electron-log';
 import {
   useState,
-  useRef,
   useCallback,
   useContext,
-  useEffect,
   KeyboardEvent,
   ChangeEvent,
 } from 'react';
+import useNoteStore from 'renderer/NoteStore';
 import { Input, Typography } from 'antd';
 import { UIControllerContext } from 'renderer/UIControllerContext';
-import { HitMode, NoteDTO, UIController } from 'types';
-import { Note } from 'main/modules/DataModels';
+import { UIController } from 'types';
+import { useDebouncedCallback } from 'use-debounce';
+import { SaveTwoTone } from '@ant-design/icons';
+
 
 const { TextArea } = Input;
 const { Paragraph } = Typography;
 
-interface Props {
-  readOnly: boolean;
-  noteKey: string;
-  initValue?: string | undefined;
-}
+export default function DetailsTitleComponent() {
 
-export default function DetailsTitleComponent({
-  readOnly,
-  noteKey,
-  initValue,
-}: Props) {
-  const [title, setTitle] = useState('');
-  const titleDomRef = useRef(null);
+  const [note, setTitle] = useNoteStore((state) => [
+    state.detailsNote,
+    state.setTitle,
+  ]);
+
+  const [saved, setSaved] = useState(true);
 
   const { uiController }: { uiController: UIController } =
     useContext(UIControllerContext);
 
-  const fetchTitle = useCallback(async () => {
-    const note: Note | undefined = await uiController.getNote(noteKey);
-    const updateTitle = note !== undefined ? note.title : '';
-    setTitle(updateTitle);
-  }, [uiController, noteKey]);
+  const debounceTitle = useDebouncedCallback((value) => {
+    console.log("debounceTitle");
+    if (value !== null && note !== undefined) {
+      console.log("debounceTitle SAVE");
+      uiController.modifyNote({
+        key: note.key,
+        title: value || '',
+      });
+      setSaved(true);
+    } else {
+      console.log("debounceTitle SKIP");
+    }
+  }, 2000);
 
-  const handleChangeTitle = useCallback(async () => {
-    await uiController.modifyNote({
-      key: noteKey,
-      title,
-    });
-  }, [uiController, noteKey, title]);
+  const handleBlur = useCallback(async () => {
+    debounceTitle.flush();
+  }, [debounceTitle]);
 
   const handleKeydown = useCallback(
     async (event: KeyboardEvent) => {
-      if (event.key === 's' && event.ctrlKey) {
-        handleChangeTitle();
+      if ((event.key === 's' && event.ctrlKey) || event.key === 'Enter') {
+        debounceTitle.flush();
       }
     },
-    [handleChangeTitle]
+    [debounceTitle]
   );
 
   const handleEditTitle = useCallback(
     async (event: ChangeEvent<HTMLTextAreaElement>) => {
-      setTitle(event.target.value);
+      const value = event.target.value
+        // remove /
+        .replaceAll(/\//gi, '')
+        // remove end of lines
+        .replaceAll(/(?:\r\n|\r|\n)/g, '');
+      setSaved(false);
+      setTitle(value);
+      debounceTitle(value);
     },
-    []
+    [debounceTitle, setTitle]
   );
 
-  useEffect(() => {
-    if (initValue !== undefined) {
-      setTitle(initValue);
-    } else {
-      fetchTitle();
-    }
-  }, [fetchTitle, initValue]);
-
-  const titleChangeListener = useCallback(
-    async (
-      trigger: string,
-      parentNoteKey: string,
-      note: NoteDTO,
-      hitMode: HitMode,
-      relativeToKey: string,
-      newNote: NoteDTO
-    ) => {
-      log.debug(
-        `I'm listener to add note (trigger: ${trigger}, parentNoteKey: ${parentNoteKey}, note: ${note}, hitMode: ${hitMode}, relativeToKey: ${relativeToKey}, newNote: ${newNote})`
-      );
-      // TODO: set focus on title?
-    },
-    []
-  );
-
-  useEffect(() => {
-    uiController.subscribe('addNote', 'after', titleChangeListener);
-    return () => {
-      uiController.unsubscribe('addNote', 'after', titleChangeListener);
-    };
-  }, [titleChangeListener, uiController]);
+  if (note === undefined) {
+    return null;
+  }
 
   return (
-    <>
-      {readOnly && (
+    <div style={{ display: 'flex' }}>
+      {note.trash && (
         <Paragraph strong style={{ marginBottom: 0 }}>
-          {title}
+          {note.title}
         </Paragraph>
       )}
-      {!readOnly && (
+      {!note.trash && (
         <TextArea
           onKeyDown={handleKeydown}
-          onBlur={handleChangeTitle}
+          onBlur={handleBlur}
           size="large"
           bordered={false}
-          ref={titleDomRef}
-          value={title}
+          value={note.title}
           onChange={handleEditTitle}
           autoSize={{
             minRows: 1,
           }}
         />
       )}
-    </>
+      {saved && <SaveTwoTone twoToneColor='#00ff00' />}
+      {!saved && <SaveTwoTone twoToneColor='#ff0000' />}
+    </div>
   );
 }
-
-DetailsTitleComponent.defaultProps = {
-  initValue: undefined,
-};

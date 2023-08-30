@@ -20,7 +20,7 @@ import {
   NoteDTO,
   TagController,
 } from 'types';
-import { Tree } from './Tree.jsx';
+import Tree from './Tree';
 import Note from './Note';
 import SearchNotes from './SearchNotes';
 import Footer from './Footer';
@@ -79,7 +79,6 @@ export default class App extends React.Component {
       this.openNoteInListLoadMore = this.openNoteInListLoadMore.bind(this);
 
 
-      this.expandNote = this.expandNote.bind(this);
       this.handleChangeDone = this.handleChangeDone.bind(this);
       this.handleChangeDescription = this.handleChangeDescription.bind(this);
       this.setFilter = this.setFilter.bind(this);
@@ -460,19 +459,6 @@ console.log('selectRepositoryFolder', repositoryChoosenOK);
         });
     }
 
-    async expandNote(key, expanded) {
-        this.setState({
-            longOperationProcessing: true,
-        });
-        let modifiedNote = await this.dataService.modifyNote({
-            key: key,
-            expanded: expanded
-        });
-        this.setState({
-            longOperationProcessing: false,
-        });
-    }
-
 
     async handleChangeDescription(noteKey, description) {
         let self = this;
@@ -765,7 +751,6 @@ console.log('selectRepositoryFolder', repositoryChoosenOK);
                                         restore={this.restore}
                                         openNoteDetails={this.openNoteDetails}
                                         addNote={this.addNote}
-                                        expandNote={this.expandNote}
                                         handleChangeDone={this.handleChangeDone}
                                         dataService={this.dataService}
                                         trash={this.state.trash}
@@ -807,36 +792,7 @@ console.log('selectRepositoryFolder', repositoryChoosenOK);
 
                                     </div>
 
-                                    <Note
-                                      noteKey={this.state.detailsNote && this.state.detailsNote.key}
-                                      note={this.state.detailsNote}
-                                      trash={this.state.trash}
-
-
-                                      ref={this.noteDomRef}
-
-                                      dataService={this.dataService}
-
-
-
-                                      editableTitle={this.state.editableTitle}
-
-                                      handleChangeDone={this.handleChangeDone}
-
-                                      handleChangeDescription={this.handleChangeDescription}
-
-                                      addNote={this.addNote}
-
-                                      openNoteDetails={this.openNoteDetails}
-                                      openNoteInTreeAndDetails={this.openNoteInTreeAndDetails}
-                                      openNoteInTree={this.openNoteInTree}
-                                      openNoteInList={this.openNoteInList}
-                                      delete={this.delete}
-                                      restore={this.restore}
-                                      showHistory={this.showHistory}
-
-
-                                    />
+                                    <Note />
                                 </div>
                             </ReflexElement>
 
