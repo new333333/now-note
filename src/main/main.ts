@@ -128,16 +128,6 @@ const createWindow = async () => {
   const _protocolHanlder = new ProtocolHandler(protocol, nowNote);
 
   await nowNote.connectDefaultRepository();
-
-  // TODO: no dirty any more??? the remove it
-  mainWindow.on('close', (event) => {
-    log.debug('mainWindow.close');
-
-    if (nowNote.getIsDirty()) {
-      event.preventDefault();
-      mainWindow.webContents.send('wantClose');
-    }
-  });
 };
 
 /**

@@ -1,3 +1,4 @@
+import log from 'electron-log';
 import { Divider, Typography } from 'antd';
 import useNoteStore from 'renderer/NoteStore';
 import DetailsPriorityComponent from './DetailsPriorityComponent';
@@ -12,6 +13,8 @@ import DetailsNoteDone from './DetailsNoteDone';
 
 export default function Note() {
   const [note] = useNoteStore((state) => [state.detailsNote]);
+
+  log.debug(`DetailsNoteBacklinks note=`, note);
 
   return (
     <div id="nn-note">
@@ -34,13 +37,7 @@ export default function Note() {
               <DetailsTitleComponent />
             </div>
             <div>
-              <DetailsMenu
-                readOnly={note.trash}
-                noteKey={note.key}
-                updatedAt={note.updatedAt}
-                createdAt={note.createdAt}
-                createdBy={note.createdBy}
-              />
+              <DetailsMenu note={note} />
             </div>
           </div>
           <Divider style={{ margin: '5px 0' }} />

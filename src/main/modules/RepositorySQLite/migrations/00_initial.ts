@@ -194,6 +194,7 @@ async function createTableAssets(queryInterface: QueryInterface) {
 }
 
 export const up: MigrationFn = async ({ context: sequelize }) => {
+  log.debug('RepositorySQLite 00_initial up');
   const queryInterface: QueryInterface = sequelize.getQueryInterface();
   await createTableNotes(queryInterface);
   await createTableTitles(queryInterface);
@@ -204,6 +205,7 @@ export const up: MigrationFn = async ({ context: sequelize }) => {
 };
 
 export const down: MigrationFn = async ({ context: sequelize }) => {
+  log.debug('RepositorySQLite 00_initial down');
   const queryInterface: QueryInterface = sequelize.getQueryInterface();
   await queryInterface.dropTable('Notes');
   await queryInterface.dropTable('Titles');

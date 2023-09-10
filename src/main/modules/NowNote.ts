@@ -4,10 +4,7 @@ import path from 'path';
 import { Sequelize } from 'sequelize';
 import sqlite3 from 'sqlite3';
 import UserSettingsService from './UserSettings/UserSettingsService';
-import {
-  RepositorySQLite,
-  SQLITE3_TYPE,
-} from './RepositorySQLite/RepositorySQLite';
+import RepositorySQLite from './RepositorySQLite/RepositorySQLite';
 import {
   UserSettingsRepository,
   HitMode,
@@ -16,15 +13,14 @@ import {
   Repository,
   SearchResult,
   SearchResultOptions,
+  RepositorySettings,
 } from '../../types';
 import RepositorySettingsService from './RepositorySettings/RepositorySettingsService';
 import RepositorySQLiteSetup from './RepositorySQLite/RepositorySQLiteSetup';
-import { Note, Tag } from './DataModels';
+import { Note, SQLITE3_TYPE, Tag } from './DataModels';
 import AssetFilesService from './AssetFilesService';
 
 export default class NowNote {
-  private isDirty: boolean = true;
-
   private userSettingsManger: UserSettingsService;
 
   private currentRepositorySettingsService:
@@ -86,7 +82,7 @@ export default class NowNote {
 
       log.debug('NowNote.connectRepository() repositoryPath:', repositoryPath);
       const sequelize: Sequelize = new Sequelize({
-        logging: true,
+        logging: false,
         dialect: 'sqlite',
         dialectModule: sqlite3,
         storage: repositoryPath,
@@ -102,7 +98,7 @@ export default class NowNote {
         this.userName
       );
       try {
-        await this.currentRepository?.open();
+        await this.currentRepository?.authenticate();
       } catch (error) {
         log.error('connectRepository error', error);
       }
@@ -140,14 +136,6 @@ export default class NowNote {
     const userSettingsRepository: UserSettingsRepository | undefined =
       await this.userSettingsManger.getDefaultRepository();
     return userSettingsRepository;
-  }
-
-  setDirty(dirty: boolean) {
-    this.isDirty = dirty;
-  }
-
-  getIsDirty() {
-    return this.isDirty;
   }
 
   isRepositoryInitialized(): boolean {
@@ -193,9 +181,9 @@ export default class NowNote {
     return Promise.resolve(undefined);
   }
 
-  async getNote(key: string): Promise<Note | undefined> {
+  async getNoteWithDescription(key: string): Promise<Note | undefined> {
     if (this.currentRepository !== undefined) {
-      return this.currentRepository.getNote(key);
+      return this.currentRepository.getNoteWithDescription(key);
     }
     return Promise.resolve(undefined);
   }
@@ -207,7 +195,7 @@ export default class NowNote {
     return Promise.resolve(undefined);
   }
 
-  async getBacklinks(key: string): Promise<Array<NoteDTO> | undefined> {
+  async getBacklinks(key: string): Promise<Array<Note> | undefined> {
     if (this.currentRepository !== undefined) {
       return this.currentRepository.getBacklinks(key);
     }
@@ -310,6 +298,12 @@ export default class NowNote {
     return Promise.resolve(undefined);
   }
 
+  async reindexAll(key: string | undefined): Promise<void> {
+    if (this.currentRepository !== undefined) {
+      await this.currentRepository.reindexAll(key);
+    }
+  }
+
   async restore(key: string): Promise<boolean | undefined> {
     if (this.currentRepository !== undefined) {
       await this.currentRepository.restore(key);
@@ -317,12 +311,9 @@ export default class NowNote {
     return Promise.resolve(undefined);
   }
 
-  async deletePermanently(
-    key: string,
-    skipUpdatePosition?: boolean
-  ): Promise<boolean | undefined> {
+  async deletePermanently(key: string): Promise<boolean | undefined> {
     if (this.currentRepository !== undefined) {
-      await this.currentRepository.deletePermanently(key, skipUpdatePosition);
+      await this.currentRepository.deletePermanently(key);
     }
     return Promise.resolve(undefined);
   }

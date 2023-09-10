@@ -5,7 +5,6 @@ import {
   Error,
   HitMode,
   NoteDTO,
-  RepositoryDTO,
   UserSettingsRepository,
   SearchResult,
   SearchResultOptions,
@@ -20,19 +19,19 @@ export interface ElectronIPCRenderer {
 
 const electronHandler: ElectronIPCRenderer = {
   ipcRenderer: {
-    selectRepositoryFolder: (): Promise<RepositoryDTO | Error> =>
+    selectRepositoryFolder: (): Promise<UserSettingsRepository | Error> =>
       ipcRenderer.invoke('selectRepositoryFolder'),
 
     isRepositoryInitialized: (): Promise<Boolean> =>
       ipcRenderer.invoke('isRepositoryInitialized'),
 
-    getRepositories: (): Promise<Array<RepositoryDTO>> =>
+    getRepositories: (): Promise<Array<UserSettingsRepository>> =>
       ipcRenderer.invoke('getRepositories'),
 
     getRepositorySettings: (): Promise<RepositorySettings | undefined> =>
       ipcRenderer.invoke('getRepositorySettings'),
 
-    setRepositorySettings: (settings: RepositoryDTO) =>
+    setRepositorySettings: (settings: UserSettingsRepository) =>
       ipcRenderer.invoke('setRepositorySettings', settings),
 
     getCurrentRepository: (): Promise<UserSettingsRepository | undefined> =>
@@ -44,13 +43,13 @@ const electronHandler: ElectronIPCRenderer = {
     ): Promise<Array<Note> | undefined> =>
       ipcRenderer.invoke('getChildren', key, trash),
 
-    getNote: (key: string): Promise<Note | undefined> =>
-      ipcRenderer.invoke('getNote', key),
+    getNoteWithDescription: (key: string): Promise<Note | undefined> =>
+      ipcRenderer.invoke('getNoteWithDescription', key),
 
     getParents: (key: string): Promise<Array<Note> | undefined> =>
       ipcRenderer.invoke('getParents', key),
 
-    getBacklinks: (key: string): Promise<Array<NoteDTO>> =>
+    getBacklinks: (key: string): Promise<Array<Note>> =>
       ipcRenderer.invoke('getBacklinks', key),
 
     search: (
@@ -115,6 +114,9 @@ const electronHandler: ElectronIPCRenderer = {
     deletePermanently: (key: string): Promise<boolean | undefined> =>
       ipcRenderer.invoke('deletePermanently', key),
 
+    reindexAll: (key: string | undefined): Promise<void> =>
+      ipcRenderer.invoke('reindexAll'),
+
     getPriorityStat: () => ipcRenderer.invoke('getPriorityStat'),
 
     addFile: (
@@ -127,10 +129,6 @@ const electronHandler: ElectronIPCRenderer = {
     openAssetFile: (url: string) => ipcRenderer.invoke('openAssetFile', url),
 
     quit: () => ipcRenderer.invoke('quit'),
-
-    setDirty: (dirty: boolean) => ipcRenderer.invoke('setDirty', dirty),
-
-    onClose: (callback) => ipcRenderer.on('wantClose', callback),
   },
 };
 

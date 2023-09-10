@@ -4,6 +4,8 @@ import {
   useContext,
   KeyboardEvent,
   ChangeEvent,
+  useEffect,
+  useRef,
 } from 'react';
 import useNoteStore from 'renderer/NoteStore';
 import { Input, Typography } from 'antd';
@@ -12,33 +14,33 @@ import { UIController } from 'types';
 import { useDebouncedCallback } from 'use-debounce';
 import { SaveTwoTone } from '@ant-design/icons';
 
-
 const { TextArea } = Input;
 const { Paragraph } = Typography;
 
 export default function DetailsTitleComponent() {
+  const domRef = useRef(null);
 
-  const [note, setTitle] = useNoteStore((state) => [
-    state.detailsNote,
-    state.setTitle,
-  ]);
+  const [note, setTitle, detailsNoteTitleFocus, setDetailsNoteTitleFocus] =
+    useNoteStore((state) => [
+      state.detailsNote,
+      state.setTitle,
+      state.detailsNoteTitleFocus,
+      state.setDetailsNoteTitleFocus,
+    ]);
 
   const [saved, setSaved] = useState(true);
-
   const { uiController }: { uiController: UIController } =
     useContext(UIControllerContext);
 
   const debounceTitle = useDebouncedCallback((value) => {
-    console.log("debounceTitle");
     if (value !== null && note !== undefined) {
-      console.log("debounceTitle SAVE");
       uiController.modifyNote({
         key: note.key,
         title: value || '',
       });
       setSaved(true);
     } else {
-      console.log("debounceTitle SKIP");
+      console.log('debounceTitle SKIP');
     }
   }, 2000);
 
@@ -48,8 +50,14 @@ export default function DetailsTitleComponent() {
 
   const handleKeydown = useCallback(
     async (event: KeyboardEvent) => {
+      if (event.key === '/') {
+        // prevent onChange
+        event.preventDefault();
+      }
       if ((event.key === 's' && event.ctrlKey) || event.key === 'Enter') {
         debounceTitle.flush();
+        // prevent onChange
+        event.preventDefault();
       }
     },
     [debounceTitle]
@@ -63,11 +71,24 @@ export default function DetailsTitleComponent() {
         // remove end of lines
         .replaceAll(/(?:\r\n|\r|\n)/g, '');
       setSaved(false);
-      setTitle(value);
-      debounceTitle(value);
+      if (note !== undefined) {
+        setTitle(note.key, value);
+        debounceTitle(value);
+      }
     },
-    [debounceTitle, setTitle]
+    [debounceTitle, note, setTitle]
   );
+
+  useEffect(() => {
+    // console.log(
+    //   'Title set focus: detailsNoteTitleFocus=',
+    //   detailsNoteTitleFocus
+    // );
+    if (detailsNoteTitleFocus && domRef.current !== null) {
+      domRef.current.focus();
+    }
+    setDetailsNoteTitleFocus(false);
+  }, [detailsNoteTitleFocus, setDetailsNoteTitleFocus]);
 
   if (note === undefined) {
     return null;
@@ -82,6 +103,7 @@ export default function DetailsTitleComponent() {
       )}
       {!note.trash && (
         <TextArea
+          ref={domRef}
           onKeyDown={handleKeydown}
           onBlur={handleBlur}
           size="large"
@@ -93,8 +115,8 @@ export default function DetailsTitleComponent() {
           }}
         />
       )}
-      {saved && <SaveTwoTone twoToneColor='#00ff00' />}
-      {!saved && <SaveTwoTone twoToneColor='#ff0000' />}
+      {saved && <SaveTwoTone twoToneColor="#00ff00" />}
+      {!saved && <SaveTwoTone twoToneColor="#ff0000" />}
     </div>
   );
 }

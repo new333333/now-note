@@ -7,12 +7,11 @@ import {
   HitMode,
   NoteDTO,
   PriorityStatDTO,
-  RepositoryDTO,
-  Repository,
   SearchResult,
   SearchResultOptions,
+  RepositorySettings,
 } from '../types';
-import { Tag } from './modules/DataModels';
+import { Note, Tag } from './modules/DataModels';
 
 export default class IpcHandler {
   private browserWindow: BrowserWindow;
@@ -30,10 +29,6 @@ export default class IpcHandler {
     this.ipcMain = ipcMain;
     this.nowNote = nowNote;
 
-    this.ipcMain.handle('setDirty', (_event, dirty: boolean): void => {
-      this.nowNote.setDirty(dirty);
-    });
-
     this.ipcMain.handle('quit', async () => {
       log.debug('IpcHandler.quit()');
       app.quit();
@@ -41,38 +36,32 @@ export default class IpcHandler {
 
     this.ipcMain.handle(
       'selectRepositoryFolder',
-      async (): Promise<RepositoryDTO | Error | undefined> => {
-        let repositoryDTOOrError: RepositoryDTO | Error | undefined;
-
+      async (): Promise<UserSettingsRepository | Error | undefined> => {
         const options = {
           properties: ['openDirectory', 'createDirectory', 'promptToCreate'],
         };
 
         const choosedFolders = dialog.showOpenDialogSync(options);
-        if (choosedFolders) {
-          const repositoryFolder = choosedFolders[0];
-          const userSettingsRepository: UserSettingsRepository | undefined =
-            await this.nowNote.addRepository(repositoryFolder);
-          if (userSettingsRepository !== undefined) {
-            await this.nowNote.setDefaultRepository(repositoryFolder);
-            const repository: Repository = await this.nowNote.connectRepository(
-              userSettingsRepository
-            );
-
-            repositoryDTOOrError = {
-              name: repository.getName(),
-              directory: repository.getDirectory(),
-              type: repository.getType(),
-              default: repository.isDefault(),
-            };
-          } else {
-            repositoryDTOOrError = {
-              message: 'No folder choosed.',
-            };
-          }
+        log.debug('selectRepositoryFolder -> choosedFolders', choosedFolders);
+        if (choosedFolders === undefined) {
+          return {
+            message: 'No folder selected.',
+          };
         }
 
-        return repositoryDTOOrError;
+        const repositoryFolder = choosedFolders[0];
+        const userSettingsRepository: UserSettingsRepository | undefined =
+          await this.nowNote.addRepository(repositoryFolder);
+        if (userSettingsRepository === undefined) {
+          return {
+            message: 'No folder selected.',
+          };
+        }
+        await this.nowNote.setDefaultRepository(repositoryFolder);
+        const repository: UserSettingsRepository =
+          await this.nowNote.connectRepository(userSettingsRepository);
+
+        return repository;
       }
     );
 
@@ -99,7 +88,7 @@ export default class IpcHandler {
 
     this.ipcMain.handle(
       'setRepositorySettings',
-      async (_event, settings: RepositorySettings) => {
+      async (_event, settings: RepositorySettings): Promise<void> => {
         this.nowNote.setRepositorySettings(settings);
       }
     );
@@ -112,6 +101,27 @@ export default class IpcHandler {
     );
 
     this.ipcMain.handle(
+      'connectRepository',
+      async (
+        _event,
+        repositoryFolder: string
+      ): Promise<UserSettingsRepository | undefined> => {
+        let userSettingsRepository: UserSettingsRepository | undefined =
+          await this.nowNote.getRepository(repositoryFolder);
+        if (userSettingsRepository !== undefined) {
+          userSettingsRepository = await this.nowNote.connectRepository(
+            userSettingsRepository
+          );
+        }
+        return userSettingsRepository;
+      }
+    );
+
+    this.ipcMain.handle('closeRepository', async (): Promise<void> => {
+      return this.nowNote.closeRepository();
+    });
+
+    this.ipcMain.handle(
       'getChildren',
       async (_event, key, trash): Promise<Array<Note> | undefined> => {
         return this.nowNote.getChildren(key, trash);
@@ -119,9 +129,9 @@ export default class IpcHandler {
     );
 
     this.ipcMain.handle(
-      'getNote',
+      'getNoteWithDescription',
       async (_event, key: string): Promise<Note | undefined> => {
-        return this.nowNote.getNote(key);
+        return this.nowNote.getNoteWithDescription(key);
       }
     );
 
@@ -134,7 +144,7 @@ export default class IpcHandler {
 
     this.ipcMain.handle(
       'getBacklinks',
-      async (_event, key: string): Promise<Array<NoteDTO> | undefined> => {
+      async (_event, key: string): Promise<Array<Note> | undefined> => {
         return this.nowNote.getBacklinks(key);
       }
     );
@@ -167,23 +177,6 @@ export default class IpcHandler {
     );
 
     this.ipcMain.handle(
-      'connectRepository',
-      async (
-        _event,
-        repositoryFolder: string
-      ): Promise<UserSettingsRepository | undefined> => {
-        let userSettingsRepository: UserSettingsRepository | undefined =
-          await this.nowNote.getRepository(repositoryFolder);
-        if (userSettingsRepository !== undefined) {
-          userSettingsRepository = await this.nowNote.connectRepository(
-            userSettingsRepository
-          );
-        }
-        return userSettingsRepository;
-      }
-    );
-
-    this.ipcMain.handle(
       'findTag',
       async (_event, tag: string): Promise<Tag[] | undefined> => {
         return this.nowNote.findTag(tag);
@@ -207,10 +200,6 @@ export default class IpcHandler {
         return this.nowNote.removeTag(key, tag);
       }
     );
-
-    this.ipcMain.handle('closeRepository', async (): Promise<void> => {
-      return this.nowNote.closeRepository();
-    });
 
     this.ipcMain.handle(
       'addNote',
@@ -299,5 +288,13 @@ export default class IpcHandler {
         return Promise.resolve(undefined);
       }
     );
+
+    this.ipcMain.handle(
+      'reindexAll',
+      async (_event, key: string | undefined): Promise<void> => {
+        return this.nowNote.reindexAll(key);
+      }
+    );
+
   }
 }

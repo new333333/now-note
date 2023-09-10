@@ -1,6 +1,5 @@
-import log from 'electron-log';
-import { useContext } from 'react';
-import { Button, Dropdown } from 'antd';
+import { useContext, useCallback } from 'react';
+import { Button, Dropdown, theme } from 'antd';
 import type { MenuProps } from 'antd';
 import {
   EllipsisOutlined,
@@ -9,30 +8,31 @@ import {
   UnorderedListOutlined,
   DeleteFilled,
 } from '@ant-design/icons';
-import { UIController } from 'types';
+import { NoteDTO, UIController } from 'types';
 import { UIControllerContext } from 'renderer/UIControllerContext';
+import { Note } from 'main/modules/DataModels';
+import useNoteStore from 'renderer/NoteStore';
+
+const { useToken } = theme;
 
 interface Props {
-  readOnly: boolean;
-  noteKey: string;
-  updatedAt: Date;
-  createdAt: Date;
-  createdBy: string;
+  note: Note;
 }
 
-export default function DetailsMenu({
-  readOnly,
-  noteKey,
-  updatedAt,
-  createdAt,
-  createdBy,
-}: Props) {
+export default function DetailsMenu({ note }: Props) {
+  const [updateUpdatedNote, setReloadTreeNoteKey, updateDetailsNote, setAddTreeNoteOnNoteKey] = useNoteStore((state) => [
+    state.updateUpdatedNote,
+    state.setReloadTreeNoteKey,
+    state.updateDetailsNote,
+    state.setAddTreeNoteOnNoteKey,
+  ]);
+
   const { uiController }: { uiController: UIController } =
     useContext(UIControllerContext);
 
   const menuItems = [];
-  if (noteKey !== undefined) {
-    if (!readOnly) {
+  if (note.key !== undefined) {
+    if (note !== undefined && !note.trash) {
       menuItems.push({
         key: 'add_note',
         label: 'Add note',
@@ -51,10 +51,10 @@ export default function DetailsMenu({
     });
     menuItems.push({
       key: 'delete',
-      label: readOnly ? 'Delete Permanently' : 'Move To Trash',
+      label: note.trash ? 'Delete Permanently' : 'Move To Trash',
       icon: <DeleteFilled />,
     });
-    if (readOnly) {
+    if (note.trash) {
       menuItems.push({
         key: 'restore',
         label: 'Restore',
@@ -72,45 +72,70 @@ export default function DetailsMenu({
     menuItems.push({
       type: 'divider',
     });
-
-    menuItems.push({
-      key: 'metadata',
-      disabled: true,
-      label: (<>
-                <div className="nn-note-metadata">Last modified: {updatedAt.toLocaleString()}</div>
-                <div className="nn-note-metadata">Created on: {createdAt.toLocaleString()}</div>
-                <div className="nn-note-metadata">Created by: {createdBy}</div>
-                <div className="nn-note-metadata">Id: {noteKey}</div>
-              </>),
-    });
-
   }
 
-  const handleClickMenu: MenuProps['onClick'] = async ({  key }) => {
-    console.log("handleNoteMenu, noteKey=", noteKey);
+  const { token } = useToken();
 
-    if (key === 'add_note') {
-      await uiController.addNote(
-        'DetailsMenu',
-        noteKey,
-        { title: '', type: 'note' },
-        'over'
-      );
-    } else if (key === 'open_tree') {
-      await uiController.openNoteInTree(noteKey);
-    } else if (key === 'open_list') {
-      await uiController.openNoteInList(noteKey);
-    } else if (key === 'delete') {
-      await uiController.deleteNote(noteKey);
-    } else if (key === 'restore') {
-      await uiController.restore(noteKey);
-    } else if (key === 'history') {
-      await uiController.showHistory(noteKey);
-    }
+  const contentStyle: React.CSSProperties = {
+    backgroundColor: token.colorBgElevated,
+    borderRadius: token.borderRadiusLG,
+    boxShadow: token.boxShadowSecondary,
   };
 
+  const menuStyle: React.CSSProperties = {
+    boxShadow: 'none',
+  };
+
+  const handleClickMenu = useCallback(
+    (option): MenuProps['onClick'] => {
+      console.log('handleNoteMenu, note.key=, option=', note.key, option);
+      const key = option.key;
+      console.log('handleNoteMenu, key=', key);
+      if (key === 'add_note') {
+        setAddTreeNoteOnNoteKey(note.key);
+      } else if (key === 'open_tree') {
+        uiController.openNoteInTree(note.key);
+      } else if (key === 'open_list') {
+        uiController.openNoteInList(note.key);
+      } else if (key === 'delete') {
+        console.log("handleNoteMenu, delete note=", note);
+        uiController.moveNoteToTrash(note.key);
+        setReloadTreeNoteKey(note.parent);
+        updateDetailsNote(undefined);
+      } else if (key === 'restore') {
+        uiController.restore(note.key);
+      } else if (key === 'history') {
+        uiController.showHistory(note.key);
+      }
+    },
+    [
+      note,
+      setAddTreeNoteOnNoteKey,
+      setReloadTreeNoteKey,
+      uiController,
+      updateDetailsNote,
+    ]
+  );
+
+  if (note === undefined) {
+    return null;
+  }
+
   return (
-    <Dropdown menu={{ items: menuItems, onClick: handleClickMenu }}>
+    <Dropdown
+      menu={{ items: menuItems, onClick: handleClickMenu }}
+      dropdownRender={(menu) => (
+
+        <div style={contentStyle}>
+          {React.cloneElement(menu as React.ReactElement, { style: menuStyle })}
+          <div style={{padding: 10}}>
+                <div className="nn-note-metadata">Last modified: {note.updatedAt.toLocaleString()}</div>
+                <div className="nn-note-metadata">Created on: {note.createdAt.toLocaleString()}</div>
+                <div className="nn-note-metadata">Created by: {note.createdBy}</div>
+                <div className="nn-note-metadata">Id: {note.key}</div>
+              </div>
+        </div>
+      )}>
       <Button shape="circle" icon={<EllipsisOutlined />} size="small" />
     </Dropdown>
   );

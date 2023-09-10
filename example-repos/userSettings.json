@@ -16,6 +16,12 @@
       "name": "Now Note Repository",
       "path": "E:\\Projekte\\now-note-test_repositories\\repo1",
       "type": "sqlite3",
+      "default": false
+    },
+    {
+      "name": "Now Note Repository",
+      "path": "E:\\Projekte\\now-note-test_repositories\\02_new",
+      "type": "sqlite3",
       "default": true
     }
   ]

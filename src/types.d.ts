@@ -2,7 +2,6 @@
 /* eslint max-classes-per-file: ["error", 99] */
 import fs from 'fs';
 import { Note, Tag } from 'main/modules/DataModels';
-import { inflateRaw } from 'zlib';
 
 
 // ***************************************************************************
@@ -67,13 +66,6 @@ export interface RepositorySettings {
 // ***************************************************************************
 // ***************************************************************************
 
-export interface RepositoryDTO {
-  name: string;
-  directory: string;
-  type: string;
-  default: Boolean;
-}
-
 export interface Error {
   message: string;
 }
@@ -113,15 +105,15 @@ export interface NoteDTO {
 export type FileTransferType = 'base64' | 'path';
 
 export interface Repository {
-  open(): Promise<void>;
+  authenticate(): Promise<void>;
   close(): Promise<void>;
   getChildren(key: string, trash: boolean): Promise<Array<Note> | undefined>;
-  getNote(key: string): Promise<NoteDTO | undefined>;
+  getNoteWithDescription(key: string): Promise<Note | undefined>;
   getParents(
     key: string,
     parents: Array<Note> | undefined
   ): Promise<Array<Note> | undefined>;
-  getBacklinks(key: string): Promise<Array<NoteDTO>>;
+  getBacklinks(key: string): Promise<Array<Note>>;
   getTags(key: string): Promise<Array<Tag>>;
   search(
     searchText: string,
@@ -151,10 +143,7 @@ export interface Repository {
   ): Promise<void>;
   moveNoteToTrash(key: string): Promise<boolean>;
   restore(key: string): Promise<boolean>;
-  deletePermanently(
-    key: string,
-    skipUpdatePosition?: boolean
-  ): Promise<boolean>;
+  deletePermanently(key: string): Promise<boolean>;
   getPriorityStat(): Promise<PriorityStatDTO>;
   addFile(
     parentKey: string,
@@ -165,20 +154,17 @@ export interface Repository {
   getAssetFileName(assetKey: string): Promise<string | undefined>;
   getAssetFileReadStream(assetKey: string): Promise<fs.ReadStream | undefined>;
   getAssetFileLocalPath(assetKey: string): Promise<string | undefined>;
-  reindexAll(): Promise<void>;
+  reindexAll(key: string | undefined): Promise<void>;
 }
 
 // ***************************************************************************
 // ***************************************************************************
 
-export interface NoteController {
-  // TODO: probably this method need refactoring
-  openNote(key: string): Promise<Note | undefined>;
-
-  getNote(key: string): Promise<Note | undefined>;
+export interface UIController {
+  getNoteWithDescription(key: string): Promise<Note | undefined>;
   getChildren(
-    key: string | null,
-    trash: boolean
+    key: string | null | undefined,
+    trash?: boolean
   ): Promise<Array<Note> | undefined>;
   getParents(key: string): Promise<Array<Note> | undefined>;
   getBacklinks(key: string): Promise<Array<Note>>;
@@ -190,7 +176,6 @@ export interface NoteController {
   ): Promise<SearchResult>;
   modifyNote(note: NoteDTO): Promise<NoteDTO>;
   addNote(
-    trigger: string,
     parentNoteKey: string,
     note: NoteDTO,
     hitMode: HitMode,
@@ -206,28 +191,22 @@ export interface NoteController {
   moveNoteToTrash(key: string): Promise<boolean | undefined>;
   restore(key: string): Promise<boolean | undefined>;
   deletePermanently(key: string): Promise<boolean | undefined>;
-}
 
-export interface TagController {
   getTags(key: string): Promise<Array<Tag>>;
   findTag(tag: string): Promise<Tag[]>;
   addTag(key: string, tag: string): Promise<void>;
   removeTag(key: string, tag: string): Promise<string[]>;
-}
 
-export interface PriorityController {
   getPriorityStat(): Promise<PriorityStatDTO>;
+
+  selectRepositoryFolder(): Promise<UserSettingsRepository | Error | undefined>;
+  isRepositoryInitialized(): Promise<Boolean>;
+  getRepositories(): Promise<Array<UserSettingsRepository>>;
+  getRepositorySettings(): Promise<RepositorySettings | undefined>;
+  setRepositorySettings(settings: UserSettingsRepository): Promise<void>;
+  getCurrentRepository(): Promise<UserSettingsRepository | undefined>;
+  connectRepository(path: string): Promise<UserSettingsRepository | undefined>;
+  closeRepository(): Promise<void>;
+
+  reindexAll(key: string | undefined): Promise<void>;
 }
-
-export type ListenerWhen = 'before' | 'after';
-
-export interface UIControllerListener {
-  subscribe(title: string, when: ListenerWhen, callback: Function): void;
-  unsubscribe(title: string, when: ListenerWhen, callback: Function): void;
-}
-
-export interface UIController
-  extends NoteController,
-    TagController,
-    PriorityController,
-    UIControllerListener {}

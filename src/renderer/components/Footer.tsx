@@ -1,23 +1,41 @@
-import React from 'react';
-import { Typography, Tooltip } from 'antd';
-import { UserSettingsRepository } from 'types';
+import log from 'electron-log';
+import { useContext, useCallback } from 'react';
+import { Typography, Tooltip, Button } from 'antd';
+import useNoteStore from 'renderer/NoteStore';
+import { UIController } from 'types';
+import { UIControllerContext } from 'renderer/UIControllerContext';
 
 const { Link } = Typography;
 
-interface FooterProps {
-  repository: UserSettingsRepository;
-  changeRepository: Function;
-}
+export default function Footer() {
+  const [currentRepository, setCurrentRepository] = useNoteStore((state) => [
+    state.currentRepository,
+    state.setCurrentRepository,
+  ]);
 
-export default function Footer({ repository, changeRepository }: FooterProps) {
+  const changeRepository = useCallback(() => {
+    setCurrentRepository(undefined);
+  }, [setCurrentRepository]);
+
+  const { uiController }: { uiController: UIController } =
+    useContext(UIControllerContext);
+
+  const reindexAllHandler = useCallback(() => {
+    log.debug('AddNoteButton.reindexAllHandler call');
+    uiController.reindexAll(undefined);
+  }, [uiController]);
+
   return (
     <div id="nn-footer">
       <Tooltip title="Choose other Repository">
-        <Link onClick={(event) => changeRepository()}>
-          <strong>Repository:</strong> {repository && repository.path}
-          {!repository && <>No repository initialized</>}
+        <Link onClick={changeRepository}>
+          <strong>Repository:</strong> {currentRepository && currentRepository.path}
+          {!currentRepository && <>No repository initialized</>}
         </Link>
-      </Tooltip>
+      </Tooltip>&nbsp;
+      <Button size="small" onClick={reindexAllHandler}>
+        Reindex Repository
+      </Button>
     </div>
   );
 }

@@ -1,3 +1,4 @@
+import log from 'electron-log';
 import { useContext } from 'react';
 import { Typography, Dropdown } from 'antd';
 import type { MenuProps } from 'antd';
@@ -42,29 +43,30 @@ export default function DetailsNoteType() {
   }
 
   const handleClickMenu: MenuProps['onClick'] = async ({ key }) => {
-    setType(key);
-    if (note !== undefined) {
-      await uiController.modifyNote({
-        key: note.key,
-        type: key,
-      });
+    if (note === undefined) {
+      return;
     }
+    setType(note.key, key);
+    uiController.modifyNote({
+      key: note.key,
+      type: key,
+    });
   };
 
+  if (note === undefined) {
+    return;
+  }
+
   return (
-    <>
-      {note &&
-        <span style={{ marginRight: '5px' }}>
-          {!note.trash && (
-            <Dropdown menu={{ items: menuItems, onClick: handleClickMenu }}>
-              <Link strong href="#">
-                {getNoteTypeLabel(note.type)}
-              </Link>
-            </Dropdown>
-          )}
-          {note.trash && <Text strong>{getNoteTypeLabel(note.type)}</Text>}
-        </span>
-      }
-    </>
+    <span style={{ marginRight: '5px' }}>
+      {!note.trash && (
+        <Dropdown menu={{ items: menuItems, onClick: handleClickMenu }}>
+          <Link strong href="#">
+            {getNoteTypeLabel(note.type)}
+          </Link>
+        </Dropdown>
+      )}
+      {note.trash && <Text strong>{getNoteTypeLabel(note.type)}</Text>}
+    </span>
   );
 }

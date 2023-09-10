@@ -32,14 +32,15 @@ export default function DetailsTagsComponent() {
   }, [fetchPriorityStat]);
 
   const handleChangePriority = useCallback(
-    async (value: number | null) => {
-      if (note !== undefined && value !== null) {
-        setPriority(value);
-        await uiController.modifyNote({
-          key: note.key,
-          priority: value,
-        });
+    (value: number | null) => {
+      if (note === undefined || value === null) {
+        return;
       }
+      setPriority(note.key, value);
+      uiController.modifyNote({
+        key: note.key,
+        priority: value,
+      });
     },
     [uiController, note, setPriority]
   );
@@ -64,17 +65,16 @@ export default function DetailsTagsComponent() {
     medianaPriority = priorityStat.mediana;
   }
 
-  const handleClickMenu: MenuProps['onClick'] = async ({ key }) => {
-    if (priorityStat !== null) {
-      const newPririty = priorityStat[key as PriorityMenuKeys];
-      setPriority(newPririty);
-      if (note !== undefined) {
-        await uiController.modifyNote({
-          key: note.key,
-          priority: newPririty,
-        });
-      }
+  const handleClickMenu: MenuProps['onClick'] = ({ key }) => {
+    if (priorityStat === null || note === undefined) {
+      return;
     }
+    const newPririty = priorityStat[key as PriorityMenuKeys];
+    setPriority(note.key, newPririty);
+    uiController.modifyNote({
+      key: note.key,
+      priority: newPririty,
+    });
   };
 
   const menuItems: MenuProps['items'] = [

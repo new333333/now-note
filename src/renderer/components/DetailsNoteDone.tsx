@@ -1,4 +1,4 @@
-import { useContext } from 'react';
+import { useContext, useEffect } from 'react';
 import { Checkbox, Tooltip } from 'antd';
 import { UIController } from 'types';
 import { UIControllerContext } from 'renderer/UIControllerContext';
@@ -15,24 +15,25 @@ export default function DetailsNoteDone() {
 
   const handleChangeDone = async () => {
     if (note !== undefined) {
-      await uiController.modifyNote({
+      setDone(note.key, !note.done);
+      uiController.modifyNote({
         key: note.key,
         done: !note.done,
       });
-      setDone(!note.done);
     }
   };
 
+  if (note === undefined) {
+    return null;
+  }
+
   return (
-    <>
-      {note &&
-        <Tooltip placement="bottom" title={`Mark as{note.done ? ' NOT' : ''} Done`}>
-          <Checkbox
-            disabled={note.trash}
-            checked={note.done}
-            onChange={handleChangeDone}
-          />
-        </Tooltip>}
-    </>
+    <Tooltip placement="bottom" title={`Mark as{note.done ? ' NOT' : ''} Done`}>
+      <Checkbox
+        disabled={note.trash}
+        checked={note.done}
+        onChange={handleChangeDone}
+      />
+    </Tooltip>
   );
 }

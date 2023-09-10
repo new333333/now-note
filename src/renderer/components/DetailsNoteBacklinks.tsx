@@ -1,4 +1,5 @@
-import React, { useCallback, useContext, useEffect, useState } from 'react';
+import log from 'electron-log';
+import { useCallback, useContext, useEffect, useState } from 'react';
 import { Collapse, Badge } from 'antd';
 import { Note as NoteDataModel } from 'main/modules/DataModels';
 import { blue } from '@ant-design/colors';
@@ -19,7 +20,10 @@ export default function DetailsNoteBacklinks({ noteKey, initValue }: Props) {
   const { uiController }: { uiController: UIController } =
     useContext(UIControllerContext);
 
+  log.debug(`DetailsNoteBacklinks noteKey=${noteKey}`);
+
   const fetchBacklinks = useCallback(async () => {
+    log.debug(`DetailsNoteBacklinks.fetchBacklinks() noteKey=${noteKey}`);
     setBacklinks(await uiController.getBacklinks(noteKey));
   }, [uiController, noteKey]);
 

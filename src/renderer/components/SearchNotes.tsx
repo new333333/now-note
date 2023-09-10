@@ -2,12 +2,11 @@ import { useState, useEffect, useContext, useCallback } from 'react';
 import { Input, AutoComplete } from 'antd';
 import { SearchResultOptions, UIController } from 'types';
 import { UIControllerContext } from 'renderer/UIControllerContext';
+import useNoteStore from 'renderer/NoteStore';
 
-interface Props {
-  trash: boolean;
-}
+export default function SearchNotes() {
+  const [trash] = useNoteStore((state) => [state.trash]);
 
-export default function SearchNotes({ trash }: Props) {
   const [loading, setLoading] = useState<boolean>(false);
   const [valueAutoComplete, setValueAutoComplete] = useState<string>('');
   const [optionsAutoComplete, setOptionsAutoComplete] = useState([]); // TODO: type

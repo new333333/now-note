@@ -58,6 +58,7 @@ async function dropTableNotesIndex(queryInterface: QueryInterface) {
 }
 
 export const up: MigrationFn = async ({ context: sequelize }) => {
+  log.debug('RepositorySQLite 01_initial up');
   const queryInterface: QueryInterface = sequelize.getQueryInterface();
 
   await addColumnLinkstype(queryInterface);
@@ -68,6 +69,7 @@ export const up: MigrationFn = async ({ context: sequelize }) => {
 };
 
 export const down: MigrationFn = async ({ context: sequelize }) => {
+  log.debug('RepositorySQLite 01_initial down');
   const queryInterface: QueryInterface = sequelize.getQueryInterface();
 
   await removeColumnLinkstype(queryInterface);

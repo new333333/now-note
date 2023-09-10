@@ -53,15 +53,6 @@ export default function DetailsTagsComponent() {
     [fetchTags, note]
   );
 
-  useEffect(() => {
-    uiController.subscribe('addTag', 'after', tagChangeListener);
-    uiController.subscribe('removeTag', 'after', tagChangeListener);
-    return () => {
-      uiController.unsubscribe('addTag', 'after', tagChangeListener);
-      uiController.unsubscribe('removeTag', 'after', tagChangeListener);
-    };
-  }, [tagChangeListener, uiController]);
-
   const onBlurAutoComplete = useCallback(async () => {
     setInputAutoCompleteVisible(false);
     setValueAutoComplete('');
@@ -101,12 +92,12 @@ export default function DetailsTagsComponent() {
       );
       let found = false;
       const options: AutoCompleteOption[] = matchingTags.map((currentTag) => {
-        if (currentTag.dataValues.tag === searchText) {
+        if (currentTag.tag === searchText) {
           found = true;
         }
         return {
-          label: currentTag.dataValues.tag,
-          value: currentTag.dataValues.tag,
+          label: currentTag.tag,
+          value: currentTag.tag,
         };
       });
 
@@ -137,7 +128,6 @@ export default function DetailsTagsComponent() {
 
 
   useEffect(() => {
-    console.log('DetailsTagsComponent note changed');
     fetchTags();
   }, [note]);
 
@@ -145,24 +135,24 @@ export default function DetailsTagsComponent() {
     <>
       {note && <>
         {tags.map((tag) => {
-          const isLongTag = tag.dataValues.tag.length > 20;
+          const isLongTag = tag.tag.length > 20;
           const tagElem = (
             <Tag
               className="nn-edit-tag"
-              key={tag.dataValues.tag}
+              key={tag.tag}
               closable={!note.trash}
-              onClose={() => handleCloseTag(tag.dataValues.tag)}
+              onClose={() => handleCloseTag(tag.tag)}
             >
               <span>
                 {isLongTag
-                  ? `${tag.dataValues.tag.slice(0, 20)}...`
-                  : tag.dataValues.tag}
+                  ? `${tag.tag.slice(0, 20)}...`
+                  : tag.tag}
               </span>
             </Tag>
           );
 
           return isLongTag ? (
-            <Tooltip title={tag.dataValues.tag} key={tag.dataValues.tag}>
+            <Tooltip title={tag.tag} key={tag.tag}>
               {tagElem}
             </Tooltip>
           ) : (

@@ -13,7 +13,6 @@ export default class RepositorySQLiteSetup {
     this.sequelize = sequelize;
     log.debug('RepositorySQLiteSetup.constructor() create SequelizeStorage');
     this.sequelizeStorage = new SequelizeStorage({ sequelize });
-    log.debug('RepositorySQLiteSetup.constructor() repositoryPath:');
     this.umzug = new Umzug({
       migrations: {
         glob: ['migrations/*.ts', { cwd: __dirname }],
@@ -22,19 +21,16 @@ export default class RepositorySQLiteSetup {
       storage: this.sequelizeStorage,
       logger: log,
     });
-    log.debug('RepositorySQLiteSetup.constructor() Zmuzu created');
+    log.debug('RepositorySQLiteSetup.constructor() Umzug created');
   }
 
   async existsSchemaMetaTable(): Promise<boolean> {
     log.debug('RepositorySQLiteSetup.existsSchemaMetaTable() start');
-    log.debug(
-      'RepositorySQLiteSetup.existsSchemaMetaTable() sequelize authorized'
-    );
     const [tablesInfo] = await this.sequelize!.query(`PRAGMA table_list`);
-    const notesTable = tablesInfo.find((table: any) => {
+    const SequelizeMetaTable = tablesInfo.find((table: any) => {
       return table.name === 'SequelizeMeta';
     });
-    return notesTable !== undefined;
+    return SequelizeMetaTable !== undefined;
   }
 
   async existsNotesIndexTable(): Promise<boolean> {
@@ -48,16 +44,24 @@ export default class RepositorySQLiteSetup {
   async up() {
     log.debug('RepositorySQLiteSetup.up() start');
     const existsSchemaMetaTable = await this.existsSchemaMetaTable();
+    log.debug(
+      'RepositorySQLiteSetup.up() existsSchemaMetaTable=',
+      existsSchemaMetaTable
+    );
     if (!existsSchemaMetaTable) {
       const existsNotesIndexTable = await this.existsNotesIndexTable();
+      log.debug(
+        'RepositorySQLiteSetup.up() existsNotesIndexTable=',
+        existsNotesIndexTable
+      );
       if (existsNotesIndexTable) {
         this.sequelizeStorage?.logMigration({ name: '00_initial.ts' });
         this.sequelizeStorage?.logMigration({ name: '01_initial.ts' });
       } else {
-        this.sequelizeStorage?.logMigration({ name: '00_initial.ts' });
+        // was: this.sequelizeStorage?.logMigration({ name: '00_initial.ts' }); but why?
         const migrations = await this.umzug!.up();
         log.debug(
-          'RepositorySQLiteSetup.setup() logged 00_initial.ts and up migrations',
+          'RepositorySQLiteSetup.setup() new repository -> up migrations',
           migrations
         );
       }

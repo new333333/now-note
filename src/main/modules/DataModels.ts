@@ -7,6 +7,8 @@ import {
   CreationOptional,
 } from 'sequelize';
 
+export const SQLITE3_TYPE: string = 'sqlite3';
+
 export class Note extends Model<
   InferAttributes<Note>,
   InferCreationAttributes<Note>
@@ -16,8 +18,6 @@ export class Note extends Model<
   declare title: string;
 
   declare description: string | null;
-
-  declare descriptionAsText: string;
 
   declare parent: string | null;
 
@@ -41,7 +41,12 @@ export class Note extends Model<
 
   declare restoreParentKey: CreationOptional<string | null>;
 
-  declare linkToKey: string;
+  declare linkToKey: string | null;
+
+  declare keyPath: string;
+
+  declare titlePath: string;
+
 }
 
 export class NotesIndex extends Model<
@@ -50,23 +55,7 @@ export class NotesIndex extends Model<
 > {
   declare key: CreationOptional<string>;
 
-  declare path: string | null;
-
-  declare parents: string | null;
-
-  declare title: string;
-
-  declare descriptionAsText: string | null;
-
-  declare tags: string | null;
-
-  declare type: string;
-
-  declare done: boolean;
-
-  declare priority: number;
-
-  declare trash: boolean;
+  declare text: string | null;
 }
 
 export class Asset extends Model<
@@ -95,8 +84,6 @@ export class Description extends Model<
   declare key: string;
 
   declare description: string;
-
-  declare descriptionAsText: string;
 
   declare createdAt: CreationOptional<Date>;
 
@@ -151,9 +138,9 @@ export class Title extends Model<
 }
 
 export class NoteNotFoundByKeyError extends Error {
-  private key: string;
+  private key: string | null | undefined;
 
-  constructor(key: string) {
+  constructor(key: string | null | undefined) {
     super(`Note not found by key: ${key}"`);
     this.key = key;
   }
