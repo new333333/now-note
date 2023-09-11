@@ -9,7 +9,7 @@ import {
   UserSettingsRepository,
   HitMode,
   NoteDTO,
-  PriorityStatDTO,
+  PriorityStatistics,
   Repository,
   SearchResult,
   SearchResultOptions,
@@ -318,9 +318,9 @@ export default class NowNote {
     return Promise.resolve(undefined);
   }
 
-  async getPriorityStat(): Promise<PriorityStatDTO | undefined> {
+  async getPriorityStatistics(): Promise<PriorityStatistics | undefined> {
     if (this.currentRepository !== undefined) {
-      return this.currentRepository.getPriorityStat();
+      return this.currentRepository.getPriorityStatistics();
     }
     return Promise.resolve(undefined);
   }

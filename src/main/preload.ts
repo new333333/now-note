@@ -117,7 +117,7 @@ const electronHandler: ElectronIPCRenderer = {
     reindexAll: (key: string | undefined): Promise<void> =>
       ipcRenderer.invoke('reindexAll'),
 
-    getPriorityStat: () => ipcRenderer.invoke('getPriorityStat'),
+    getPriorityStatistics: () => ipcRenderer.invoke('getPriorityStatistics'),
 
     addFile: (
       parentKey: string,

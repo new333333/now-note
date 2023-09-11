@@ -72,7 +72,7 @@ export interface Error {
 
 export type HitMode = 'firstChild' | 'over' | 'after' | 'before';
 
-export interface PriorityStatDTO {
+export interface PriorityStatistics {
   minimum: number;
   average: number;
   mediana: number;
@@ -144,7 +144,7 @@ export interface Repository {
   moveNoteToTrash(key: string): Promise<boolean>;
   restore(key: string): Promise<boolean>;
   deletePermanently(key: string): Promise<boolean>;
-  getPriorityStat(): Promise<PriorityStatDTO>;
+  getPriorityStatistics(): Promise<PriorityStatistics>;
   addFile(
     parentKey: string,
     filepath: string,
@@ -197,7 +197,7 @@ export interface UIController {
   addTag(key: string, tag: string): Promise<void>;
   removeTag(key: string, tag: string): Promise<string[]>;
 
-  getPriorityStat(): Promise<PriorityStatDTO>;
+  getPriorityStatistics(): Promise<PriorityStatistics>;
 
   selectRepositoryFolder(): Promise<UserSettingsRepository | Error | undefined>;
   isRepositoryInitialized(): Promise<Boolean>;

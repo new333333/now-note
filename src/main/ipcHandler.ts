@@ -6,7 +6,7 @@ import {
   Error,
   HitMode,
   NoteDTO,
-  PriorityStatDTO,
+  PriorityStatistics,
   SearchResult,
   SearchResultOptions,
   RepositorySettings,
@@ -255,9 +255,9 @@ export default class IpcHandler {
     );
 
     this.ipcMain.handle(
-      'getPriorityStat',
-      async (): Promise<PriorityStatDTO | undefined> => {
-        return this.nowNote.getPriorityStat();
+      'getPriorityStatistics',
+      async (): Promise<PriorityStatistics | undefined> => {
+        return this.nowNote.getPriorityStatistics();
       }
     );
 

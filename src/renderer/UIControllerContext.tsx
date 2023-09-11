@@ -3,7 +3,7 @@ import { createContext } from 'react';
 import {
   HitMode,
   NoteDTO,
-  PriorityStatDTO,
+  PriorityStatistics,
   SearchResult,
   SearchResultOptions,
   UIController,
@@ -19,9 +19,9 @@ export class UIControllerContextImpl implements UIController {
     this.îpcRenderer = îpcRenderer;
   }
 
-  async getPriorityStat(): Promise<PriorityStatDTO> {
-    const priorityStat: PriorityStatDTO =
-      await this.îpcRenderer.getPriorityStat();
+  async getPriorityStatistics(): Promise<PriorityStatistics> {
+    const priorityStat: PriorityStatistics =
+      await this.îpcRenderer.getPriorityStatistics();
     return priorityStat;
   }
 

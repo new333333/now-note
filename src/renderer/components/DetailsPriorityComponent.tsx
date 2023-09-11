@@ -1,7 +1,7 @@
 import { useState, useContext, useCallback, useEffect } from 'react';
 import { Dropdown, InputNumber, Typography } from 'antd';
 import type { MenuProps } from 'antd';
-import { UIController, PriorityStatDTO } from 'types';
+import { UIController, PriorityStatistics } from 'types';
 import { UIControllerContext } from 'renderer/UIControllerContext';
 import useNoteStore from 'renderer/NoteStore';
 
@@ -16,7 +16,7 @@ export default function DetailsPriorityComponent() {
     state.setPriority,
   ]);
 
-  const [priorityStat, setPriorityStat] = useState<PriorityStatDTO | null>(
+  const [priorityStat, setPriorityStat] = useState<PriorityStatistics | null>(
     null
   );
 
@@ -24,7 +24,7 @@ export default function DetailsPriorityComponent() {
     useContext(UIControllerContext);
 
   const fetchPriorityStat = useCallback(async () => {
-    setPriorityStat(await uiController.getPriorityStat());
+    setPriorityStat(await uiController.getPriorityStatistics());
   }, [uiController, note]);
   // note added as dependency to refresh priorities on every note change
 

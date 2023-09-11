@@ -9,7 +9,7 @@ import {
   FileTransferType,
   HitMode,
   NoteDTO,
-  PriorityStatDTO,
+  PriorityStatistics,
   Repository,
   SearchResult,
   SearchResultOptions,
@@ -170,7 +170,7 @@ export default class RepositorySQLite implements Repository {
   }
 
 
-  async getPriorityStat(): Promise<PriorityStatDTO> {
+  async getPriorityStatistics(): Promise<PriorityStatistics> {
     const maximum: number = await Note.max('priority', {
       where: { trash: false },
     });
@@ -189,7 +189,7 @@ export default class RepositorySQLite implements Repository {
       { type: QueryTypes.SELECT }
     );
     const mediana: number = Math.round(results[0].mediana);
-    log.debug(`RepositorySQLite.getPriorityStat() minimum=${minimum}`);
+    log.debug(`RepositorySQLite.getPriorityStatistics() minimum=${minimum}`);
     return {
       minimum,
       average,
