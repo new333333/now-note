@@ -21,7 +21,7 @@ export default function Note() {
       {note && (
         <>
           <div>
-            <NoteBreadCrumb noteKey={note.key} />
+            <NoteBreadCrumb note={note} />
           </div>
           <Divider style={{ margin: '5px 0' }} />
           <div style={{ display: 'flex', alignItems: 'center' }}>

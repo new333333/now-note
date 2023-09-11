@@ -53,14 +53,40 @@ async function prepareAttachmentsPathToRead(
   return $linksHiddenContainer.html();
 }
 
-async function prepareLinksToRead(
-  repository: RepositorySQLite,
-  htmlText: string
-): Promise<string> {
+async function fixOldLinksToRead(htmlText: string): Promise<string> {
   if (htmlText === undefined) {
     return '';
   }
 
+  const $htmlCntainer = cheerio.load(htmlText, null, false);
+  const internalLinks = $htmlCntainer('[data-nnlink-node]');
+
+  for (let i = 0; i < internalLinks.length; i += 1) {
+    const $linkToNote = internalLinks.eq(i);
+    if ($linkToNote.attr('data-nnlink-node')) {
+      const linkToNoteKey = $linkToNote.attr('data-nnlink-node');
+      $linkToNote.replaceWith(
+        `<span class="mention" data-index="0" data-denotation-char="/" data-id="${linkToNoteKey}"></span>`
+      );
+    }
+  }
+
+  return $htmlCntainer.html();
+}
+
+async function prepareLinksToRead(
+  repository: RepositorySQLite,
+  htmlTextParam: string
+): Promise<string> {
+  if (
+    htmlTextParam === null ||
+    htmlTextParam === undefined ||
+    htmlTextParam.trim().length === 0
+  ) {
+    return '';
+  }
+
+  const htmlText: string = await fixOldLinksToRead(htmlTextParam);
   const $htmlCntainer = cheerio.load(htmlText, null, false);
   const internalLinks = $htmlCntainer('.mention');
 
@@ -71,8 +97,6 @@ async function prepareLinksToRead(
       // eslint-disable-next-line no-await-in-loop
       const note = await Note.findByPk(linkToNoteKey);
       if (note) {
-        // TODO: refactor to keyPath, titlePath
-
         let shoWNotePath = note.titlePath.substring(
           2,
           note.titlePath.length - 2

@@ -100,7 +100,7 @@ export class Link extends Model<
 
   declare to: string;
 
-  declare type: string;
+  declare type: string | null;
 
   declare createdAt: CreationOptional<Date>;
 

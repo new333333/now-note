@@ -1,16 +1,20 @@
 import { useCallback, useContext, useEffect, useState } from 'react';
 import { Breadcrumb } from 'antd';
-import { Note as NoteDataModel } from 'main/modules/DataModels';
+import { Note } from 'main/modules/DataModels';
 import { UIController } from 'types';
 import { UIControllerContext } from 'renderer/UIControllerContext';
 import useNoteStore from 'renderer/NoteStore';
 
 interface Props {
-  noteKey: string;
+  note: Note;
 }
 
-export default function NoteBreadCrumb({ noteKey }: Props) {
-  const [parents, setParent] = useState<NoteDataModel[]>([]);
+interface BreadCrumbElementNote {
+  key: string;
+  title: string;
+}
+
+export default function NoteBreadCrumb({ note }: Props) {
   const [updateDetailsNoteKey, updatedNote, detailsNote] = useNoteStore(
     (state) => [
       state.updateDetailsNoteKey,
@@ -18,20 +22,27 @@ export default function NoteBreadCrumb({ noteKey }: Props) {
       state.detailsNote,
     ]
   );
-
-  const { uiController }: { uiController: UIController } =
-    useContext(UIControllerContext);
-
-  const fetchParents = useCallback(async () => {
-    const newParemts = (await uiController.getParents(noteKey)) || [];
-    setParent(newParemts);
-  }, [uiController, noteKey]);
+  const [path, setPath] = useState<BreadCrumbElementNote[]>([]);
 
   useEffect(() => {
-    fetchParents();
-  }, [fetchParents]);
+    const keys = note.keyPath.substring(2, note.keyPath.length - 2).split('/');
+    const titles = note.titlePath
+      .substring(2, note.titlePath.length - 2)
+      .split('/');
+    const newPath: BreadCrumbElementNote[] = [];
+    keys.forEach((key, index) => {
+      newPath.push({
+        key,
+        title: titles[index],
+      });
+    });
+    setPath(newPath);
+  }, [note.keyPath, note.titlePath]);
+
+  /*
 
   useEffect(() => {
+    // update displayed title, when detailsNote chnages
     // console.log('NoteBreadCrumb updatedNote=', updatedNote);
     if (updatedNote === undefined || !('title' in updatedNote)) {
       return;
@@ -51,9 +62,11 @@ export default function NoteBreadCrumb({ noteKey }: Props) {
       return [...prevParenst];
     });
   }, [updatedNote, setParent]);
+*/
 
   useEffect(() => {
-    // console.log('NoteBreadCrumb detailsNote=', detailsNote);
+    // update displayed title, when detailsNote chnages
+    console.log('NoteBreadCrumb detailsNote=', detailsNote);
     if (detailsNote === undefined || !('title' in detailsNote)) {
       return;
     }
@@ -61,18 +74,16 @@ export default function NoteBreadCrumb({ noteKey }: Props) {
     const { key } = detailsNote;
     const { title } = detailsNote;
 
-    // console.log('NoteBreadCrumb key=, title=', key, title);
-    setParent((prevParenst) => {
-      // console.log('NoteBreadCrumb prevParenst=', prevParenst);
-      prevParenst.map((note) => {
-        if (note.key === key) {
-          note.title = title || '';
-        }
-        return true;
-      });
-      return [...prevParenst];
+    console.log('NoteBreadCrumb key=, title=', key, title);
+    path.forEach((el: BreadCrumbElementNote) => {
+      if (el.key === key) {
+        el.title = title;
+      }
     });
-  }, [detailsNote, setParent]);
+    console.log('NoteBreadCrumb path=', path);
+    // setPath([...path]);
+
+  }, [detailsNote, path]);
 
   const openNote = useCallback(
     (key: string) => {
@@ -83,20 +94,19 @@ export default function NoteBreadCrumb({ noteKey }: Props) {
 
   return (
     <Breadcrumb>
-      {parents &&
-        parents.map((parentNote) => (
+      {path.map((el: BreadCrumbElementNote, index) => {
+        return (
           <Breadcrumb.Item
-            key={parentNote.key}
+            key={el.key}
             href="#"
             onClick={() => {
-              openNote(parentNote.key);
+              openNote(el.key);
             }}
           >
-            {parentNote.type === 'link' &&
-              `TODO: linkToKey {parentNote.linkToKey}`}
-            {parentNote.type !== 'link' && parentNote.title}
+            {el.title}
           </Breadcrumb.Item>
-        ))}
+        );
+      })}
     </Breadcrumb>
   );
 }

@@ -5,7 +5,10 @@ import { UIControllerContext } from 'renderer/UIControllerContext';
 import useNoteStore from 'renderer/NoteStore';
 
 export default function SearchNotes() {
-  const [trash] = useNoteStore((state) => [state.trash]);
+  const [trash, updateDetailsNoteKey] = useNoteStore((state) => [
+    state.trash,
+    state.updateDetailsNoteKey,
+  ]);
 
   const [loading, setLoading] = useState<boolean>(false);
   const [valueAutoComplete, setValueAutoComplete] = useState<string>('');
@@ -30,10 +33,10 @@ export default function SearchNotes() {
     useContext(UIControllerContext);
 
   const openNote = useCallback(
-    async (noteKey: string) => {
-      await uiController.openNote(noteKey);
+    (noteKey: string) => {
+      updateDetailsNoteKey(noteKey);
     },
-    [uiController]
+    [updateDetailsNoteKey]
   );
 
   const onSelectAutoComplete = useCallback(

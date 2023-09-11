@@ -82,7 +82,7 @@ export default class NowNote {
 
       log.debug('NowNote.connectRepository() repositoryPath:', repositoryPath);
       const sequelize: Sequelize = new Sequelize({
-        logging: false,
+        logging: true,
         dialect: 'sqlite',
         dialectModule: sqlite3,
         storage: repositoryPath,

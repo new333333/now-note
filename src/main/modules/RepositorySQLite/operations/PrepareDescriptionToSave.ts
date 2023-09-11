@@ -47,8 +47,8 @@ async function prepareLinksToSave(
             to: linkToNoteKey,
             type: {
               [Op.or]: {
-                [Op.lt]: 'link',
-                [Op.eq]: null, // support previous implementation
+                [Op.eq]: 'link',
+                [Op.is]: null, // support previous implementation
               },
             },
           },
@@ -70,8 +70,8 @@ async function prepareLinksToSave(
       from: key,
       type: {
         [Op.or]: {
-          [Op.lt]: 'link',
-          [Op.eq]: null, // support previous implementation
+          [Op.eq]: 'link',
+          [Op.is]: null, // support previous implementation
         },
       },
     },
@@ -94,89 +94,6 @@ async function prepareLinksToSave(
 
   return $htmlCntainer.html();
 }
-
-/*
-async function prepareLinksToSave(
-  repository: RepositorySQLite,
-  key: string,
-  description: string | undefined | null
-) {
-  let html: string = '';
-  if (description !== undefined && description !== null) {
-    html = description;
-  }
-
-  const $htmlCntainer = cheerio.load(html, null, false);
-  const internalLinks = $htmlCntainer('[data-nnlink-node]');
-
-  const newLinks: string[] = [];
-
-  for (let i = 0; i < internalLinks.length; i += 1) {
-    const $linkToNote = internalLinks.eq(i);
-    const linkToNoteKey: string | undefined =
-      $linkToNote.attr('data-nnlink-node');
-    if (linkToNoteKey !== undefined) {
-      // eslint-disable-next-line no-await-in-loop
-      const linkToNote = await Note.findByPk(linkToNoteKey);
-      if (linkToNote !== undefined) {
-        if (!newLinks.includes(linkToNoteKey)) {
-          newLinks.push(linkToNoteKey);
-        }
-        // eslint-disable-next-line no-await-in-loop
-        await Link.findOrCreate({
-          where: {
-            from: key,
-            to: linkToNoteKey,
-            type: {
-              [Op.or]: {
-                [Op.lt]: 'link',
-                [Op.eq]: null, // support previous implementation
-              },
-            },
-          },
-          defaults: {
-            from: key,
-            to: linkToNoteKey,
-            type: 'link',
-          },
-        });
-      }
-
-      // clean goto-links before write
-      $linkToNote.html('');
-    }
-  }
-
-  const allLinks: Link[] = await Link.findAll({
-    where: {
-      from: key,
-      type: {
-        [Op.or]: {
-          [Op.lt]: 'link',
-          [Op.eq]: null, // support previous implementation
-        },
-      },
-    },
-  });
-
-  for (let i = 0; i < allLinks.length; i += 1) {
-    const link = allLinks[i];
-    // eslint-disable-next-line no-await-in-loop
-    const linkToNote = await Note.findByPk(link.to);
-    if (linkToNote !== undefined) {
-      if (!newLinks.includes(link.to)) {
-        // eslint-disable-next-line no-await-in-loop
-        await link.destroy();
-      }
-    } else {
-      // eslint-disable-next-line no-await-in-loop
-      await link.destroy();
-    }
-  }
-
-  return $htmlCntainer.html();
-}
-*/
 
 async function prepareInlineImagesToSave(
   repository: RepositorySQLite,

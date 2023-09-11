@@ -56,7 +56,7 @@ export default function DetailsNoteBacklinks({ noteKey, initValue }: Props) {
             {backlinks.map((note) => {
               return (
                 <li key={note.key}>
-                  <NoteBreadCrumb noteKey={note.key} />
+                  <NoteBreadCrumb note={note} />
                 </li>
               )})}
           </ul>

@@ -47,6 +47,7 @@ import restore from './operations/Restore';
 import deletePermanently from './operations/DeletePermanently';
 import prepareDescriptionToRead from './operations/PrepareDescriptionToRead';
 import getNoteWithDescription from './operations/GetNoteWithDescription';
+import getBacklinks from './operations/GetBacklinks';
 
 export default class RepositorySQLite implements Repository {
   private sequelize: Sequelize;
@@ -165,159 +166,7 @@ export default class RepositorySQLite implements Repository {
   }
 
   async getBacklinks(key: string): Promise<Array<Note>> {
-    log.debug(`RepositorySQLite.getBacklinks() key=${key}`);
-    const links = await Link.findAll({
-      where: {
-        to: key,
-      },
-    });
-
-    const backlinks: Array<Note> = [];
-
-    const withchildren: boolean = false;
-    const withDescription: boolean = false;
-    const withParents: boolean = true;
-    const withLindedNote: boolean = true;
-
-    for (let i = 0; i < links.length; i += 1) {
-      // eslint-disable-next-line no-await-in-loop
-      /*const note = await this.getNoteWith(
-        links[i].from,
-        withchildren,
-        withDescription,
-        withParents,
-        withLindedNote
-      );
-
-      if (note !== undefined) {
-        backlinks.push(note);
-      }
-      */
-    }
-
-    return backlinks;
-  }
-
-  async getTags(key: string): Promise<Array<Tag>> {
-    return Tag.findAll({
-      where: {
-        key,
-      },
-    });
-  }
-
-  async getParents(
-    key: string,
-    parents: Array<Note> | undefined
-  ): Promise<Array<Note>> {
-    let parentLocal: Array<Note> = [];
-    if (parents !== undefined) {
-      parentLocal = parents;
-    }
-
-    const noteModel = await Note.findByPk(key, {
-      raw: true,
-    });
-
-    if (noteModel === null) {
-      throw new NoteNotFoundByKeyError(key);
-    }
-    if (noteModel.parent === null) {
-      parentLocal.unshift(noteModel);
-      return parentLocal;
-    }
-    parentLocal.unshift(noteModel);
-    return this.getParents(noteModel.parent, parentLocal);
-  }
-
-  async addFile(
-    parentKey: string,
-    filepath: string,
-    hitMode: HitMode,
-    relativeToKey: string
-  ): Promise<NoteDTO | undefined> {
-    if (filepath === undefined) {
-      return undefined;
-    }
-
-    let resultNote;
-
-    const stats = await fs.promises.stat(filepath);
-    if (stats.isDirectory()) {
-      resultNote = await this.addNote(
-        parentKey,
-        {
-          title: path.basename(filepath),
-          type: 'note',
-          key: undefined,
-          description: undefined,
-          createdBy: undefined,
-          createdAt: undefined,
-          updatedAt: undefined,
-          done: undefined,
-          priority: undefined,
-          expanded: undefined,
-          trash: undefined,
-          linkToKey: undefined,
-          linkedNote: undefined,
-          parents: undefined,
-          position: undefined,
-          tags: undefined,
-          hasChildren: undefined,
-        },
-        hitMode,
-        relativeToKey
-      );
-
-      const files = await fs.promises.readdir(filepath, {
-        withFileTypes: true,
-      });
-
-      for (let i = 0; i < files.length; i += 1) {
-        // eslint-disable-next-line no-await-in-loop
-        await this.addFile(
-          resultNote!.key as string,
-          path.join(filepath, files[i].name),
-          'over',
-          resultNote!.key as string
-        );
-      }
-    } else if (stats.isFile()) {
-      const asset: Asset = await this.addAsset(
-        null,
-        path.basename(filepath),
-        filepath,
-        'path'
-      );
-
-      resultNote = await this.addNote(
-        parentKey,
-        {
-          title: path.basename(filepath),
-          type: 'note',
-          description: `<a href="nn-asset:${
-            asset.key
-          }" download>${path.basename(filepath)}</a>`,
-          key: undefined,
-          createdBy: undefined,
-          createdAt: undefined,
-          updatedAt: undefined,
-          done: undefined,
-          priority: undefined,
-          expanded: undefined,
-          trash: undefined,
-          linkToKey: undefined,
-          linkedNote: undefined,
-          parents: undefined,
-          position: undefined,
-          tags: undefined,
-          hasChildren: undefined,
-        },
-        hitMode,
-        relativeToKey
-      );
-    }
-    return resultNote;
+    return getBacklinks(this, key);
   }
 
 
@@ -340,7 +189,7 @@ export default class RepositorySQLite implements Repository {
       { type: QueryTypes.SELECT }
     );
     const mediana: number = Math.round(results[0].mediana);
-
+    log.debug(`RepositorySQLite.getPriorityStat() minimum=${minimum}`);
     return {
       minimum,
       average,
@@ -550,7 +399,13 @@ export default class RepositorySQLite implements Repository {
     return this.assetFilesService.getAssetFileLocalPath(assetModel);
   }
 
-
+  async getTags(key: string): Promise<Array<Tag>> {
+    return Tag.findAll({
+      where: {
+        key,
+      },
+    });
+  }
 
   async addTag(key: string, tag: string): Promise<void> {
     await Tag.findOrCreate({
@@ -627,5 +482,121 @@ export default class RepositorySQLite implements Repository {
       resultNotes.push(resultNote);
     }
     return resultNotes;
+  }
+
+  // TODO: remove when unused any more
+  async getParents(
+    key: string,
+    parents: Array<Note> | undefined
+  ): Promise<Array<Note>> {
+    let parentLocal: Array<Note> = [];
+    if (parents !== undefined) {
+      parentLocal = parents;
+    }
+
+    const noteModel = await Note.findByPk(key, {
+      raw: true,
+    });
+
+    if (noteModel === null) {
+      throw new NoteNotFoundByKeyError(key);
+    }
+    if (noteModel.parent === null) {
+      parentLocal.unshift(noteModel);
+      return parentLocal;
+    }
+    parentLocal.unshift(noteModel);
+    return this.getParents(noteModel.parent, parentLocal);
+  }
+
+
+  async addFile(
+    parentKey: string,
+    filepath: string,
+    hitMode: HitMode,
+    relativeToKey: string
+  ): Promise<NoteDTO | undefined> {
+    if (filepath === undefined) {
+      return undefined;
+    }
+
+    let resultNote;
+
+    const stats = await fs.promises.stat(filepath);
+    if (stats.isDirectory()) {
+      resultNote = await this.addNote(
+        parentKey,
+        {
+          title: path.basename(filepath),
+          type: 'note',
+          key: undefined,
+          description: undefined,
+          createdBy: undefined,
+          createdAt: undefined,
+          updatedAt: undefined,
+          done: undefined,
+          priority: undefined,
+          expanded: undefined,
+          trash: undefined,
+          linkToKey: undefined,
+          linkedNote: undefined,
+          parents: undefined,
+          position: undefined,
+          tags: undefined,
+          hasChildren: undefined,
+        },
+        hitMode,
+        relativeToKey
+      );
+
+      const files = await fs.promises.readdir(filepath, {
+        withFileTypes: true,
+      });
+
+      for (let i = 0; i < files.length; i += 1) {
+        // eslint-disable-next-line no-await-in-loop
+        await this.addFile(
+          resultNote!.key as string,
+          path.join(filepath, files[i].name),
+          'over',
+          resultNote!.key as string
+        );
+      }
+    } else if (stats.isFile()) {
+      const asset: Asset = await this.addAsset(
+        null,
+        path.basename(filepath),
+        filepath,
+        'path'
+      );
+
+      resultNote = await this.addNote(
+        parentKey,
+        {
+          title: path.basename(filepath),
+          type: 'note',
+          description: `<a href="nn-asset:${
+            asset.key
+          }" download>${path.basename(filepath)}</a>`,
+          key: undefined,
+          createdBy: undefined,
+          createdAt: undefined,
+          updatedAt: undefined,
+          done: undefined,
+          priority: undefined,
+          expanded: undefined,
+          trash: undefined,
+          linkToKey: undefined,
+          linkedNote: undefined,
+          parents: undefined,
+          position: undefined,
+          tags: undefined,
+          hasChildren: undefined,
+        },
+        hitMode,
+        relativeToKey
+      );
+    }
+    return resultNote;
   }
 }

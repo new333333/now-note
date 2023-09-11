@@ -10,7 +10,7 @@ const { Text } = Typography;
 
 type PriorityMenuKeys = 'minimum' | 'average' | 'mediana' | 'maximum';
 
-export default function DetailsTagsComponent() {
+export default function DetailsPriorityComponent() {
   const [note, setPriority] = useNoteStore((state) => [
     state.detailsNote,
     state.setPriority,
@@ -25,7 +25,8 @@ export default function DetailsTagsComponent() {
 
   const fetchPriorityStat = useCallback(async () => {
     setPriorityStat(await uiController.getPriorityStat());
-  }, [uiController]);
+  }, [uiController, note]);
+  // note added as dependency to refresh priorities on every note change
 
   useEffect(() => {
     fetchPriorityStat();

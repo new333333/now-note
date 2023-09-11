@@ -1,11 +1,11 @@
 import log from 'electron-log';
-import { useContext, useRef, useState, useCallback } from 'react';
+import { useContext, useRef, useState, useCallback, useEffect } from 'react';
 import ReactQuill, { Quill } from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import 'quill-mention';
 import 'quill-mention/dist/quill.mention.min.css';
 import htmlEditButton from 'quill-html-edit-button';
-import { UIControllerContext, uiController } from 'renderer/UIControllerContext';
+import { UIControllerContext } from 'renderer/UIControllerContext';
 import { SearchResult, SearchResultOptions, UIController } from 'types';
 import useNoteStore from 'renderer/NoteStore';
 import { SaveTwoTone } from '@ant-design/icons';
@@ -16,9 +16,10 @@ Quill.register({
 });
 
 export default function NoteDescriptionQuill() {
-  const [note, setDescription] = useNoteStore((state) => [
+  const [note, setDescription, updateDetailsNoteKey] = useNoteStore((state) => [
     state.detailsNote,
     state.setDescription,
+    state.updateDetailsNoteKey,
   ]);
   const [saved, setSaved] = useState(true);
 
@@ -40,8 +41,11 @@ export default function NoteDescriptionQuill() {
   }, 2000);
 
   const onChange = useCallback(
-    async (content: string, b, source) => {
-      log.debug(`NoteDescriptionQuill.onChange() content=${content} b=, source=${source}, d=`, b);
+    async (content: string, b, source: string) => {
+      log.debug(
+        `NoteDescriptionQuill.onChange() content=${content} b=, source=${source}, d=`,
+        b
+      );
       if (note === undefined || source === 'api') {
         return;
       }
@@ -61,6 +65,34 @@ export default function NoteDescriptionQuill() {
     [debounceDescription]
   );
 
+  const clickedNoteLinkKey = useCallback(
+    async (targetParam: HTMLElement | null): Promise<string | undefined> => {
+      let target: HTMLElement | null = targetParam;
+      while (target !== null) {
+        if (target.classList.contains('mention') && target.dataset.id) {
+          return target.dataset.id;
+        }
+        target = target.parentElement;
+      }
+      return undefined;
+    },
+    []
+  );
+
+  useEffect(() => {
+    if (editorRef.current === null) {
+      return;
+    }
+    editorRef.current.editor.root.addEventListener(
+      'click',
+      async (event: PointerEvent) => {
+        const key = await clickedNoteLinkKey(event.target);
+        if (key !== undefined) {
+          updateDetailsNoteKey(key);
+        }
+      }
+    );
+  }, [clickedNoteLinkKey, updateDetailsNoteKey]);
 
   const formats = [
     'header',
@@ -80,7 +112,9 @@ export default function NoteDescriptionQuill() {
 
   const mentionSource = useCallback(
     async (searchTerm: string, renderList: Function, mentionChar: string) => {
-      log.debug(`NoteDescriptionQuill mention.source() searchTerm=${searchTerm} mentionChar=${mentionChar}`);
+      log.debug(
+        `NoteDescriptionQuill mention.source() searchTerm=${searchTerm} mentionChar=${mentionChar}`
+      );
       const values = [];
       const searchResultOptions: SearchResultOptions = {
         parentNotesKey: [],
@@ -119,23 +153,6 @@ export default function NoteDescriptionQuill() {
     },
     [uiController]
   );
-
-  const mentionOnselect = useCallback((item, insertItem) => {
-    log.debug(
-      `NoteDescriptionQuill mention.onSelect() insertItem=${insertItem} item=`,
-      item
-    );
-    // return `<span>${item.value}</span>`;
-    insertItem(item, true);
-    /*
-item= {
-  index: '0',
-  denotationChar: '/',
-  id: '2cd397d6-e7f5-4d9a-a49f-4f338f73c85a',
-  value: 'a'
-}
-    */
-  }, []);
 
   const modules = {
     toolbar: [
