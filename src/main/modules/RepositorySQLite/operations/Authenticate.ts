@@ -95,6 +95,11 @@ export default async function authenticate(repository: RepositorySQLite) {
         type: DataTypes.STRING,
         allowNull: false,
       },
+      childrenCount: {
+        type: DataTypes.INTEGER,
+        defaultValue: 0,
+        allowNull: false,
+      },
     },
     {
       sequelize: repository.getSequelize(),

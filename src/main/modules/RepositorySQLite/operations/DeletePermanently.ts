@@ -9,6 +9,7 @@ import {
 } from '../../DataModels';
 import RepositorySQLite from '../RepositorySQLite';
 import { Op, QueryTypes } from 'sequelize';
+import getChildrenCount from './GetChildrenCount';
 
 export default async function deletePermanently(
   repository: RepositorySQLite,
@@ -24,6 +25,8 @@ export default async function deletePermanently(
   if (deleteNote === null) {
     throw new NoteNotFoundByKeyError(key);
   }
+
+  const { parent } = deleteNote;
 
   const deteKeyPath = `${deleteNote.keyPath.substring(
     0,
@@ -100,20 +103,6 @@ export default async function deletePermanently(
 
   // TODO: what to do with assets?
 
-  /*
-  const children = await Note.findAll({
-    where: {
-      parent: key,
-      trash: true,
-    },
-  });
-
-  for (let i = 0; i < children.length; i += 1) {
-    // eslint-disable-next-line no-await-in-loop
-    await repository.deletePermanently(children[i].key, true);
-  }
-*/
-
   await repository
     .getSequelize()!
     .query(
@@ -130,41 +119,16 @@ export default async function deletePermanently(
       }
     );
 
-  // repository.deleteNoteIndex(key);
-  /*
-  await Description.destroy({
-    where: {
-      key,
-    },
-  });
-  */
-  /*
-  await Link.destroy({
-    where: {
-      from: key,
-      type: {
-        [Op.or]: {
-          [Op.lt]: 'link',
-          [Op.eq]: null,
-        },
-      },
-    },
-  });
-  */
-  /*
-  await Tag.destroy({
-    where: {
-      key,
-    },
-  });
-  */
-  /*
-  await Title.destroy({
-    where: {
-      key,
-    },
-  });
-  */
-  // deleteNote.destroy();
+  if (parent !== null) {
+    const parentNote = await Note.findByPk(parent);
+    if (parentNote !== null) {
+      parentNote.childrenCount = await getChildrenCount(
+        parentNote.key,
+        parentNote.trash
+      );
+      parentNote.save();
+    }
+  }
+
   return true;
 }

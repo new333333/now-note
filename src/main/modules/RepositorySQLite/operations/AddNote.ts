@@ -4,6 +4,7 @@ import { HitMode, NoteDTO } from 'types';
 import { Link, Note, NoteNotFoundByKeyError } from '../../DataModels';
 import RepositorySQLite from '../RepositorySQLite';
 import { setKeyAndTitlePath } from '../RepositorySQLiteUtils';
+import getChildrenCount from './GetChildrenCount';
 
 export default async function addNote(
   repository: RepositorySQLite,
@@ -124,6 +125,7 @@ export default async function addNote(
   );
 
   newNote.description = description;
+  newNote.childrenCount = 0;
 
   await newNote.save();
 
@@ -136,5 +138,17 @@ export default async function addNote(
   }
 
   await repository.addNoteIndex(newNote);
+
+  if (parent !== null) {
+    const parentNote = await Note.findByPk(parent);
+    if (parentNote !== null) {
+      parentNote.childrenCount = await getChildrenCount(
+        parentNote.key,
+        parentNote.trash
+      );
+      parentNote.save();
+    }
+  }
+
   return newNote.dataValues;
 }

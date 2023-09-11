@@ -372,7 +372,11 @@ export default function Tree() {
 
         node.lazy = true;
 
-        if (node.data.linkedNote || !node.hasChildren) {
+        if (
+          node.data.linkedNote ||
+          node.childrenCount === 0 ||
+          node.childrenCount === null
+        ) {
           node.children = [];
         }
         setCheckBoxFromTyp(node);

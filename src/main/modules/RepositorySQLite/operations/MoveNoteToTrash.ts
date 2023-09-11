@@ -3,6 +3,7 @@ import log from 'electron-log';
 import { QueryTypes } from 'sequelize';
 import { Note, NoteNotFoundByKeyError } from '../../DataModels';
 import RepositorySQLite from '../RepositorySQLite';
+import getChildrenCount from './GetChildrenCount';
 
 
 export default async function moveNoteToTrash(
@@ -20,6 +21,7 @@ export default async function moveNoteToTrash(
 
   const prevKeyPath = modifyNote.keyPath;
   const prevTitlePath = modifyNote.titlePath;
+  const prevParent = modifyNote.parent;
 
   await repository
     .getSequelize()!
@@ -65,5 +67,17 @@ export default async function moveNoteToTrash(
   await repository.updateTrashFlag(modifyNote.keyPath, trash);
 
   await repository.addNoteIndex(modifyNote);
+
+  if (prevParent !== null) {
+    const prevParentNote = await Note.findByPk(prevParent);
+    if (prevParentNote !== null) {
+      prevParentNote.childrenCount = await getChildrenCount(
+        prevParentNote.key,
+        prevParentNote.trash
+      );
+      prevParentNote.save();
+    }
+  }
+
   return true;
 }

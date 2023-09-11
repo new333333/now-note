@@ -47,6 +47,7 @@ export class Note extends Model<
 
   declare titlePath: string;
 
+  declare childrenCount: number;
 }
 
 export class NotesIndex extends Model<

@@ -3,6 +3,7 @@ import { QueryTypes } from 'sequelize';
 import { Note, NoteNotFoundByKeyError } from '../../DataModels';
 import RepositorySQLite from '../RepositorySQLite';
 import { setKeyAndTitlePath } from '../RepositorySQLiteUtils';
+import getChildrenCount from './GetChildrenCount';
 
 export default async function restore(
   repository: RepositorySQLite,
@@ -20,6 +21,7 @@ export default async function restore(
 
   const prevTitlePath = modifyNote.titlePath;
   const prevKeyPath = modifyNote.keyPath;
+  const prevParent = modifyNote.parent;
 
   await repository
     .getSequelize()!
@@ -70,5 +72,27 @@ export default async function restore(
   await repository.updateTrashFlag(modifyNote.keyPath, modifyNote.trash);
 
   await repository.addNoteIndex(modifyNote);
+
+  if (modifyNote.parent !== null) {
+    const parentNote = await Note.findByPk(modifyNote.parent);
+    if (parentNote !== null) {
+      parentNote.childrenCount = await getChildrenCount(
+        parentNote.key,
+        parentNote.trash
+      );
+      parentNote.save();
+    }
+  }
+  if (prevParent !== null) {
+    const parentNote = await Note.findByPk(prevParent);
+    if (parentNote !== null) {
+      parentNote.childrenCount = await getChildrenCount(
+        parentNote.key,
+        parentNote.trash
+      );
+      parentNote.save();
+    }
+  }
+
   return true;
 }

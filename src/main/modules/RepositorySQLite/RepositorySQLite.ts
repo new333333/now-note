@@ -49,6 +49,7 @@ import prepareDescriptionToRead from './operations/PrepareDescriptionToRead';
 import getNoteWithDescription from './operations/GetNoteWithDescription';
 import getBacklinks from './operations/GetBacklinks';
 import getPriorityStatistics from './operations/GetPriorityStatistics';
+import search from './operations/Search';
 
 export default class RepositorySQLite implements Repository {
   private sequelize: Sequelize;
@@ -174,6 +175,39 @@ export default class RepositorySQLite implements Repository {
     return getPriorityStatistics(this);
   }
 
+  async search(
+    searchText: string,
+    limit: number,
+    trash: boolean,
+    options: SearchResultOptions
+  ): Promise<SearchResult> {
+    return search(this, searchText, limit, trash, options);
+  }
+
+
+  // load root nodes, if key undefined
+  // load children notes if key defined
+  async getChildren(
+    key: string | null | undefined,
+    trash: boolean = false
+  ): Promise<Array<Note>> {
+    log.debug(`RepositorySQLite.getChildren() key=${key}, trash=${trash}`);
+    const notes = await Note.findAll({
+      where: {
+        parent: key === undefined ? null : key,
+        trash,
+      },
+      order: [['position', 'ASC']],
+    });
+
+    const resultNotes: Array<Note> = [];
+    for (let i = 0; i < notes.length; i += 1) {
+      const noteModel = notes[i];
+      resultNotes.push(noteModel.dataValues);
+    }
+    return resultNotes;
+  }
+
   async noteToNoteDTO(
     note: Note,
     withchildren?: boolean,
@@ -251,80 +285,6 @@ export default class RepositorySQLite implements Repository {
     }
 
     return Promise.all(results);
-  }
-
-  // SELECT * FROM Notes_index where text MATCH 'a *' and
-  //      key in (SELECT key FROM Notes where trash=0)
-  //      ORDER BY rank LIMIT 20 OFFSET 0
-  async search(
-    searchText: string,
-    limit: number,
-    trash: boolean,
-    options: SearchResultOptions
-  ): Promise<SearchResult> {
-    let whereNotesIndex = ` `;
-    if (searchText && searchText.length > 0 && searchText.trim().length > 0) {
-      whereNotesIndex = `${whereNotesIndex} text MATCH :searchText and `;
-    }
-
-    let whereNotes = ` `;
-    if (options.parentNotesKey && options.parentNotesKey.length) {
-      const parentNotesKeyJoined = options.parentNotesKey
-        .map((key: string) => ` parents like '%,${key},%' `)
-        .join(' or ');
-      whereNotes = `${whereNotes} ${parentNotesKeyJoined} and`;
-    }
-    if (options.types && options.types.length > 0) {
-      whereNotes = `${whereNotes} type in (${options.types.join(', ')}) and`;
-    }
-    if (options.dones && options.dones.length > 0) {
-      whereNotes = `${whereNotes} done in (${options.dones.join(', ')}) and`;
-    }
-    whereNotes = `${whereNotes} trash=${trash ? 1 : 0}`;
-
-    // on Notes_index
-    const orderByNotesIndex = ` ORDER BY ${
-      options.sortBy ? options.sortBy : 'rank'
-    } `;
-    let limitNotesIndex = ' ';
-    if (limit > -1) {
-      limitNotesIndex = ' LIMIT :limit OFFSET :offset ';
-    }
-
-    const selectFromNotesIndex = `select * from notes where key in (SELECT key FROM Notes_index where ${whereNotesIndex} key in (SELECT key FROM Notes where ${whereNotes}) ${orderByNotesIndex}) `;
-    const selectFromNotesIndexCount = `SELECT count(*) FROM Notes_index where ${whereNotesIndex} key in (SELECT key FROM Notes where ${whereNotes}) `;
-
-    const selectResults: Note[] = await this.sequelize!.query<Note>(
-      `${selectFromNotesIndex} ${limitNotesIndex}`,
-      {
-        replacements: {
-          searchText: `${searchText.trim()} *`,
-          limit,
-          offset: options.offset,
-        },
-        raw: true,
-        type: QueryTypes.SELECT,
-      }
-    );
-
-    const countResults: any = await this.sequelize!.query(
-      `${selectFromNotesIndexCount}`,
-      {
-        replacements: {
-          searchText: `${searchText} *`,
-        },
-        raw: true,
-        type: QueryTypes.SELECT,
-      });
-
-    const searchResult: SearchResult = {
-      offset: options.offset || 0,
-      limit,
-      results: selectResults,
-      maxResults: countResults[0]['count(*)'],
-    };
-
-    return searchResult;
   }
 
   async addAsset(
@@ -420,44 +380,6 @@ export default class RepositorySQLite implements Repository {
     });
 
     return tags;
-  }
-
-
-  // load root nodes, if key undefined
-  // load children notes if key defined
-  // TODO: no NtoDTO
-  async getChildren(
-    key: string | null | undefined,
-    trash: boolean = false
-  ): Promise<Array<NoteDTO>> {
-    log.debug(`RepositorySQLite.getChildren() key=${key}, trash=${trash}`);
-    const notes = await Note.findAll({
-      where: {
-        parent: key === undefined ? null : key,
-        trash,
-      },
-      order: [['position', 'ASC']],
-    });
-
-    const withchildren: boolean = true;
-    const withDescription: boolean = false;
-    const withParents: boolean = false;
-    const withLindedNote: boolean = true;
-
-    const resultNotes: Array<NoteDTO> = [];
-    for (let i = 0; i < notes.length; i += 1) {
-      const noteModel = notes[i];
-      // eslint-disable-next-line no-await-in-loop
-      const resultNote = await this.noteToNoteDTO(
-        noteModel,
-        withchildren,
-        withDescription,
-        withParents,
-        withLindedNote
-      );
-      resultNotes.push(resultNote);
-    }
-    return resultNotes;
   }
 
   // TODO: remove when unused any more

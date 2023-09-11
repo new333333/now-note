@@ -4,6 +4,7 @@ import { HitMode } from 'types';
 import { Note, NoteNotFoundByKeyError } from '../../DataModels';
 import RepositorySQLite from '../RepositorySQLite';
 import { getPath, setKeyAndTitlePath } from '../RepositorySQLiteUtils';
+import getChildrenCount from './GetChildrenCount';
 
 export default async function moveNote(
   repository: RepositorySQLite,
@@ -241,19 +242,36 @@ export default async function moveNote(
     //    keyPath: ^/1-2/$
     //    child's keyPath: ^/1-2/e-f/$
 
-    await repository.updateNoteKeyPath(
-      prevKeyPath,
-      modifyNote.keyPath
-    );
+    await repository.updateNoteKeyPath(prevKeyPath, modifyNote.keyPath);
 
-    log.debug(
-      `RepositorySQLite.moveNote() prevTitlePath=${prevTitlePath}`
-    );
+    log.debug(`RepositorySQLite.moveNote() prevTitlePath=${prevTitlePath}`);
 
     await repository.updateNoteTitlePath(
       prevTitlePath,
       modifyNote.titlePath,
       modifyNote.keyPath
     );
+
+    if (modifyNote.parent !== null) {
+      const newNote = await Note.findByPk(modifyNote.parent);
+      if (newNote !== null) {
+        newNote.childrenCount = await getChildrenCount(
+          newNote.key,
+          newNote.trash
+        );
+        newNote.save();
+      }
+    }
+
+    if (prevParent !== null) {
+      const prevParentNote = await Note.findByPk(prevParent);
+      if (prevParentNote !== null) {
+        prevParentNote.childrenCount = await getChildrenCount(
+          prevParentNote.key,
+          prevParentNote.trash
+        );
+        prevParentNote.save();
+      }
+    }
   }
 }
