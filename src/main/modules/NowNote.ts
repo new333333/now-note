@@ -261,7 +261,7 @@ export default class NowNote {
     note: NoteDTO,
     hitMode: HitMode,
     relativeToKey?: string
-  ): Promise<NoteDTO | undefined> {
+  ): Promise<Note | undefined> {
     if (this.currentRepository !== undefined) {
       return this.currentRepository.addNote(
         parentNoteKey,

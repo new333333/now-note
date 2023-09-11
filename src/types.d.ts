@@ -133,7 +133,7 @@ export interface Repository {
     note: NoteDTO,
     hitMode: HitMode,
     relativeToKey?: string
-  ): Promise<NoteDTO | undefined>;
+  ): Promise<Note | undefined>;
   moveNote(
     key: string,
     from: string,
@@ -180,7 +180,7 @@ export interface UIController {
     note: NoteDTO,
     hitMode: HitMode,
     relativeToKey?: string
-  ): Promise<NoteDTO | undefined>;
+  ): Promise<Note | undefined>;
   moveNote(
     key: string,
     from: string,

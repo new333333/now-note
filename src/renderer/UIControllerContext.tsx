@@ -75,7 +75,7 @@ export class UIControllerContextImpl implements UIController {
     note: NoteDTO,
     hitMode: HitMode,
     relativeToKey?: string
-  ): Promise<NoteDTO | undefined> {
+  ): Promise<Note | undefined> {
     return this.îpcRenderer.addNote(
       parentNoteKey,
       note,

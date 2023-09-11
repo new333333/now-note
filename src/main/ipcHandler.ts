@@ -209,7 +209,7 @@ export default class IpcHandler {
         note: NoteDTO,
         hitMode: HitMode,
         relativeToKey?: string
-      ): Promise<NoteDTO | undefined> => {
+      ): Promise<Note | undefined> => {
         return this.nowNote.addNote(
           parentNoteKey,
           note,

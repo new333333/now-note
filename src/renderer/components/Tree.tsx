@@ -180,7 +180,7 @@ export default function Tree() {
       log.debug('addNote parent node=', node);
       await node.setExpanded(true);
 
-      const newNote: NoteDTO | undefined = await uiController.addNote(
+      const newNote: NoteDataModel | undefined = await uiController.addNote(
         node.key,
         { title: '', type: 'note' },
         'over'

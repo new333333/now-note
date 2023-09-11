@@ -25,6 +25,5 @@ export default async function getNoteWithDescription(
     repository,
     noteModel.description || ''
   );
-  return noteModel.dataValues;
+  return noteModel.get({ plain: true });
 }
-

@@ -11,7 +11,7 @@ export default async function addNote(
   note: NoteDTO,
   hitMode: HitMode,
   relativeToKey?: string
-): Promise<NoteDTO | undefined> {
+): Promise<Note | undefined> {
   let parent: string | null = parentNoteKey.startsWith('root_')
     ? null
     : parentNoteKey;
@@ -136,5 +136,5 @@ export default async function addNote(
   }
 
   await repository.addNoteIndex(newNote);
-  return repository.noteToNoteDTO(newNote, false, true);
+  return newNote.dataValues;
 }

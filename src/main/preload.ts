@@ -87,7 +87,7 @@ const electronHandler: ElectronIPCRenderer = {
       note: NoteDTO,
       hitMode: HitMode,
       relativeToKey?: string
-    ): Promise<NoteDTO | undefined> =>
+    ): Promise<Note | undefined> =>
       ipcRenderer.invoke(
         'addNote',
         parentNoteKey,

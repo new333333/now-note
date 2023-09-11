@@ -48,6 +48,7 @@ import deletePermanently from './operations/DeletePermanently';
 import prepareDescriptionToRead from './operations/PrepareDescriptionToRead';
 import getNoteWithDescription from './operations/GetNoteWithDescription';
 import getBacklinks from './operations/GetBacklinks';
+import getPriorityStatistics from './operations/GetPriorityStatistics';
 
 export default class RepositorySQLite implements Repository {
   private sequelize: Sequelize;
@@ -95,7 +96,7 @@ export default class RepositorySQLite implements Repository {
     note: NoteDTO,
     hitMode: HitMode,
     relativeToKey?: string
-  ): Promise<NoteDTO | undefined> {
+  ): Promise<Note | undefined> {
     return addNote(this, parentNoteKey, note, hitMode, relativeToKey);
   }
 
@@ -169,33 +170,8 @@ export default class RepositorySQLite implements Repository {
     return getBacklinks(this, key);
   }
 
-
   async getPriorityStatistics(): Promise<PriorityStatistics> {
-    const maximum: number = await Note.max('priority', {
-      where: { trash: false },
-    });
-    const minimum: number = await Note.min('priority', {
-      where: { trash: false },
-    });
-
-    let results = await this.sequelize!.query(
-      `SELECT AVG(priority) as average FROM notes`,
-      { type: QueryTypes.SELECT }
-    );
-    const average: number = Math.round(results[0].average);
-
-    results = await this.sequelize!.query(
-      `SELECT AVG(priority) as mediana FROM (SELECT priority FROM notes ORDER BY priority LIMIT 2 OFFSET (SELECT (COUNT(*) - 1) / 2 FROM notes))`,
-      { type: QueryTypes.SELECT }
-    );
-    const mediana: number = Math.round(results[0].mediana);
-    log.debug(`RepositorySQLite.getPriorityStatistics() minimum=${minimum}`);
-    return {
-      minimum,
-      average,
-      mediana,
-      maximum,
-    };
+    return getPriorityStatistics(this);
   }
 
   async noteToNoteDTO(
