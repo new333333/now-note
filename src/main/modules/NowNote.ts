@@ -214,7 +214,7 @@ export default class NowNote {
     return Promise.resolve(undefined);
   }
 
-  async modifyNote(note: NoteDTO): Promise<NoteDTO | undefined> {
+  async modifyNote(note: NoteDTO): Promise<Note | undefined> {
     if (this.currentRepository !== undefined) {
       return this.currentRepository.modifyNote(note);
     }

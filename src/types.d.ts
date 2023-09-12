@@ -124,7 +124,7 @@ export interface Repository {
   modifyNote(
     note: NoteDTO,
     skipVersioning?: boolean | undefined
-  ): Promise<NoteDTO | undefined>;
+  ): Promise<Note | undefined>;
   findTag(tag: string): Promise<string[]>;
   addTag(key: string, tag: string): Promise<string>;
   removeTag(key: string, tag: string): Promise<string>;
@@ -174,7 +174,7 @@ export interface UIController {
     trash: boolean,
     options: SearchResultOptions
   ): Promise<SearchResult>;
-  modifyNote(note: NoteDTO): Promise<NoteDTO>;
+  modifyNote(note: Note): Promise<NoteDTO>;
   addNote(
     parentNoteKey: string,
     note: NoteDTO,

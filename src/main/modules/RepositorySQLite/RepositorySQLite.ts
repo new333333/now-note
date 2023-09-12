@@ -120,7 +120,7 @@ export default class RepositorySQLite implements Repository {
   async modifyNote(
     note: NoteDTO,
     skipVersioning: boolean = false
-  ): Promise<NoteDTO | undefined> {
+  ): Promise<Note | undefined> {
     return modifyNote(this, note, skipVersioning);
   }
 

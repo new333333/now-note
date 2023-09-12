@@ -12,7 +12,7 @@ export default async function modifyNote(
   repository: RepositorySQLite,
   note: NoteDTO,
   skipVersioning: boolean = false
-): Promise<NoteDTO | undefined> {
+): Promise<Note | undefined> {
   log.debug('RepositorySQLite.modifyNote() note:', note);
   const noteToModify = await Note.findByPk(note.key);
   if (noteToModify === null) {
@@ -78,5 +78,5 @@ export default async function modifyNote(
     );
   }
 
-  return repository.noteToNoteDTO(noteToModify, false, true);
+  return noteToModify.dataValues;
 }

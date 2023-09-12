@@ -66,7 +66,7 @@ export class UIControllerContextImpl implements UIController {
     return searchResult;
   }
 
-  async modifyNote(note: NoteDTO): Promise<NoteDTO> {
+  async modifyNote(note: NoteDTO): Promise<Note> {
     return this.îpcRenderer.modifyNote(note);
   }
 

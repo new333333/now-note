@@ -33,12 +33,12 @@ export default async function updateNoteTitlePath(
   }
 
   log.debug(
-    `RepositorySQLite.modifyNote() oldTitlePath=${oldTitlePath}`
+    `RepositorySQLite.updateNoteTitlePath() oldTitlePath=${oldTitlePath}`
   );
   log.debug(
-    `RepositorySQLite.modifyNote() newTitlePath=${newTitlePath}`
+    `RepositorySQLite.updateNoteTitlePath() newTitlePath=${newTitlePath}`
   );
-  log.debug(`RepositorySQLite.modifyNote() keyPath=${keyPath}`);
+  log.debug(`RepositorySQLite.updateNoteTitlePath() keyPath=${keyPath}`);
 
   if (oldTitlePath !== newTitlePath) {
     await repository

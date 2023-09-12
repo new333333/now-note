@@ -164,7 +164,7 @@ export default class IpcHandler {
 
     this.ipcMain.handle(
       'modifyNote',
-      async (_event, note: NoteDTO): Promise<NoteDTO | undefined> => {
+      async (_event, note: NoteDTO): Promise<Note | undefined> => {
         return this.nowNote.modifyNote(note);
       }
     );
