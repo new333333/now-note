@@ -48,6 +48,8 @@ export class Note extends Model<
   declare titlePath: string;
 
   declare childrenCount: number;
+
+  declare tags: string;
 }
 
 export class NotesIndex extends Model<
@@ -102,21 +104,6 @@ export class Link extends Model<
   declare to: string;
 
   declare type: string | null;
-
-  declare createdAt: CreationOptional<Date>;
-
-  declare updatedAt: CreationOptional<Date>;
-}
-
-export class Tag extends Model<
-  InferAttributes<Tag>,
-  InferCreationAttributes<Tag>
-> {
-  declare id: CreationOptional<number>;
-
-  declare key: string;
-
-  declare tag: string;
 
   declare createdAt: CreationOptional<Date>;
 

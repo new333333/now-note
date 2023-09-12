@@ -106,23 +106,18 @@ export class UIControllerContextImpl implements UIController {
     return this.îpcRenderer.deletePermanently(key);
   }
 
-  async getTags(key: string): Promise<Tag[]> {
-    const tags = await this.îpcRenderer.getTags(key);
-    return tags;
-  }
-
-  async findTag(tag: string): Promise<Tag[]> {
+  async findTag(tag: string): Promise<string[]> {
     const tags = await this.îpcRenderer.findTag(tag);
     return tags;
   }
 
-  async addTag(key: string, tag: string): Promise<void> {
-    await this.îpcRenderer.addTag(key, tag);
+  async addTag(key: string, tag: string): Promise<string> {
+    return this.îpcRenderer.addTag(key, tag);
   }
 
-  async removeTag(key: string, tag: string): Promise<string[]> {
-    const removedTags: string[] = await this.îpcRenderer.removeTag(key, tag);
-    return removedTags;
+  async removeTag(key: string, tag: string): Promise<string> {
+    const currentTags: string = await this.îpcRenderer.removeTag(key, tag);
+    return currentTags;
   }
 
   async selectRepositoryFolder(): Promise<

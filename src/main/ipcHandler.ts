@@ -150,13 +150,6 @@ export default class IpcHandler {
     );
 
     this.ipcMain.handle(
-      'getTags',
-      async (_event, key: string): Promise<Array<Tag> | undefined> => {
-        return this.nowNote.getTags(key);
-      }
-    );
-
-    this.ipcMain.handle(
       'search',
       async (
         _event,
@@ -178,25 +171,21 @@ export default class IpcHandler {
 
     this.ipcMain.handle(
       'findTag',
-      async (_event, tag: string): Promise<Tag[] | undefined> => {
+      async (_event, tag: string): Promise<string[] | undefined> => {
         return this.nowNote.findTag(tag);
       }
     );
 
     this.ipcMain.handle(
       'addTag',
-      async (_event, key: string, tag: string): Promise<void | undefined> => {
+      async (_event, key: string, tag: string): Promise<string | undefined> => {
         return this.nowNote.addTag(key, tag);
       }
     );
 
     this.ipcMain.handle(
       'removeTag',
-      async (
-        _event,
-        key: string,
-        tag: string
-      ): Promise<string[] | undefined> => {
+      async (_event, key: string, tag: string): Promise<string | undefined> => {
         return this.nowNote.removeTag(key, tag);
       }
     );

@@ -44,7 +44,7 @@ export default function Note() {
           <div style={{ padding: '5px 0' }}>
             <DetailsNoteType />
             <DetailsPriorityComponent />
-            <DetailsTagsComponent />
+            <DetailsTagsComponent note={note} />
           </div>
           <Divider style={{ margin: '5px 0' }} />
           <div style={{ flex: 1 }}>

@@ -125,9 +125,9 @@ export interface Repository {
     note: NoteDTO,
     skipVersioning?: boolean | undefined
   ): Promise<NoteDTO | undefined>;
-  findTag(tag: string): Promise<Tag[]>;
-  addTag(key: string, tag: string): Promise<void>;
-  removeTag(key: string, tag: string): Promise<string[]>;
+  findTag(tag: string): Promise<string[]>;
+  addTag(key: string, tag: string): Promise<string>;
+  removeTag(key: string, tag: string): Promise<string>;
   addNote(
     parentNoteKey: string,
     note: NoteDTO,
@@ -192,10 +192,9 @@ export interface UIController {
   restore(key: string): Promise<boolean | undefined>;
   deletePermanently(key: string): Promise<boolean | undefined>;
 
-  getTags(key: string): Promise<Array<Tag>>;
-  findTag(tag: string): Promise<Tag[]>;
-  addTag(key: string, tag: string): Promise<void>;
-  removeTag(key: string, tag: string): Promise<string[]>;
+  findTag(tag: string): Promise<string[]>;
+  addTag(key: string, tag: string): Promise<string>;
+  removeTag(key: string, tag: string): Promise<string>;
 
   getPriorityStatistics(): Promise<PriorityStatistics>;
 

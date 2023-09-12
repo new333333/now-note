@@ -68,16 +68,13 @@ const electronHandler: ElectronIPCRenderer = {
     ): Promise<UserSettingsRepository | undefined> =>
       ipcRenderer.invoke('connectRepository', repositoryFolder),
 
-    getTags: (key: string): Promise<Array<Tag>> =>
-      ipcRenderer.invoke('getTags', key),
-
-    findTag: (tag: string): Promise<Tag[]> =>
+    findTag: (tag: string): Promise<string[]> =>
       ipcRenderer.invoke('findTag', tag),
 
-    addTag: (key: string, tag: string): Promise<void> =>
+    addTag: (key: string, tag: string): Promise<string> =>
       ipcRenderer.invoke('addTag', key, tag),
 
-    removeTag: (key: string, tag: string): Promise<string[]> =>
+    removeTag: (key: string, tag: string): Promise<string> =>
       ipcRenderer.invoke('removeTag', key, tag),
 
     closeRepository: () => ipcRenderer.invoke('closeRepository'),

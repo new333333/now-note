@@ -50,6 +50,10 @@ import getNoteWithDescription from './operations/GetNoteWithDescription';
 import getBacklinks from './operations/GetBacklinks';
 import getPriorityStatistics from './operations/GetPriorityStatistics';
 import search from './operations/Search';
+import getChildren from './operations/GetChildren';
+import removeTag from './operations/RemoveTag';
+import addTag from './operations/AddTag';
+import findTag from './operations/FindTag';
 
 export default class RepositorySQLite implements Repository {
   private sequelize: Sequelize;
@@ -184,28 +188,23 @@ export default class RepositorySQLite implements Repository {
     return search(this, searchText, limit, trash, options);
   }
 
-
-  // load root nodes, if key undefined
-  // load children notes if key defined
   async getChildren(
     key: string | null | undefined,
     trash: boolean = false
   ): Promise<Array<Note>> {
-    log.debug(`RepositorySQLite.getChildren() key=${key}, trash=${trash}`);
-    const notes = await Note.findAll({
-      where: {
-        parent: key === undefined ? null : key,
-        trash,
-      },
-      order: [['position', 'ASC']],
-    });
+    return getChildren(this, key, trash);
+  }
 
-    const resultNotes: Array<Note> = [];
-    for (let i = 0; i < notes.length; i += 1) {
-      const noteModel = notes[i];
-      resultNotes.push(noteModel.dataValues);
-    }
-    return resultNotes;
+  async addTag(key: string, tag: string): Promise<string> {
+    return addTag(this, key, tag);
+  }
+
+  async removeTag(key: string, tag: string): Promise<string> {
+    return removeTag(this, key, tag);
+  }
+
+  async findTag(tag: string): Promise<string[]> {
+    return findTag(this, tag);
   }
 
   async noteToNoteDTO(
@@ -333,53 +332,6 @@ export default class RepositorySQLite implements Repository {
       return undefined;
     }
     return this.assetFilesService.getAssetFileLocalPath(assetModel);
-  }
-
-  async getTags(key: string): Promise<Array<Tag>> {
-    return Tag.findAll({
-      where: {
-        key,
-      },
-    });
-  }
-
-  async addTag(key: string, tag: string): Promise<void> {
-    await Tag.findOrCreate({
-      where: {
-        key,
-        tag,
-      },
-    });
-  }
-
-  async removeTag(key: string, tag: string): Promise<string[]> {
-    await Tag.destroy({
-      where: {
-        key,
-        tag,
-      },
-    });
-
-    const tags = await Tag.findAll({
-      where: {
-        key,
-      },
-    });
-
-    return tags.map((currentTag) => currentTag.tag);
-  }
-
-  async findTag(tag: string): Promise<Tag[]> {
-    const tags: Tag[] = await Tag.findAll({
-      where: {
-        tag: {
-          [Op.like]: `${tag}%`,
-        },
-      },
-      group: ['tag'],
-    });
-
-    return tags;
   }
 
   // TODO: remove when unused any more

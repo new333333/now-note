@@ -40,6 +40,7 @@ type Action = {
   setDescription: (key: string, description: string) => void;
   setType: (key: string, type: string) => void;
   setPriority: (key: string, priority: number) => void;
+  setTags: (key: string, tags: string) => void;
 
   setDetailsNoteTitleFocus: (value: boolean) => void;
 
@@ -181,6 +182,24 @@ const useNoteStore = create<State & Action>((set, get) => ({
         updatedNote: {
           key,
           priority,
+        }
+      };
+    };
+  }),
+
+  setTags: (key: string, tags: string) => set((state) => {
+    if (get().detailsNote !== undefined && get().detailsNote.key === key) {
+      return {
+        detailsNote: {
+          ...state.detailsNote,
+          tags: tags,
+        }
+      };
+    } else {
+      return {
+        updatedNote: {
+          key,
+          tags,
         }
       };
     };

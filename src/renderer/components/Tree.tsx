@@ -411,7 +411,6 @@ export default function Tree() {
 
   const loadTree = useCallback(
     async (event: string | undefined, data) => {
-      console.log(data);
       log.debug(`Tree.loadTree() trash=${trash}`);
       if (!trash) {
         // console.trace();

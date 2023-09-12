@@ -100,6 +100,10 @@ export default async function authenticate(repository: RepositorySQLite) {
         defaultValue: 0,
         allowNull: false,
       },
+      tags: {
+        type: DataTypes.STRING,
+        allowNull: false,
+      },
     },
     {
       sequelize: repository.getSequelize(),
@@ -149,29 +153,6 @@ export default async function authenticate(repository: RepositorySQLite) {
       description: {
         type: DataTypes.TEXT,
         allowNull: true,
-      },
-      createdAt: DataTypes.DATE,
-      updatedAt: DataTypes.DATE,
-    },
-    {
-      sequelize: repository.getSequelize(),
-    }
-  );
-
-  Tag.init(
-    {
-      id: {
-        type: DataTypes.BIGINT,
-        primaryKey: true,
-        autoIncrement: true,
-      },
-      key: {
-        type: DataTypes.UUID,
-        allowNull: false,
-      },
-      tag: {
-        type: DataTypes.STRING,
-        allowNull: false,
       },
       createdAt: DataTypes.DATE,
       updatedAt: DataTypes.DATE,

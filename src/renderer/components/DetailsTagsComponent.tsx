@@ -9,7 +9,7 @@ import {
 } from 'react';
 import { PlusOutlined } from '@ant-design/icons';
 import { Input, Tag, Tooltip, AutoComplete } from 'antd';
-import { Tag as TagDataModel } from 'main/modules/DataModels';
+import { Note } from 'main/modules/DataModels';
 import { UIControllerContext } from 'renderer/UIControllerContext';
 import { UIController } from 'types';
 import useNoteStore from 'renderer/NoteStore';
@@ -19,13 +19,14 @@ declare type AutoCompleteOption = {
   value: string;
 };
 
+interface Props {
+  note: Note;
+}
 
-export default function DetailsTagsComponent() {
-  const [note] = useNoteStore((state) => [state.detailsNote]);
+export default function DetailsTagsComponent({ note }: Props) {
+  const [setTags] = useNoteStore((state) => [state.setTags]);
 
   const inputRefAutoComplete = useRef<AutoComplete>(null);
-  const [tags, setTags] = useState<TagDataModel[]>([]);
-
   const [inputAutoCompleteVisible, setInputAutoCompleteVisible] =
     useState<boolean>(false);
   const [valueAutoComplete, setValueAutoComplete] = useState<string>('');
@@ -36,23 +37,6 @@ export default function DetailsTagsComponent() {
   const { uiController }: { uiController: UIController } =
     useContext(UIControllerContext);
 
-  const fetchTags = useCallback(async () => {
-    if (note !== undefined) {
-      setTags(await uiController.getTags(note.key));
-    }
-  }, [uiController, note]);
-
-  // listen to note's tag changes
-  const tagChangeListener = useCallback(
-    async (key: string) => {
-      log.debug(`I'm listener to tag changes on note(key: ${key})`);
-      if (note !== undefined && key === note.key) {
-        await fetchTags();
-      }
-    },
-    [fetchTags, note]
-  );
-
   const onBlurAutoComplete = useCallback(async () => {
     setInputAutoCompleteVisible(false);
     setValueAutoComplete('');
@@ -61,6 +45,10 @@ export default function DetailsTagsComponent() {
 
   const onKeyDownAutoComplete = useCallback(
     async (event: KeyboardEvent) => {
+      if (event.key === '|') {
+        // prevent onChange
+        event.preventDefault();
+      }
       if (event.key === 'Escape') {
         onBlurAutoComplete();
       }
@@ -71,9 +59,9 @@ export default function DetailsTagsComponent() {
   const onSelectAutoComplete = useCallback(
     async (newTag: string) => {
       if (note !== undefined) {
-        await uiController.addTag(note.key, newTag);
-        setTags(await uiController.getTags(note.key));
-
+        const newTags = await uiController.addTag(note.key, newTag);
+        log.debug(`DetailsTagsComponent addTag() => newTags=${newTags}`);
+        setTags(note.key, newTags);
         setInputAutoCompleteVisible(false);
         setValueAutoComplete('');
         setOptionsAutoComplete([]);
@@ -82,22 +70,20 @@ export default function DetailsTagsComponent() {
         }
       }
     },
-    [uiController, note]
+    [note, uiController, setTags]
   );
 
   const onSearchAutoComplete = useCallback(
     async (searchText: string) => {
-      const matchingTags: TagDataModel[] = await uiController.findTag(
-        searchText
-      );
+      const matchingTags: string[] = await uiController.findTag(searchText);
       let found = false;
-      const options: AutoCompleteOption[] = matchingTags.map((currentTag) => {
-        if (currentTag.tag === searchText) {
+      const options: AutoCompleteOption[] = matchingTags.map((nextTag) => {
+        if (nextTag === searchText) {
           found = true;
         }
         return {
-          label: currentTag.tag,
-          value: currentTag.tag,
+          label: nextTag,
+          value: nextTag,
         };
       });
 
@@ -116,43 +102,50 @@ export default function DetailsTagsComponent() {
     setValueAutoComplete(data);
   }, []);
 
-  async function handleCloseTag(tag: string) {
-    if (note !== undefined) {
-      await uiController.removeTag(note.key, tag);
-    }
-  }
+  const handleCloseTag = useCallback(
+    async (tag: string) => {
+      if (note !== undefined) {
+        const newTags = await uiController.removeTag(note.key, tag);
+        log.debug(`DetailsTagsComponent removeTag() => newTags=${newTags}`);
+        setTags(note.key, newTags);
+      }
+    },
+    [note, setTags, uiController]
+  );
 
   const showInputAutoComplete = useCallback(async () => {
     setInputAutoCompleteVisible(true);
   }, []);
 
+  log.debug(`DetailsTagsComponent note.tags=${note.tags}`);
 
-  useEffect(() => {
-    fetchTags();
-  }, [note]);
+  const tags =
+    note.tags !== null && note.tags !== undefined && note.tags.length > 0
+      ? note.tags.substring(2, note.tags.length - 2).split('|')
+      : [];
 
   return (
     <>
       {note && <>
         {tags.map((tag) => {
-          const isLongTag = tag.tag.length > 20;
+          const isLongTag = tag > 20;
           const tagElem = (
             <Tag
               className="nn-edit-tag"
-              key={tag.tag}
+              key={tag}
               closable={!note.trash}
-              onClose={() => handleCloseTag(tag.tag)}
+              onClose={() => handleCloseTag(tag)}
             >
               <span>
                 {isLongTag
-                  ? `${tag.tag.slice(0, 20)}...`
-                  : tag.tag}
+                  ? `${tag.slice(0, 20)}...`
+                  : tag}
               </span>
             </Tag>
           );
 
           return isLongTag ? (
-            <Tooltip title={tag.tag} key={tag.tag}>
+            <Tooltip title={tag} key={tag}>
               {tagElem}
             </Tooltip>
           ) : (
