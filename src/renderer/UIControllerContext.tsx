@@ -39,11 +39,6 @@ export class UIControllerContextImpl implements UIController {
     return children;
   }
 
-  async getParents(key: string): Promise<Note[] | undefined> {
-    const parents: Note[] | undefined = await this.îpcRenderer.getParents(key);
-    return parents;
-  }
-
   async getBacklinks(key: string): Promise<Note[]> {
     const backlinks: Note[] | undefined = await this.îpcRenderer.getBacklinks(
       key

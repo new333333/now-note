@@ -107,10 +107,6 @@ export interface Repository {
   close(): Promise<void>;
   getChildren(key: string, trash: boolean): Promise<Array<Note> | undefined>;
   getNoteWithDescription(key: string): Promise<Note | undefined>;
-  getParents(
-    key: string,
-    parents: Array<Note> | undefined
-  ): Promise<Array<Note> | undefined>;
   getBacklinks(key: string): Promise<Array<Note>>;
   search(
     searchText: string,
@@ -168,7 +164,6 @@ export interface UIController {
     key: string | null | undefined,
     trash?: boolean
   ): Promise<Array<Note> | undefined>;
-  getParents(key: string): Promise<Array<Note> | undefined>;
   getBacklinks(key: string): Promise<Array<Note>>;
   search(
     searchText: string,

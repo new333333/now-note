@@ -136,13 +136,6 @@ export default class IpcHandler {
     );
 
     this.ipcMain.handle(
-      'getParents',
-      async (_event, key: string): Promise<Array<Note> | undefined> => {
-        return this.nowNote.getParents(key);
-      }
-    );
-
-    this.ipcMain.handle(
       'getBacklinks',
       async (_event, key: string): Promise<Array<Note> | undefined> => {
         return this.nowNote.getBacklinks(key);

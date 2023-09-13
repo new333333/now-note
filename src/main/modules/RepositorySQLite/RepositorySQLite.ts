@@ -346,33 +346,4 @@ export default class RepositorySQLite implements Repository {
     return resultNote;
   }
 
-
-
-
-
-
-  // TODO: remove when unused any more
-  async getParents(
-    key: string,
-    parents: Array<Note> | undefined
-  ): Promise<Array<Note>> {
-    let parentLocal: Array<Note> = [];
-    if (parents !== undefined) {
-      parentLocal = parents;
-    }
-
-    const noteModel = await Note.findByPk(key, {
-      raw: true,
-    });
-
-    if (noteModel === null) {
-      throw new NoteNotFoundByKeyError(key);
-    }
-    if (noteModel.parent === null) {
-      parentLocal.unshift(noteModel);
-      return parentLocal;
-    }
-    parentLocal.unshift(noteModel);
-    return this.getParents(noteModel.parent, parentLocal);
-  }
 }

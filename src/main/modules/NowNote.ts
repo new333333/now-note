@@ -188,13 +188,6 @@ export default class NowNote {
     return Promise.resolve(undefined);
   }
 
-  async getParents(key: string): Promise<Array<Note> | undefined> {
-    if (this.currentRepository !== undefined) {
-      return this.currentRepository.getParents(key, undefined);
-    }
-    return Promise.resolve(undefined);
-  }
-
   async getBacklinks(key: string): Promise<Array<Note> | undefined> {
     if (this.currentRepository !== undefined) {
       return this.currentRepository.getBacklinks(key);

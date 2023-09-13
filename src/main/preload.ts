@@ -46,9 +46,6 @@ const electronHandler: ElectronIPCRenderer = {
     getNoteWithDescription: (key: string): Promise<Note | undefined> =>
       ipcRenderer.invoke('getNoteWithDescription', key),
 
-    getParents: (key: string): Promise<Array<Note> | undefined> =>
-      ipcRenderer.invoke('getParents', key),
-
     getBacklinks: (key: string): Promise<Array<Note>> =>
       ipcRenderer.invoke('getBacklinks', key),
 
