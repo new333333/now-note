@@ -123,12 +123,12 @@ const electronHandler: ElectronIPCRenderer = {
 
     getPriorityStatistics: () => ipcRenderer.invoke('getPriorityStatistics'),
 
-    addFile: (
+    addFileAsNote: (
       parentKey: string,
       path: string,
       hitMode: HitMode,
       relativeToKey: string
-    ) => ipcRenderer.invoke('addFile', parentKey, path, hitMode, relativeToKey),
+    ) => ipcRenderer.invoke('addFileAsNote', parentKey, path, hitMode, relativeToKey),
 
     openAssetFile: (url: string) => ipcRenderer.invoke('openAssetFile', url),
 

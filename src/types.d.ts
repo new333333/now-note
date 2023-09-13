@@ -102,8 +102,6 @@ export interface NoteDTO {
 // ***************************************************************************
 // ***************************************************************************
 
-export type FileTransferType = 'base64' | 'path';
-
 export interface Repository {
   authenticate(): Promise<void>;
   close(): Promise<void>;
@@ -144,12 +142,12 @@ export interface Repository {
   restore(key: string): Promise<boolean>;
   deletePermanently(key: string): Promise<boolean>;
   getPriorityStatistics(): Promise<PriorityStatistics>;
-  addFile(
+  addFileAsNote(
     parentKey: string,
     filepath: string,
     hitMode: HitMode,
     relativeToKey: string
-  ): Promise<NoteDTO | undefined>;
+  ): Promise<Note | undefined>;
   getAssetFileName(assetKey: string): Promise<string | undefined>;
   getAssetFileReadStream(assetKey: string): Promise<fs.ReadStream | undefined>;
   getAssetFileLocalPath(assetKey: string): Promise<string | undefined>;

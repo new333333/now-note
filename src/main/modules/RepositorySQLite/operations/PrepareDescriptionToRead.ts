@@ -1,10 +1,7 @@
 import log from 'electron-log';
 import * as cheerio from 'cheerio';
-import path = require('path');
-import { Op } from 'sequelize';
-import { FileTransferType } from 'types';
 import RepositorySQLite from '../RepositorySQLite';
-import { Asset, Link, Note } from '../../DataModels';
+import { Note } from '../../DataModels';
 
 // support old repository implementations
 async function prepareInlineImagesPathToRead(

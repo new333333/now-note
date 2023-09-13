@@ -784,14 +784,14 @@ export default function Tree() {
               console.log('entry as file', entry);
 
               self.props.dataService
-                .addFile(
+                .addFileAsNote(
                   data.hitMode === 'over' ? node.key : node.parent.key,
                   entry.path,
                   data.hitMode,
                   node.key
                 )
                 .then(function () {
-                  console.log('addFile done');
+                  console.log('addFileAsNote done');
                   if (data.hitMode == 'over') {
                     node.resetLazy();
                     node.setExpanded(true);

@@ -2,7 +2,6 @@ import log from 'electron-log';
 import * as cheerio from 'cheerio';
 import path = require('path');
 import { Op } from 'sequelize';
-import { FileTransferType } from 'types';
 import RepositorySQLite from '../RepositorySQLite';
 import { Asset, Link, Note } from '../../DataModels';
 
@@ -120,38 +119,31 @@ async function prepareInlineImagesToSave(
           const fileType = imgSrc.substring(5, 14); // image/png
           const fileName = 'img.png';
           const filePathOrBase64 = imgSrc.substring(22);
-          const fileTransferType: FileTransferType = imgSrc.substring(
-            15,
-            21
-          ) as FileTransferType; // base64
           // eslint-disable-next-line no-await-in-loop
-          const asset: Asset = await repository.addAsset(
+          const asset: Asset = await repository.addImageAsBase64(
             fileType,
             fileName,
-            filePathOrBase64,
-            fileTransferType
+            filePathOrBase64
           );
           nextImg.attr('src', `nn-asset:${asset.key}`);
         } else if (imgSrc.indexOf('file:///') === 0) {
           // copy/paste e.g. from outlook
           const filePath = imgSrc.substring('file:///'.length);
           // eslint-disable-next-line no-await-in-loop
-          const asset: Asset = await repository.addAsset(
+          const asset: Asset = await repository.addLocalFile(
             null,
             path.basename(filePath),
-            filePath,
-            'path'
+            filePath
           );
           nextImg.attr('src', `nn-asset:${asset.key}`);
         } else if (imgSrc.indexOf('file://') === 0) {
           // copy/paste e.g. from outlook
           const filePath = imgSrc.substring('file://'.length);
           // eslint-disable-next-line no-await-in-loop
-          const asset: Asset = await repository.addAsset(
+          const asset: Asset = await repository.addLocalFile(
             null,
             path.basename(filePath),
-            filePath,
-            'path'
+            filePath
           );
           nextImg.attr('src', `nn-asset:${asset.key}`);
         }

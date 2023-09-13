@@ -333,14 +333,14 @@ export default class NowNote {
     return Promise.resolve(undefined);
   }
 
-  async addFile(
+  async addFileAsNote(
     parentKey: string,
     filepath: string,
     hitMode: HitMode,
     relativeToKey: string
-  ): Promise<NoteDTO | undefined> {
+  ): Promise<Note | undefined> {
     if (this.currentRepository !== undefined) {
-      return this.currentRepository.addFile(
+      return this.currentRepository.addFileAsNote(
         parentKey,
         filepath,
         hitMode,

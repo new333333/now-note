@@ -1,12 +1,11 @@
 /* eslint-disable class-methods-use-this */
 /* eslint max-classes-per-file: ["error", 99] */
 import log from 'electron-log';
-import { Sequelize, DataTypes, Op, QueryTypes } from 'sequelize';
+import { Sequelize } from 'sequelize';
 import * as cheerio from 'cheerio';
 import path = require('path');
 import fs from 'fs';
 import {
-  FileTransferType,
   HitMode,
   NoteDTO,
   PriorityStatistics,
@@ -16,21 +15,12 @@ import {
 } from '../../../types';
 import {
   Note,
-  Tag,
   Asset,
-  Description,
-  Link,
-  Title,
-  NotesIndex,
   NoteNotFoundByKeyError,
 } from '../DataModels';
 import AssetFilesService from '../AssetFilesService';
 import moveNote from './operations/MoveNote';
 import authenticate from './operations/Authenticate';
-import {
-  getKeyAndTitlePath,
-  getPath,
-} from './RepositorySQLiteUtils';
 import close from './operations/Close';
 import reindexAll from './operations/ReindexAll';
 import addNote from './operations/AddNote';
@@ -45,7 +35,6 @@ import moveNoteToTrash from './operations/MoveNoteToTrash';
 import updateTrashFlag from './operations/UpdateTrashFlag';
 import restore from './operations/Restore';
 import deletePermanently from './operations/DeletePermanently';
-import prepareDescriptionToRead from './operations/PrepareDescriptionToRead';
 import getNoteWithDescription from './operations/GetNoteWithDescription';
 import getBacklinks from './operations/GetBacklinks';
 import getPriorityStatistics from './operations/GetPriorityStatistics';
@@ -222,11 +211,10 @@ export default class RepositorySQLite implements Repository {
     return assetModel.dataValues;
   }
 
-  /*
   async addLocalFile(
     fileType: string | null,
     fileName: string,
-    filePath: string
+    filePath: string,
   ): Promise<Asset> {
     const assetModel = await Asset.create({
       type: fileType,
@@ -235,34 +223,10 @@ export default class RepositorySQLite implements Repository {
     });
 
     // eslint-disable-next-line no-unused-vars
-    const assetFile = this.assetFilesService.saveFile(
+    const assetFile = await this.assetFilesService.saveLocalFile(
       assetModel,
       fileName,
-      filePathOrBase64,
-      fileTransferType
-    );
-    return assetModel;
-  }
-  */
-
-  async addAsset(
-    fileType: string | null,
-    fileName: string,
-    filePathOrBase64: string,
-    fileTransferType: FileTransferType
-  ): Promise<Asset> {
-    const assetModel = await Asset.create({
-      type: fileType,
-      name: fileName,
-      createdBy: this.userName,
-    });
-
-    // eslint-disable-next-line no-unused-vars
-    const assetFile = this.assetFilesService.saveFile(
-      assetModel,
-      fileName,
-      filePathOrBase64,
-      fileTransferType
+      filePath
     );
     return assetModel;
   }
@@ -293,38 +257,12 @@ export default class RepositorySQLite implements Repository {
     return this.assetFilesService.getAssetFileLocalPath(assetModel);
   }
 
-  // TODO: remove when unused any more
-  async getParents(
-    key: string,
-    parents: Array<Note> | undefined
-  ): Promise<Array<Note>> {
-    let parentLocal: Array<Note> = [];
-    if (parents !== undefined) {
-      parentLocal = parents;
-    }
-
-    const noteModel = await Note.findByPk(key, {
-      raw: true,
-    });
-
-    if (noteModel === null) {
-      throw new NoteNotFoundByKeyError(key);
-    }
-    if (noteModel.parent === null) {
-      parentLocal.unshift(noteModel);
-      return parentLocal;
-    }
-    parentLocal.unshift(noteModel);
-    return this.getParents(noteModel.parent, parentLocal);
-  }
-
-
-  async addFile(
+  async addFileAsNote(
     parentKey: string,
     filepath: string,
     hitMode: HitMode,
     relativeToKey: string
-  ): Promise<NoteDTO | undefined> {
+  ): Promise<Note | undefined> {
     if (filepath === undefined) {
       return undefined;
     }
@@ -364,7 +302,7 @@ export default class RepositorySQLite implements Repository {
 
       for (let i = 0; i < files.length; i += 1) {
         // eslint-disable-next-line no-await-in-loop
-        await this.addFile(
+        await this.addFileAsNote(
           resultNote!.key as string,
           path.join(filepath, files[i].name),
           'over',
@@ -372,11 +310,10 @@ export default class RepositorySQLite implements Repository {
         );
       }
     } else if (stats.isFile()) {
-      const asset: Asset = await this.addAsset(
+      const asset: Asset = await this.addLocalFile(
         null,
         path.basename(filepath),
-        filepath,
-        'path'
+        filepath
       );
 
       resultNote = await this.addNote(
@@ -407,5 +344,35 @@ export default class RepositorySQLite implements Repository {
       );
     }
     return resultNote;
+  }
+
+
+
+
+
+
+  // TODO: remove when unused any more
+  async getParents(
+    key: string,
+    parents: Array<Note> | undefined
+  ): Promise<Array<Note>> {
+    let parentLocal: Array<Note> = [];
+    if (parents !== undefined) {
+      parentLocal = parents;
+    }
+
+    const noteModel = await Note.findByPk(key, {
+      raw: true,
+    });
+
+    if (noteModel === null) {
+      throw new NoteNotFoundByKeyError(key);
+    }
+    if (noteModel.parent === null) {
+      parentLocal.unshift(noteModel);
+      return parentLocal;
+    }
+    parentLocal.unshift(noteModel);
+    return this.getParents(noteModel.parent, parentLocal);
   }
 }

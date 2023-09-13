@@ -263,15 +263,15 @@ export default class IpcHandler {
     );
 
     this.ipcMain.handle(
-      'addFile',
+      'addFileAsNote',
       async (
         _event,
         parentKey: string,
         path: string,
         hitMode: HitMode,
         relativeToKey: string
-      ): Promise<NoteDTO | undefined> => {
-        return this.nowNote.addFile(parentKey, path, hitMode, relativeToKey);
+      ): Promise<Note | undefined> => {
+        return this.nowNote.addFileAsNote(parentKey, path, hitMode, relativeToKey);
       }
     );
 

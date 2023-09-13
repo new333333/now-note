@@ -1,6 +1,5 @@
 import path from 'path';
 import fs from 'fs';
-import { FileTransferType } from 'types';
 import { Asset } from './DataModels';
 
 export default class AssetFilesService {
@@ -40,11 +39,10 @@ export default class AssetFilesService {
     return assetFile;
   }
 
-  async saveFile(
+  async saveLocalFile(
     asset: Asset,
     fileName: string,
-    filePathOrBase64: string,
-    fileTransferType: FileTransferType
+    filePathOrBase64: string
   ): Promise<string> {
     let assetFile = path.join(
       this.assetsDirectory,
@@ -53,14 +51,7 @@ export default class AssetFilesService {
     );
     await fs.promises.mkdir(assetFile, { recursive: true });
     assetFile = path.join(assetFile, fileName);
-    if (fileTransferType === 'base64') {
-      await fs.promises.writeFile(
-        assetFile,
-        Buffer.from(filePathOrBase64, 'base64')
-      );
-    } else {
-      await fs.promises.copyFile(filePathOrBase64, assetFile);
-    }
+    await fs.promises.copyFile(filePathOrBase64, assetFile);
     return assetFile;
   }
 
