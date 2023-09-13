@@ -13,7 +13,6 @@ import Note from './Note';
 import Tree from './Tree';
 import AddNoteButton from './AddNoteButton';
 import TrashButton from './TrashButton';
-import Tree2 from './Tree2';
 
 export default function App() {
   const [currentRepository, setCurrentRepository, trash] = useNoteStore(
