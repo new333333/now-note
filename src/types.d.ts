@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-vars */
 /* eslint max-classes-per-file: ["error", 99] */
 import fs from 'fs';
-import { Note, Tag } from 'main/modules/DataModels';
+import { Asset, Note, Tag } from 'main/modules/DataModels';
 
 
 // ***************************************************************************
@@ -114,7 +114,6 @@ export interface Repository {
     parents: Array<Note> | undefined
   ): Promise<Array<Note> | undefined>;
   getBacklinks(key: string): Promise<Array<Note>>;
-  getTags(key: string): Promise<Array<Tag>>;
   search(
     searchText: string,
     limit: number,
@@ -155,6 +154,11 @@ export interface Repository {
   getAssetFileReadStream(assetKey: string): Promise<fs.ReadStream | undefined>;
   getAssetFileLocalPath(assetKey: string): Promise<string | undefined>;
   reindexAll(key: string | undefined): Promise<void>;
+  addImageAsBase64(
+    fileType: string | null,
+    fileName: string,
+    base64: string
+  ): Promise<Asset>;
 }
 
 // ***************************************************************************
@@ -208,4 +212,10 @@ export interface UIController {
   closeRepository(): Promise<void>;
 
   reindexAll(key: string | undefined): Promise<void>;
+
+  addImageAsBase64(
+    fileType: string | null,
+    fileName: string,
+    base64: string
+  ): Promise<Asset>;
 }

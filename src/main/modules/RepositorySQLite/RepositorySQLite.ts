@@ -207,6 +207,44 @@ export default class RepositorySQLite implements Repository {
     return findTag(this, tag);
   }
 
+  async addImageAsBase64(
+    fileType: string | null,
+    fileName: string,
+    base64: string
+  ): Promise<Asset> {
+    const assetModel = await Asset.create({
+      type: fileType,
+      name: fileName,
+      createdBy: this.userName,
+    });
+
+    this.assetFilesService.saveBase64ToFile(assetModel, fileName, base64);
+    return assetModel.dataValues;
+  }
+
+  /*
+  async addLocalFile(
+    fileType: string | null,
+    fileName: string,
+    filePath: string
+  ): Promise<Asset> {
+    const assetModel = await Asset.create({
+      type: fileType,
+      name: fileName,
+      createdBy: this.userName,
+    });
+
+    // eslint-disable-next-line no-unused-vars
+    const assetFile = this.assetFilesService.saveFile(
+      assetModel,
+      fileName,
+      filePathOrBase64,
+      fileTransferType
+    );
+    return assetModel;
+  }
+  */
+
   async addAsset(
     fileType: string | null,
     fileName: string,

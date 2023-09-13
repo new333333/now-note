@@ -1,4 +1,4 @@
-import { Note, Tag } from 'main/modules/DataModels';
+import { Asset, Note, Tag } from 'main/modules/DataModels';
 import { createContext } from 'react';
 import {
   HitMode,
@@ -109,6 +109,19 @@ export class UIControllerContextImpl implements UIController {
   async findTag(tag: string): Promise<string[]> {
     const tags = await this.îpcRenderer.findTag(tag);
     return tags;
+  }
+
+  async addImageAsBase64(
+    fileType: string | null,
+    fileName: string,
+    base64: string
+  ): Promise<Asset> {
+    const asset = await this.îpcRenderer.addImageAsBase64(
+      fileType,
+      fileName,
+      base64
+    );
+    return asset;
   }
 
   async addTag(key: string, tag: string): Promise<string> {

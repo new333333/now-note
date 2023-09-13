@@ -11,7 +11,7 @@ import {
   SearchResultOptions,
   RepositorySettings,
 } from '../types';
-import { Note, Tag } from './modules/DataModels';
+import { Asset, Note, Tag } from './modules/DataModels';
 
 export default class IpcHandler {
   private browserWindow: BrowserWindow;
@@ -173,6 +173,18 @@ export default class IpcHandler {
       'findTag',
       async (_event, tag: string): Promise<string[] | undefined> => {
         return this.nowNote.findTag(tag);
+      }
+    );
+
+    this.ipcMain.handle(
+      'addImageAsBase64',
+      async (
+        _event,
+        fileType: string | null,
+        fileName: string,
+        base64: string
+      ): Promise<Asset | undefined> => {
+        return this.nowNote.addImageAsBase64(fileType, fileName, base64);
       }
     );
 

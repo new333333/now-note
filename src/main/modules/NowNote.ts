@@ -17,7 +17,7 @@ import {
 } from '../../types';
 import RepositorySettingsService from './RepositorySettings/RepositorySettingsService';
 import RepositorySQLiteSetup from './RepositorySQLite/RepositorySQLiteSetup';
-import { Note, SQLITE3_TYPE, Tag } from './DataModels';
+import { Asset, Note, SQLITE3_TYPE, Tag } from './DataModels';
 import AssetFilesService from './AssetFilesService';
 
 export default class NowNote {
@@ -93,7 +93,7 @@ export default class NowNote {
       repositorySQLiteSetup.up();
 
       this.currentRepository = new RepositorySQLite(
-        new AssetFilesService(repositoryPath),
+        new AssetFilesService(path.dirname(repositoryPath)),
         sequelize,
         this.userName
       );
@@ -224,6 +224,21 @@ export default class NowNote {
   async findTag(tag: string): Promise<string[] | undefined> {
     if (this.currentRepository !== undefined) {
       return this.currentRepository.findTag(tag);
+    }
+    return Promise.resolve(undefined);
+  }
+
+  async addImageAsBase64(
+    fileType: string | null,
+    fileName: string,
+    base64: string
+  ): Promise<Asset | undefined> {
+    if (this.currentRepository !== undefined) {
+      return this.currentRepository.addImageAsBase64(
+        fileType,
+        fileName,
+        base64
+      );
     }
     return Promise.resolve(undefined);
   }

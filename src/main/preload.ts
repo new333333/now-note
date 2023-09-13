@@ -11,7 +11,7 @@ import {
   Repository,
   RepositorySettings,
 } from '../types';
-import { Note, Tag } from './modules/DataModels';
+import { Asset, Note, Tag } from './modules/DataModels';
 
 export interface ElectronIPCRenderer {
   ipcRenderer: Repository;
@@ -60,7 +60,7 @@ const electronHandler: ElectronIPCRenderer = {
     ): Promise<SearchResult> =>
       ipcRenderer.invoke('search', searchText, limit, trash, options),
 
-    modifyNote: (note: NoteDTO): Promise<NoteDTO> =>
+    modifyNote: (note: NoteDTO): Promise<Note> =>
       ipcRenderer.invoke('modifyNote', note),
 
     connectRepository: (
@@ -70,6 +70,13 @@ const electronHandler: ElectronIPCRenderer = {
 
     findTag: (tag: string): Promise<string[]> =>
       ipcRenderer.invoke('findTag', tag),
+
+    addImageAsBase64: (
+      fileType: string | null,
+      fileName: string,
+      base64: string
+    ): Promise<Asset> =>
+      ipcRenderer.invoke('addImageAsBase64', fileType, fileName, base64),
 
     addTag: (key: string, tag: string): Promise<string> =>
       ipcRenderer.invoke('addTag', key, tag),

@@ -14,7 +14,19 @@ export default class ProtocolHandler {
     protocol.registerStreamProtocol(
       'nn-asset',
       async (request: any, callback: any) => {
-        const assetKey = request.url.substring('nn-asset:'.length);
+        log.debug('ProtocolHandler.registerStreamProtocol() request=', request);
+
+        let assetKey;
+        if (request.url.indexOf('nn-asset://') > -1) {
+          assetKey = request.url.substring('nn-asset://'.length);
+        } else {
+          assetKey = request.url.substring('nn-asset:'.length);
+        }
+
+        log.debug(
+          'ProtocolHandler.registerStreamProtocol() assetKey=',
+          assetKey
+        );
 
         if (request.headers.Accept.startsWith('image/')) {
           const assetFileReadableStream = await nowNote.getAssetFileReadStream(

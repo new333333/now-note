@@ -5,15 +5,20 @@ import 'react-quill/dist/quill.snow.css';
 import 'quill-mention';
 import 'quill-mention/dist/quill.mention.min.css';
 import htmlEditButton from 'quill-html-edit-button';
+import QuillImageDropAndPaste from 'quill-image-drop-and-paste';
 import { UIControllerContext } from 'renderer/UIControllerContext';
 import { SearchResult, SearchResultOptions, UIController } from 'types';
 import useNoteStore from 'renderer/NoteStore';
 import { SaveTwoTone } from '@ant-design/icons';
 import { useDebouncedCallback } from 'use-debounce';
+import { Asset } from 'main/modules/DataModels';
+import ImageAsset from 'renderer/ImageAsset';
 
-Quill.register({
+ReactQuill.Quill.register({
   'modules/htmlEditButton': htmlEditButton,
 });
+ReactQuill.Quill.register('modules/imageDropAndPaste', QuillImageDropAndPaste);
+ReactQuill.Quill.register('formats/imageAsset', ImageAsset);
 
 export default function NoteDescriptionQuill() {
   const [note, setDescription, updateDetailsNoteKey] = useNoteStore((state) => [
@@ -42,7 +47,7 @@ export default function NoteDescriptionQuill() {
 
   const onChange = useCallback(
     async (content: string, b, source: string) => {
-      log.debug(
+      console.log(
         `NoteDescriptionQuill.onChange() content=${content} b=, source=${source}, d=`,
         b
       );
@@ -108,6 +113,7 @@ export default function NoteDescriptionQuill() {
     'image',
     'background',
     'mention',
+    'imageAsset',
   ];
 
   const mentionSource = useCallback(
@@ -154,6 +160,83 @@ export default function NoteDescriptionQuill() {
     [uiController]
   );
 
+  const imageHandler = useCallback(
+    async (imageDataUrl, type, imageData) => {
+      const fileType = imageData.type;
+      const fileName = imageData.name;
+      const base64 = imageData.dataUrl;
+
+      const asset: Asset = await uiController.addImageAsBase64(
+        fileType,
+        fileName,
+        base64
+      );
+
+      log.debug(`NoteDescriptionQuill imageHandler() asset=`, asset);
+
+      const quill = editorRef.current.editor;
+      console.log(`NoteDescriptionQuill imageHandler() quill=`, quill);
+      let { index } = quill.getSelection() || {};
+      if (index === undefined || index < 0) {
+        index = quill.getLength();
+      }
+      log.debug(`NoteDescriptionQuill imageHandler() index=`, index);
+      const imageSrc = `nn-asset://${asset.key}`;
+      log.debug(`NoteDescriptionQuill imageHandler() imageSrc=`, imageSrc);
+
+      // quill.insertEmbed(
+      //  index,
+      //  'image',
+      //  'aaa://s3-eu-west-1.amazonaws.com/fs.dev-lds.ru/avatars/16dd6beb-c3fd-94e8-cbe5-0699bcea9454.jpg',
+      //  'user'
+      //  );
+
+      quill.insertEmbed(index, 'imageAsset', imageSrc, 'user');
+
+      // imageDataUrl=data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA0AAAACCAIAAAAM38H+AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAAEnQAABJ0Ad5mH3gAAAASdEVYdFNvZnR3YXJlAEdyZWVuc2hvdF5VCAUAAAArSURBVBhXY/gPBpMmTVFQVIGwkUFISHhZWQWQAVUHBBClEASRgwCQiKIKAGmFNmklmg1IAAAAAElFTkSuQmCC
+      // type = image/png
+      /*
+        imageData= {
+          dataUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA0AAAACCAIAAAAM38H+AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAAEnQAABJ0Ad5mH3gAAAASdEVYdFNvZnR3YXJlAEdyZWVuc2hvdF5VCAUAAAArSURBVBhXY/gPBpMmTVFQVIGwkUFISHhZWQWQAVUHBBClEASRgwCQiKIKAGmFNmklmg1IAAAAAElFTkSuQmCC',
+          type: 'image/png',
+          name: 'MzYxNTEzLjk0NDY1MTUzMDUzMTY5NDYwNTM0OTg5OA=.png'
+        }
+      */
+
+/*
+      const blob = imageData.toBlob();
+      const file = imageData.toFile();
+
+      console.log(`NoteDescriptionQuill imageHandler() blob=`, blob);
+      console.log(`NoteDescriptionQuill imageHandler() blob.text=`, await blob.text());
+      console.log(`NoteDescriptionQuill imageHandler() file=`, file);
+*/
+  /*
+      const blob = imageData.toBlob()
+      const file = imageData.toFile()
+
+      // generate a form data
+      const formData = new FormData()
+
+      // append blob data
+      formData.append('file', blob)
+
+      // or just append the file
+      formData.append('file', file)
+
+      // upload image to your server
+      callUploadAPI(your_upload_url, formData, (err, res) => {
+        if (err) return
+        // success? you should return the uploaded image's url
+        // then insert into the quill editor
+        let index = (quill.getSelection() || {}).index
+        if (index === undefined || index < 0) index = quill.getLength()
+        quill.insertEmbed(index, 'image', res.data.image_url, 'user')
+      })*/
+    },
+    [uiController]
+  );
+
   const modules = {
     toolbar: [
       [{ header: [1, 2, false] }],
@@ -173,6 +256,10 @@ export default function NoteDescriptionQuill() {
       source: mentionSource,
     },
     htmlEditButton: {},
+    imageDropAndPaste: {
+      // add an custom image handler
+      handler: imageHandler,
+    },
   };
 
   if (note === undefined) {

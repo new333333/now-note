@@ -12,6 +12,34 @@ export default class AssetFilesService {
     this.assetsDirectory = assetsDirectory;
   }
 
+  async saveBase64ToFile(
+    asset: Asset,
+    fileName: string,
+    base64: string
+  ): Promise<string | undefined> {
+    if (base64 === null && base64 === undefined) {
+      return undefined;
+    }
+    let assetFile = path.join(
+      this.assetsDirectory,
+      this.ASSET_FOLDER_NAME,
+      asset.key
+    );
+    await fs.promises.mkdir(assetFile, { recursive: true });
+    assetFile = path.join(assetFile, fileName);
+
+    await fs.promises.writeFile(
+      assetFile,
+      Buffer.from(
+        base64.indexOf(',') > -1
+          ? base64.substring(base64.indexOf(',') + 1)
+          : base64,
+        'base64'
+      )
+    );
+    return assetFile;
+  }
+
   async saveFile(
     asset: Asset,
     fileName: string,
