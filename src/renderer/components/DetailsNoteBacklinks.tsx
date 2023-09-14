@@ -1,7 +1,7 @@
 import log from 'electron-log';
 import { useCallback, useContext, useEffect, useState } from 'react';
 import { Collapse, Badge } from 'antd';
-import { Note as NoteDataModel } from 'main/modules/DataModels';
+import { Note, Note as NoteDataModel } from 'main/modules/DataModels';
 import { blue } from '@ant-design/colors';
 import { UIController } from 'types';
 import { UIControllerContext } from 'renderer/UIControllerContext';
@@ -10,35 +10,30 @@ import NoteBreadCrumb from './NoteBreadCrumb';
 const { Panel } = Collapse;
 
 interface Props {
-  noteKey: string;
-  initValue?: NoteDataModel[];
+  note: Note;
 }
 
-export default function DetailsNoteBacklinks({ noteKey, initValue }: Props) {
+export default function DetailsNoteBacklinks({ note }: Props) {
   const [backlinks, setBacklinks] = useState<NoteDataModel[] | undefined>([]);
 
   const { uiController }: { uiController: UIController } =
     useContext(UIControllerContext);
 
-  log.debug(`DetailsNoteBacklinks noteKey=${noteKey}`);
+  // log.debug(`DetailsNoteBacklinks noteKey=${noteKey}`);
 
   const fetchBacklinks = useCallback(async () => {
-    log.debug(`DetailsNoteBacklinks.fetchBacklinks() noteKey=${noteKey}`);
-    setBacklinks(await uiController.getBacklinks(noteKey));
-  }, [uiController, noteKey]);
+    // log.debug(`DetailsNoteBacklinks.fetchBacklinks() note.Key=${note.key}`);
+    setBacklinks(await uiController.getBacklinks(note.key));
+  }, [uiController, note]);
 
   useEffect(() => {
-    if (initValue !== undefined) {
-      setBacklinks(initValue);
-    } else {
-      fetchBacklinks();
-    }
-  }, [fetchBacklinks, initValue]);
+    fetchBacklinks();
+  }, [fetchBacklinks]);
 
   return (
     <Collapse bordered={false}>
       <Panel
-        key={noteKey}
+        key={note.key}
         style={{ padding: '0' }}
         header={
           <>
@@ -53,10 +48,10 @@ export default function DetailsNoteBacklinks({ noteKey, initValue }: Props) {
       >
         {backlinks &&
           <ul>
-            {backlinks.map((note) => {
+            {backlinks.map((backlinkNote) => {
               return (
-                <li key={note.key}>
-                  <NoteBreadCrumb note={note} />
+                <li key={backlinkNote.key}>
+                  <NoteBreadCrumb note={backlinkNote} />
                 </li>
               )})}
           </ul>
@@ -66,6 +61,3 @@ export default function DetailsNoteBacklinks({ noteKey, initValue }: Props) {
   );
 }
 
-DetailsNoteBacklinks.defaultProps = {
-  initValue: undefined,
-};

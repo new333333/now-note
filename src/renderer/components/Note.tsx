@@ -51,7 +51,7 @@ export default function Note() {
             <NoteDescriptionQuill />
           </div>
           <div>
-            <DetailsNoteBacklinks noteKey={note.key} />
+            <DetailsNoteBacklinks note={note} />
           </div>
         </>
       )}
