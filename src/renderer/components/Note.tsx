@@ -11,10 +11,12 @@ import DetailsMenu from './DetailsMenu';
 import NoteBreadCrumb from './NoteBreadCrumb';
 import DetailsNoteDone from './DetailsNoteDone';
 
+const noteLog = log.scope('Note');
+
 export default function Note() {
   const [note] = useNoteStore((state) => [state.detailsNote]);
 
-  log.debug(`DetailsNoteBacklinks note=`, note);
+  noteLog.debug(`note=`, note);
 
   return (
     <div id="nn-note">
@@ -25,9 +27,6 @@ export default function Note() {
           </div>
           <Divider style={{ margin: '5px 0' }} />
           <div style={{ display: 'flex', alignItems: 'center' }}>
-            { /*<>
-                <FontAwesomeIcon icon={solid('user-secret')} />
-            </>*/}
             {note.type === 'task' && (
               <div style={{ margin: '0 5px' }}>
                 <DetailsNoteDone />

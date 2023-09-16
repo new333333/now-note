@@ -28,7 +28,7 @@ export default function NoteDescriptionQuill() {
   ]);
   const [saved, setSaved] = useState(true);
 
-  log.debug(`NoteDescriptionQuill note=`, note);
+  // log.debug(`NoteDescriptionQuill note=`, note);
 
   const editorRef = useRef(null);
 

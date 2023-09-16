@@ -13,6 +13,7 @@ import { UIControllerContext } from 'renderer/UIControllerContext';
 import { UIController } from 'types';
 import { useDebouncedCallback } from 'use-debounce';
 import { SaveTwoTone } from '@ant-design/icons';
+import { Note } from 'main/modules/DataModels';
 
 const { TextArea } = Input;
 const { Paragraph } = Typography;
@@ -20,24 +21,26 @@ const { Paragraph } = Typography;
 export default function DetailsTitleComponent() {
   const domRef = useRef(null);
 
-  const [note, setTitle, detailsNoteTitleFocus, setDetailsNoteTitleFocus] =
+  const [note, setTitle, detailsNoteTitleFocus, setDetailsNoteTitleFocus, updateDetailsNote] =
     useNoteStore((state) => [
       state.detailsNote,
       state.setTitle,
       state.detailsNoteTitleFocus,
       state.setDetailsNoteTitleFocus,
+      state.updateDetailsNote,
     ]);
 
   const [saved, setSaved] = useState(true);
   const { uiController }: { uiController: UIController } =
     useContext(UIControllerContext);
 
-  const debounceTitle = useDebouncedCallback((value) => {
+  const debounceTitle = useDebouncedCallback(async (value) => {
     if (value !== null && note !== undefined) {
-      uiController.modifyNote({
+      const noteModified: Note = await uiController.modifyNote({
         key: note.key,
-        title: value || '',
+        title: value,
       });
+      updateDetailsNote(noteModified);
       setSaved(true);
     } else {
       console.log('debounceTitle SKIP');

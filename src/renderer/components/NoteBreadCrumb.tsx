@@ -1,9 +1,10 @@
-import { useCallback, useContext, useEffect, useState } from 'react';
+import log from 'electron-log';
+import { useCallback, useEffect, useState } from 'react';
 import { Breadcrumb } from 'antd';
 import { Note } from 'main/modules/DataModels';
-import { UIController } from 'types';
-import { UIControllerContext } from 'renderer/UIControllerContext';
 import useNoteStore from 'renderer/NoteStore';
+
+const noteBreadCrumbLog = log.scope('NoteBreadCrumb');
 
 interface Props {
   note: Note;
@@ -25,6 +26,9 @@ export default function NoteBreadCrumb({ note }: Props) {
   const [path, setPath] = useState<BreadCrumbElementNote[]>([]);
 
   useEffect(() => {
+    noteBreadCrumbLog.debug(
+      `useEffect() note.keyPath=${note.keyPath}, note.titlePath=${note.titlePath}`
+    );
     const keys = note.keyPath.substring(2, note.keyPath.length - 2).split('/');
     const titles = note.titlePath
       .substring(2, note.titlePath.length - 2)
@@ -43,16 +47,16 @@ export default function NoteBreadCrumb({ note }: Props) {
 
   useEffect(() => {
     // update displayed title, when detailsNote chnages
-    // console.log('NoteBreadCrumb updatedNote=', updatedNote);
+    // log.debug('NoteBreadCrumb updatedNote=', updatedNote);
     if (updatedNote === undefined || !('title' in updatedNote)) {
       return;
     }
     const { key } = updatedNote;
     const { title } = updatedNote;
 
-    // console.log('NoteBreadCrumb key=, title=', key, title);
+    // log.debug('NoteBreadCrumb key=, title=', key, title);
     setParent((prevParenst) => {
-      // console.log('NoteBreadCrumb prevParenst=', prevParenst);
+      // log.debug('NoteBreadCrumb prevParenst=', prevParenst);
       prevParenst.map((note) => {
         if (note.key === key) {
           note.title = title || '';
@@ -63,10 +67,10 @@ export default function NoteBreadCrumb({ note }: Props) {
     });
   }, [updatedNote, setParent]);
 */
-
+/*
   useEffect(() => {
     // update displayed title, when detailsNote chnages
-    console.log('NoteBreadCrumb detailsNote=', detailsNote);
+    noteBreadCrumbLog.debug('NoteBreadCrumb detailsNote=', detailsNote);
     if (detailsNote === undefined || !('title' in detailsNote)) {
       return;
     }
@@ -74,39 +78,34 @@ export default function NoteBreadCrumb({ note }: Props) {
     const { key } = detailsNote;
     const { title } = detailsNote;
 
-    console.log('NoteBreadCrumb key=, title=', key, title);
+    noteBreadCrumbLog.debug('NoteBreadCrumb key=, title=', key, title);
     path.forEach((el: BreadCrumbElementNote) => {
       if (el.key === key) {
         el.title = title;
       }
     });
-    console.log('NoteBreadCrumb path=', path);
+    noteBreadCrumbLog.debug('NoteBreadCrumb path=', path);
     // setPath([...path]);
 
   }, [detailsNote, path]);
-
+*/
   const openNote = useCallback(
     (key: string) => {
+      // log.debug(`NoteBreadCrumb click on key=${key}`);
       updateDetailsNoteKey(key);
     },
     [updateDetailsNoteKey]
   );
 
-  return (
-    <Breadcrumb>
-      {path.map((el: BreadCrumbElementNote, index) => {
-        return (
-          <Breadcrumb.Item
-            key={el.key}
-            href="#"
-            onClick={() => {
-              openNote(el.key);
-            }}
-          >
-            {el.title}
-          </Breadcrumb.Item>
-        );
-      })}
-    </Breadcrumb>
-  );
+  const items = path.map((el: BreadCrumbElementNote) => {
+    return {
+      title: el.title,
+      onClick: () => {
+        // log.debug(`NoteBreadCrumb click on el=`, el);
+        openNote(el.key);
+      },
+    };
+  });
+
+  return <Breadcrumb items={items} />;
 }

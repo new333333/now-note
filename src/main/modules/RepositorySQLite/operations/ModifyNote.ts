@@ -7,6 +7,7 @@ import {
   Title,
 } from '../../DataModels';
 import RepositorySQLite from '../RepositorySQLite';
+import { setKeyAndTitlePath } from '../RepositorySQLiteUtils';
 
 export default async function modifyNote(
   repository: RepositorySQLite,
@@ -56,24 +57,17 @@ export default async function modifyNote(
   if (note.expanded !== undefined) {
     noteToModify.expanded = note.expanded;
   }
-
+  await setKeyAndTitlePath(noteToModify);
   await noteToModify.save();
   await repository.addNoteIndex(noteToModify);
 
   if (prevTitle !== noteToModify.title) {
-    const newTitlePath = `${noteToModify.titlePath.substring(
-      0,
-      noteToModify.titlePath
-        .substring(0, noteToModify.titlePath.length - 2)
-        .lastIndexOf('/') + 1
-    )}${noteToModify.title}/$`;
-
     log.debug(
-      `RepositorySQLite.modifyNote() prevTitlePath=${prevTitlePath}, newTitlePath=${newTitlePath}, noteToModify.keyPath=${noteToModify.keyPath}`
+      `RepositorySQLite.modifyNote() prevTitlePath=${prevTitlePath}, noteToModify.titlePath=${noteToModify.titlePath}, noteToModify.keyPath=${noteToModify.keyPath}`
     );
     await repository.updateNoteTitlePath(
       prevTitlePath,
-      newTitlePath,
+      noteToModify.titlePath,
       noteToModify.keyPath
     );
   }
