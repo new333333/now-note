@@ -1,8 +1,8 @@
 import { useState, useEffect, useContext, useCallback } from 'react';
 import { Input, AutoComplete } from 'antd';
-import { SearchResultOptions, UIController } from 'types';
-import { UIControllerContext } from 'renderer/UIControllerContext';
-import useNoteStore from 'renderer/NoteStore';
+import { SearchResultOptions } from 'types';
+import useNoteStore from 'renderer/GlobalStore';
+import { nowNoteAPI } from 'renderer/NowNoteAPI';
 
 export default function SearchNotes() {
   const [trash, updateDetailsNoteKey] = useNoteStore((state) => [
@@ -28,9 +28,6 @@ export default function SearchNotes() {
       };
     });
   }
-
-  const { uiController }: { uiController: UIController } =
-    useContext(UIControllerContext);
 
   const openNote = useCallback(
     (noteKey: string) => {
@@ -64,7 +61,7 @@ export default function SearchNotes() {
         offset: 0,
       };
 
-      const searchResult = await uiController.search(
+      const searchResult = await nowNoteAPI.search(
         searchText,
         20,
         trash,
@@ -76,7 +73,7 @@ export default function SearchNotes() {
       setOptionsAutoComplete(options);
       setStartSearchPosition(20);
     },
-    [trash, uiController]
+    [trash]
   );
 
   const onPopupScroll = useCallback(
@@ -96,7 +93,7 @@ export default function SearchNotes() {
           offset: startSearchPosition + 20,
         };
 
-        const searchResult = await uiController.search(
+        const searchResult = await nowNoteAPI.search(
           valueAutoComplete,
           20,
           trash,
@@ -119,7 +116,6 @@ export default function SearchNotes() {
       optionsAutoComplete,
       startSearchPosition,
       trash,
-      uiController,
       valueAutoComplete,
     ]
   );

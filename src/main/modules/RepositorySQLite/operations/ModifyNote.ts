@@ -9,12 +9,14 @@ import {
 import RepositorySQLite from '../RepositorySQLite';
 import { setKeyAndTitlePath } from '../RepositorySQLiteUtils';
 
+const modifyNotenLog = log.scope('RepositorySQLite.modifyNote');
+
 export default async function modifyNote(
   repository: RepositorySQLite,
   note: NoteDTO,
   skipVersioning: boolean = false
 ): Promise<Note | undefined> {
-  log.debug('RepositorySQLite.modifyNote() note:', note);
+  modifyNotenLog.debug(`start note=${note}`);
   const noteToModify = await Note.findByPk(note.key);
   if (noteToModify === null) {
     throw new NoteNotFoundByKeyError(note.key);
@@ -57,7 +59,9 @@ export default async function modifyNote(
   if (note.expanded !== undefined) {
     noteToModify.expanded = note.expanded;
   }
-  await setKeyAndTitlePath(noteToModify);
+  if (prevTitle !== noteToModify.title) {
+    await setKeyAndTitlePath(noteToModify);
+  }
   await noteToModify.save();
   await repository.addNoteIndex(noteToModify);
 
@@ -71,6 +75,6 @@ export default async function modifyNote(
       noteToModify.keyPath
     );
   }
-
+  modifyNotenLog.debug(`ready`);
   return noteToModify.dataValues;
 }

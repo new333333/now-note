@@ -1,9 +1,8 @@
 import log from 'electron-log';
 import { useContext, useCallback } from 'react';
 import { Typography, Tooltip, Button } from 'antd';
-import useNoteStore from 'renderer/NoteStore';
-import { UIController } from 'types';
-import { UIControllerContext } from 'renderer/UIControllerContext';
+import useNoteStore from 'renderer/GlobalStore';
+import { nowNoteAPI } from 'renderer/NowNoteAPI';
 
 const { Link } = Typography;
 
@@ -17,13 +16,10 @@ export default function Footer() {
     setCurrentRepository(undefined);
   }, [setCurrentRepository]);
 
-  const { uiController }: { uiController: UIController } =
-    useContext(UIControllerContext);
-
   const reindexAllHandler = useCallback(() => {
     log.debug('AddNoteButton.reindexAllHandler call');
-    uiController.reindexAll(undefined);
-  }, [uiController]);
+    nowNoteAPI.reindexAll(undefined);
+  }, []);
 
   return (
     <div id="nn-footer">

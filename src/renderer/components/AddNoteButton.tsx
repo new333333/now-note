@@ -1,7 +1,7 @@
 import log from 'electron-log';
 import { PlusOutlined } from '@ant-design/icons';
 import { Button, Space } from 'antd';
-import useNoteStore from 'renderer/NoteStore';
+import useNoteStore from 'renderer/GlobalStore';
 
 export default function AddNoteButton() {
   const [trash, addTreeNoteOnNoteKey, setAddTreeNoteOnNoteKey] = useNoteStore(

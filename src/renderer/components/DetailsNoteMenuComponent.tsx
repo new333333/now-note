@@ -8,18 +8,22 @@ import {
   UnorderedListOutlined,
   DeleteFilled,
 } from '@ant-design/icons';
-import { NoteDTO, UIController } from 'types';
-import { UIControllerContext } from 'renderer/UIControllerContext';
 import { Note } from 'main/modules/DataModels';
-import useNoteStore from 'renderer/NoteStore';
+import useNoteStore from 'renderer/GlobalStore';
+import useDetailsNoteStore from 'renderer/DetailsNoteStore';
+import { nowNoteAPI } from 'renderer/NowNoteAPI';
 
 const { useToken } = theme;
 
-interface Props {
-  note: Note;
-}
 
-export default function DetailsMenu({ note }: Props) {
+export default function DetailsNoteMenuComponent() {
+  const noteKey = useDetailsNoteStore((state) => state.noteKey);
+  const trash = useDetailsNoteStore((state) => state.trash);
+  const updatedAt = useDetailsNoteStore((state) => state.updatedAt);
+  const createdAt = useDetailsNoteStore((state) => state.createdAt);
+  const createdBy = useDetailsNoteStore((state) => state.createdBy);
+  const parent = useDetailsNoteStore((state) => state.parent);
+
   const [updateUpdatedNote, setReloadTreeNoteKey, updateDetailsNote, setAddTreeNoteOnNoteKey] = useNoteStore((state) => [
     state.updateUpdatedNote,
     state.setReloadTreeNoteKey,
@@ -27,12 +31,9 @@ export default function DetailsMenu({ note }: Props) {
     state.setAddTreeNoteOnNoteKey,
   ]);
 
-  const { uiController }: { uiController: UIController } =
-    useContext(UIControllerContext);
-
   const menuItems = [];
-  if (note.key !== undefined) {
-    if (note !== undefined && !note.trash) {
+  if (noteKey !== undefined) {
+    if (!trash) {
       menuItems.push({
         key: 'add_note',
         label: 'Add note',
@@ -45,16 +46,11 @@ export default function DetailsMenu({ note }: Props) {
       icon: <ApartmentOutlined />,
     });
     menuItems.push({
-      key: 'open_list',
-      label: 'List sub notes',
-      icon: <UnorderedListOutlined />,
-    });
-    menuItems.push({
       key: 'delete',
-      label: note.trash ? 'Delete Permanently' : 'Move To Trash',
+      label: trash ? 'Delete Permanently' : 'Move To Trash',
       icon: <DeleteFilled />,
     });
-    if (note.trash) {
+    if (trash) {
       menuItems.push({
         key: 'restore',
         label: 'Restore',
@@ -88,36 +84,33 @@ export default function DetailsMenu({ note }: Props) {
 
   const handleClickMenu = useCallback(
     (option): MenuProps['onClick'] => {
-      console.log('handleNoteMenu, note.key=, option=', note.key, option);
+      console.log('handleNoteMenu, noteKey=, option=', noteKey, option);
       const key = option.key;
       console.log('handleNoteMenu, key=', key);
       if (key === 'add_note') {
-        setAddTreeNoteOnNoteKey(note.key);
+        setAddTreeNoteOnNoteKey(noteKey);
       } else if (key === 'open_tree') {
-        uiController.openNoteInTree(note.key);
-      } else if (key === 'open_list') {
-        uiController.openNoteInList(note.key);
+        nowNoteAPI.openNoteInTree(noteKey);
       } else if (key === 'delete') {
-        console.log("handleNoteMenu, delete note=", note);
-        uiController.moveNoteToTrash(note.key);
-        setReloadTreeNoteKey(note.parent);
+        console.log("handleNoteMenu, delete noteKey=", noteKey);
+        nowNoteAPI.moveNoteToTrash(noteKey);
+        setReloadTreeNoteKey(parent);
         updateDetailsNote(undefined);
       } else if (key === 'restore') {
-        uiController.restore(note.key);
+        nowNoteAPI.restore(noteKey);
       } else if (key === 'history') {
-        uiController.showHistory(note.key);
+        nowNoteAPI.showHistory(noteKey);
       }
     },
     [
-      note,
+      noteKey,
       setAddTreeNoteOnNoteKey,
       setReloadTreeNoteKey,
-      uiController,
       updateDetailsNote,
     ]
   );
 
-  if (note === undefined) {
+  if (noteKey === null) {
     return null;
   }
 
@@ -129,10 +122,10 @@ export default function DetailsMenu({ note }: Props) {
         <div style={contentStyle}>
           {React.cloneElement(menu as React.ReactElement, { style: menuStyle })}
           <div style={{padding: 10}}>
-                <div className="nn-note-metadata">Last modified: {note.updatedAt.toLocaleString()}</div>
-                <div className="nn-note-metadata">Created on: {note.createdAt.toLocaleString()}</div>
-                <div className="nn-note-metadata">Created by: {note.createdBy}</div>
-                <div className="nn-note-metadata">Id: {note.key}</div>
+                <div className="nn-note-metadata">Last modified: {updatedAt.toLocaleString()}</div>
+                <div className="nn-note-metadata">Created on: {createdAt.toLocaleString()}</div>
+                <div className="nn-note-metadata">Created by: {createdBy}</div>
+                <div className="nn-note-metadata">Id: {noteKey}</div>
               </div>
         </div>
       )}>

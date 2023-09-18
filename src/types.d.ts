@@ -158,7 +158,7 @@ export interface Repository {
 // ***************************************************************************
 // ***************************************************************************
 
-export interface UIController {
+export interface NowNoteAPI {
   getNoteWithDescription(key: string): Promise<Note | undefined>;
   getChildren(
     key: string | null | undefined,

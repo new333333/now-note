@@ -3,11 +3,16 @@ import * as cheerio from 'cheerio';
 import RepositorySQLite from '../RepositorySQLite';
 import { Note } from '../../DataModels';
 
+const prepareDescriptionToReadLog = log.scope(
+  'RepositorySQLite.prepareDescriptionToReadLog'
+);
+
 // support old repository implementations
 async function prepareInlineImagesPathToRead(
   repository: RepositorySQLite,
   html: string | undefined
 ): Promise<string> {
+  prepareDescriptionToReadLog.debug(`prepareInlineImagesPathToRead`);
   if (html === undefined) {
     return '';
   }
@@ -30,6 +35,8 @@ async function prepareAttachmentsPathToRead(
   repository: RepositorySQLite,
   htmltext: string
 ): Promise<string> {
+  prepareDescriptionToReadLog.debug(`prepareAttachmentsPathToRead`);
+
   if (htmltext === undefined) {
     return '';
   }
@@ -51,6 +58,8 @@ async function prepareAttachmentsPathToRead(
 }
 
 async function fixOldLinksToRead(htmlText: string): Promise<string> {
+  prepareDescriptionToReadLog.debug(`fixOldLinksToRead start`);
+
   if (htmlText === undefined) {
     return '';
   }
@@ -67,7 +76,7 @@ async function fixOldLinksToRead(htmlText: string): Promise<string> {
       );
     }
   }
-
+  prepareDescriptionToReadLog.debug(`fixOldLinksToRead ready`);
   return $htmlCntainer.html();
 }
 
@@ -75,6 +84,8 @@ async function prepareLinksToRead(
   repository: RepositorySQLite,
   htmlTextParam: string
 ): Promise<string> {
+  prepareDescriptionToReadLog.debug(`prepareLinksToRead start`);
+
   if (
     htmlTextParam === null ||
     htmlTextParam === undefined ||
@@ -92,8 +103,17 @@ async function prepareLinksToRead(
     if ($linkToNote.attr('data-id')) {
       const linkToNoteKey = $linkToNote.attr('data-id');
       // eslint-disable-next-line no-await-in-loop
+      prepareDescriptionToReadLog.debug(
+        `prepareLinksToRead reload link to ${linkToNoteKey}`
+      );
+
       const note = await Note.findByPk(linkToNoteKey);
-      if (note) {
+      if (
+        note !== null &&
+        note.titlePath !== undefined &&
+        note.titlePath !== null &&
+        note.titlePath.length > 0
+      ) {
         let shoWNotePath = note.titlePath.substring(
           2,
           note.titlePath.length - 2
@@ -106,6 +126,7 @@ async function prepareLinksToRead(
       }
     }
   }
+  prepareDescriptionToReadLog.debug(`prepareLinksToRead ready`);
 
   return $htmlCntainer.html();
 }
@@ -114,11 +135,13 @@ export default async function prepareDescriptionToRead(
   repository: RepositorySQLite,
   descriptionParam: string
 ) {
+  prepareDescriptionToReadLog.debug(`start`);
   let description = await prepareInlineImagesPathToRead(
     repository,
     descriptionParam
   );
   description = await prepareAttachmentsPathToRead(repository, description);
   description = await prepareLinksToRead(repository, description);
+  prepareDescriptionToReadLog.debug(`ready`);
   return description;
 }

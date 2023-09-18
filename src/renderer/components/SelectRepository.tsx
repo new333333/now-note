@@ -1,9 +1,9 @@
 import { useState, useCallback, useContext, useEffect } from 'react';
 import { Button, List, message } from 'antd';
 import log from 'electron-log/renderer';
-import { Error, UIController, UserSettingsRepository } from 'types';
-import { UIControllerContext } from 'renderer/UIControllerContext';
-import useNoteStore from 'renderer/NoteStore';
+import { Error, UserSettingsRepository } from 'types';
+import useNoteStore from 'renderer/GlobalStore';
+import { nowNoteAPI } from 'renderer/NowNoteAPI';
 
 export default function SelectRepository() {
   const [repositories, setRepositories] = useState<UserSettingsRepository[]>(
@@ -15,12 +15,9 @@ export default function SelectRepository() {
 
   const [messageApi, contextHolder] = message.useMessage();
 
-  const { uiController }: { uiController: UIController } =
-    useContext(UIControllerContext);
-
   const fetchRepositories = useCallback(async () => {
-    setRepositories(await uiController.getRepositories());
-  }, [uiController]);
+    setRepositories(await nowNoteAPI.getRepositories());
+  }, []);
 
   useEffect(() => {
     fetchRepositories();
@@ -31,15 +28,15 @@ export default function SelectRepository() {
       log.debug('SelectRepository.handleClickRepository path:', path);
 
       const repository: UserSettingsRepository | undefined =
-        await uiController.connectRepository(path);
+        await nowNoteAPI.connectRepository(path);
       setCurrentRepository(repository);
     },
-    [setCurrentRepository, uiController]
+    [setCurrentRepository]
   );
 
   const selectRepositoryFolder = useCallback(async () => {
     const repositoryOrError: UserSettingsRepository | Error | undefined =
-      await uiController.selectRepositoryFolder();
+      await nowNoteAPI.selectRepositoryFolder();
     log.debug('selectRepositoryFolder repositoryOrError:', repositoryOrError);
     if (repositoryOrError !== undefined && 'message' in repositoryOrError) {
       messageApi.open({
@@ -53,7 +50,7 @@ export default function SelectRepository() {
       );
       setCurrentRepository(repositoryOrError);
     }
-  }, [messageApi, setCurrentRepository, uiController]);
+  }, [messageApi, setCurrentRepository]);
 
   return (
     <div className="nn-center-screen">

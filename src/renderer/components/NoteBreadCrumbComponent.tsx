@@ -1,47 +1,21 @@
 import log from 'electron-log';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, useContext } from 'react';
 import { Breadcrumb } from 'antd';
+import useDetailsNoteStore from 'renderer/DetailsNoteStore';
 import { Note } from 'main/modules/DataModels';
-import useNoteStore from 'renderer/NoteStore';
+import { nowNoteAPI } from 'renderer/NowNoteAPI';
 
-const noteBreadCrumbLog = log.scope('NoteBreadCrumb');
+const noteBreadCrumbLog = log.scope('NoteBreadCrumbComponent');
 
 interface Props {
-  note: Note;
+  keyPath: string;
+  titlePath: string;
 }
 
-interface BreadCrumbElementNote {
-  key: string;
-  title: string;
-}
+export default function NoteBreadCrumbComponent({ keyPath, titlePath }: Props) {
+  const updateNote = useDetailsNoteStore((state) => state.updateNote);
+  const updateBacklinks = useDetailsNoteStore((state) => state.updateBacklinks);
 
-export default function NoteBreadCrumb({ note }: Props) {
-  const [updateDetailsNoteKey, updatedNote, detailsNote] = useNoteStore(
-    (state) => [
-      state.updateDetailsNoteKey,
-      state.updatedNote,
-      state.detailsNote,
-    ]
-  );
-  const [path, setPath] = useState<BreadCrumbElementNote[]>([]);
-
-  useEffect(() => {
-    noteBreadCrumbLog.debug(
-      `useEffect() note.keyPath=${note.keyPath}, note.titlePath=${note.titlePath}`
-    );
-    const keys = note.keyPath.substring(2, note.keyPath.length - 2).split('/');
-    const titles = note.titlePath
-      .substring(2, note.titlePath.length - 2)
-      .split('/');
-    const newPath: BreadCrumbElementNote[] = [];
-    keys.forEach((key, index) => {
-      newPath.push({
-        key,
-        title: titles[index],
-      });
-    });
-    setPath(newPath);
-  }, [note.keyPath, note.titlePath]);
 
   /*
 
@@ -90,21 +64,41 @@ export default function NoteBreadCrumb({ note }: Props) {
   }, [detailsNote, path]);
 */
   const openNote = useCallback(
-    (key: string) => {
+    async (key: string) => {
       // log.debug(`NoteBreadCrumb click on key=${key}`);
-      updateDetailsNoteKey(key);
+      const note: Note | undefined = await nowNoteAPI.getNoteWithDescription(
+        key
+      );
+      if (note !== undefined) {
+        updateNote(note);
+        updateBacklinks(await nowNoteAPI.getBacklinks(key));
+      }
     },
-    [updateDetailsNoteKey]
+    [updateNote, updateBacklinks]
   );
 
-  const items = path.map((el: BreadCrumbElementNote) => {
-    return {
-      title: el.title,
+  if (
+    keyPath === null ||
+    keyPath === undefined ||
+    keyPath.length === 0 ||
+    titlePath === null ||
+    titlePath === undefined ||
+    titlePath.length === 0
+  ) {
+    return null;
+  }
+
+  const items = [];
+  const keys = keyPath.substring(2, keyPath.length - 2).split('/');
+  const titles = titlePath.substring(2, titlePath.length - 2).split('/');
+  keys.forEach((key, index) => {
+    items.push({
+      title: titles[index],
+      href: '#',
       onClick: () => {
-        // log.debug(`NoteBreadCrumb click on el=`, el);
-        openNote(el.key);
+        openNote(key);
       },
-    };
+    });
   });
 
   return <Breadcrumb items={items} />;

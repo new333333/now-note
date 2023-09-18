@@ -1,6 +1,5 @@
 import { Note } from 'main/modules/DataModels';
 import { create } from 'zustand';
-import { uiController } from 'renderer/UIControllerContext';
 import { UserSettingsRepository } from 'types';
 
 type State = {
@@ -9,9 +8,6 @@ type State = {
 
   // currnetly connecter repository
   currentRepository: UserSettingsRepository | undefined;
-
-  // note displayed in details view
-  detailsNote: Note | undefined;
 
   // note is not displayed, it's used as listener for modification of notes in tree or breadcrums (in or out)
   // used also as new add note to notify tree
@@ -29,8 +25,6 @@ type State = {
 
 type Action = {
   setTrash: (value: boolean) => void;
-  updateDetailsNoteKey: (detailsNoteKey: string) => void;
-  updateDetailsNote: (note: Note | undefined) => void;
 
   updateUpdatedNote: (note: Note) => void;
 
@@ -70,25 +64,6 @@ const useNoteStore = create<State & Action>((set, get) => ({
     });
   },
 
-  updateDetailsNoteKey: async (key) => {
-    if (get().detailsNote === undefined || get().detailsNote.key !== key) {
-      const note: Note | undefined = await uiController.getNoteWithDescription(
-        key
-      );
-      set({
-        detailsNote: note,
-      });
-    } else {
-      // console.log('updateDetailsNoteKey SKIP set() its the same note');
-    }
-  },
-
-  updateDetailsNote: (note: Note | undefined) => {
-    set({
-      detailsNote: note,
-    });
-  },
-
   updateUpdatedNote: (note: Note) => {
     set({
       updatedNote: note,
@@ -97,129 +72,66 @@ const useNoteStore = create<State & Action>((set, get) => ({
 
   setTitle: (key: string, title: string) => set((state) => {
     // console.log('Store setTitle');
-    if (get().detailsNote !== undefined && get().detailsNote.key === key) {
-      return {
-        detailsNote: {
-          ...state.detailsNote,
-          title: title,
-        }
-      };
-    } else {
-      return {
-        updatedNote: {
-          key,
-          title,
-        }
-      };
+    return {
+      updatedNote: {
+        key,
+        title,
+      }
     };
   }),
 
   setExpanded: (key: string, expanded: boolean) => set((state) => {
-    if (get().detailsNote !== undefined && get().detailsNote.key === key) {
-      return {
-        detailsNote: {
-          ...state.detailsNote,
-          expanded: expanded,
-        }
-      };
-    } else {
-      return {
-        updatedNote: {
-          key,
-          expanded,
-        }
-      };
+    return {
+      updatedNote: {
+        key,
+        expanded,
+      }
     };
   }),
 
   setDescription: (key: string, description: string) => set((state) => {
     // console.log('Store setTitle');
-    if (get().detailsNote !== undefined && get().detailsNote.key === key) {
-      return {
-        detailsNote: {
-          ...state.detailsNote,
-          description: description,
-        }
-      };
-    } else {
-      return {
-        updatedNote: {
-          key,
-          description,
-        }
-      };
+    return {
+      updatedNote: {
+        key,
+        description,
+      }
     };
   }),
 
   setType: (key: string, type: string) => set((state) => {
-    if (get().detailsNote !== undefined && get().detailsNote.key === key) {
-      return {
-        detailsNote: {
-          ...state.detailsNote,
-          type: type,
-        }
-      };
-    } else {
-      return {
-        updatedNote: {
-          key,
-          type,
-        }
-      };
+    return {
+      updatedNote: {
+        key,
+        type,
+      }
     };
   }),
 
   setPriority: (key: string, priority: number) => set((state) => {
-    if (get().detailsNote !== undefined && get().detailsNote.key === key) {
-      return {
-        detailsNote: {
-          ...state.detailsNote,
-          priority: priority,
-        }
-      };
-    } else {
-      return {
-        updatedNote: {
-          key,
-          priority,
-        }
-      };
+    return {
+      updatedNote: {
+        key,
+        priority,
+      }
     };
   }),
 
   setTags: (key: string, tags: string) => set((state) => {
-    if (get().detailsNote !== undefined && get().detailsNote.key === key) {
-      return {
-        detailsNote: {
-          ...state.detailsNote,
-          tags: tags,
-        }
-      };
-    } else {
-      return {
-        updatedNote: {
-          key,
-          tags,
-        }
-      };
+    return {
+      updatedNote: {
+        key,
+        tags,
+      }
     };
   }),
 
   setDone: (key: string, done: boolean) => set((state) => {
-    if (get().detailsNote !== undefined && get().detailsNote.key === key) {
-      return {
-        detailsNote: {
-          ...state.detailsNote,
-          done: done,
-        }
-      };
-    } else {
-      return {
-        updatedNote: {
-          key,
-          done,
-        }
-      };
+    return {
+      updatedNote: {
+        key,
+        done,
+      }
     };
   }),
 

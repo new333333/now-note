@@ -1,9 +1,4 @@
-import {
-  useCallback,
-  useContext,
-  useEffect,
-  useRef,
-} from 'react';
+import { useCallback, useContext, useEffect, useRef } from 'react';
 import log from 'electron-log';
 import 'jquery.fancytree/dist/skin-win8/ui.fancytree.min.css';  // CSS or LESS
 import '../css/jquery.fancytree-now-note.css';
@@ -21,49 +16,233 @@ import ReactDOMServer from 'react-dom/server';
 //import 'font-awesome/css/font-awesome.min.css';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import { blue } from '@ant-design/colors';
-import { Note as NoteDataModel } from 'main/modules/DataModels';
-import { NoteDTO, UIController } from 'types';
-import { UIControllerContext } from 'renderer/UIControllerContext';
-import useNoteStore from 'renderer/NoteStore';
+import { Note, Note as NoteDataModel } from 'main/modules/DataModels';
+import useNoteStore from 'renderer/GlobalStore';
+import useDetailsNoteStore from 'renderer/DetailsNoteStore';
+import { nowNoteAPI } from 'renderer/NowNoteAPI';
 
+const treeLog = log.scope('Tree');
 
-export default function Tree() {
+export default function TreeComponent() {
   const domRef = useRef(null);
   const fancyTreeRef = useRef(null);
 
-  const { uiController }: { uiController: UIController } =
-    useContext(UIControllerContext);
+  const trash = useNoteStore((state) => state.trash);
+  const addTreeNoteOnNoteKey = useNoteStore(
+    (state) => state.addTreeNoteOnNoteKey
+  );
+  const setAddTreeNoteOnNoteKey = useNoteStore(
+    (state) => state.setAddTreeNoteOnNoteKey
+  );
+  const reloadTreeNoteKey = useNoteStore((state) => state.reloadTreeNoteKey);
+  const setReloadTreeNoteKey = useNoteStore(
+    (state) => state.setReloadTreeNoteKey
+  );
 
+  const detailsNoteKey = useDetailsNoteStore((state) => state.noteKey);
+  const detailsNoteDone = useDetailsNoteStore((state) => state.done);
+  const detailsNoteTitle = useDetailsNoteStore((state) => state.title);
+  const detailsNoteType = useDetailsNoteStore((state) => state.type);
+
+  const detailsNoteUpdateDone = useDetailsNoteStore(
+    (state) => state.updateDone
+  );
+  const detailsNoteUpdateNote = useDetailsNoteStore(
+    (state) => state.updateNote
+  );
+  const detailsNoteUpdateNoteProperties = useDetailsNoteStore(
+    (state) => state.updateNoteProperties
+  );
+  const detailsNoteUpdateBacklinks = useDetailsNoteStore(
+    (state) => state.updateBacklinks
+  );
+  const detailsNoteUpdateExpanded = useDetailsNoteStore(
+    (state) => state.updateExpanded
+  );
+
+  // new details note selected
+  // e.g. DetailsNoteBeardCrumbComponent onClick or Description link
+  useEffect(() => {
+    (async () => {
+      treeLog.debug(`useEffect() on detailsNoteKey=${detailsNoteKey}`);
+      if (
+        detailsNoteKey === undefined ||
+        detailsNoteKey === null ||
+        fancyTreeRef.current === null
+      ) {
+        return;
+      }
+      const node = fancyTreeRef.current.getNodeByKey(detailsNoteKey);
+      if (node === undefined || node === null) {
+        return;
+      }
+      treeLog.debug(
+        `useEffect() on detailsNoteKey=${detailsNoteKey} => node=${node}`
+      );
+      node.setActive();
+      node.setFocus();
+    })();
+  }, [detailsNoteKey]);
+
+  // set done on details note task
+  // by DetailsNoteDoneComponent onClick
+  useEffect(() => {
+    (async () => {
+      treeLog.debug(
+        `useEffect() on detailsNoteKey=${detailsNoteKey} and detailsNoteDone=${detailsNoteDone}`
+      );
+      if (
+        detailsNoteKey === undefined ||
+        detailsNoteKey === null ||
+        detailsNoteDone === undefined ||
+        detailsNoteDone === null ||
+        fancyTreeRef.current === null
+      ) {
+        return;
+      }
+      const node = fancyTreeRef.current.getNodeByKey(detailsNoteKey);
+      if (node === undefined || node === null) {
+        return;
+      }
+      treeLog.debug(
+        `useEffect() on detailsNoteKey=${detailsNoteKey} and detailsNoteDone=${detailsNoteDone} => node.selected=${node.selected}`
+      );
+      node.selected = detailsNoteDone;
+      node.renderTitle();
+    })();
+  }, [detailsNoteDone, detailsNoteKey]);
+
+  // details note title changed
+  // by DetailsNoteTitleComponent on debounce
+  useEffect(() => {
+    (async () => {
+      treeLog.debug(
+        `useEffect() on detailsNoteKey=${detailsNoteKey} and detailsNoteTitle=${detailsNoteTitle}`
+      );
+      if (
+        detailsNoteKey === undefined ||
+        detailsNoteKey === null ||
+        detailsNoteTitle === undefined ||
+        detailsNoteTitle === null ||
+        fancyTreeRef.current === null
+      ) {
+        return;
+      }
+      const node = fancyTreeRef.current.getNodeByKey(detailsNoteKey);
+      if (node === undefined || node === null) {
+        return;
+      }
+      treeLog.debug(
+        `useEffect() on detailsNoteKey=${detailsNoteKey} and detailsNoteTitle=${detailsNoteTitle} => node.selected=${node.selected}`
+      );
+      node.title = detailsNoteTitle;
+      node.renderTitle();
+    })();
+  }, [detailsNoteTitle, detailsNoteKey]);
+
+  // details note type changed
+  // by DetailsNoteTypeComponent on handleClickMenu
+  useEffect(() => {
+    (async () => {
+      treeLog.debug(
+        `useEffect() on detailsNoteKey=${detailsNoteKey} and detailsNoteType=${detailsNoteType}`
+      );
+      if (
+        detailsNoteKey === undefined ||
+        detailsNoteKey === null ||
+        detailsNoteType === undefined ||
+        detailsNoteType === null ||
+        fancyTreeRef.current === null
+      ) {
+        return;
+      }
+      const node = fancyTreeRef.current.getNodeByKey(detailsNoteKey);
+      if (node === undefined || node === null) {
+        return;
+      }
+      treeLog.debug(
+        `useEffect() on detailsNoteKey=${detailsNoteKey} and detailsNoteType=${detailsNoteType} => node.checkbox=${node.checkbox}`
+      );
+      node.checkbox =
+        detailsNoteType !== undefined &&
+        detailsNoteType !== null &&
+        detailsNoteType === 'task';
+      node.renderTitle();
+    })();
+  }, [detailsNoteType, detailsNoteKey]);
+
+  // on change any node tile
+  const handleChangeTitle = useCallback(
+    async (key: string, title: string) => {
+      const modifiedNote = await nowNoteAPI.modifyNote({
+        key,
+        title,
+      });
+      detailsNoteUpdateNoteProperties(modifiedNote);
+      detailsNoteUpdateBacklinks(await nowNoteAPI.getBacklinks(key));
+    },
+    [detailsNoteUpdateBacklinks, detailsNoteUpdateNoteProperties]
+  );
+
+  // on open/close node
+  const handleChangeExpanded = useCallback(
+    async (key: string, expanded: boolean) => {
+      await nowNoteAPI.modifyNote({
+        key,
+        expanded,
+      });
+      detailsNoteUpdateExpanded(key, expanded);
+    },
+    [detailsNoteUpdateExpanded]
+  );
+
+  // on change task done
+  const handleChangeDone = useCallback(
+    (key: string, done: boolean) => {
+      treeLog.debug(`handleChangeDone key=${key}, done=${done}`);
+      detailsNoteUpdateDone(key, done);
+      nowNoteAPI.modifyNote({
+        key,
+        done,
+      });
+    },
+    [detailsNoteUpdateDone]
+  );
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  /*
   const [
-    detailsNote,
     updatedNote,
-    updateDetailsNoteKey,
-    updateDetailsNote,
-    setDone,
-    setTitle,
-    setExpanded,
     setDetailsNoteTitleFocus,
     updateUpdatedNote,
-    setReloadTreeNoteKey,
-    reloadTreeNoteKey,
-    addTreeNoteOnNoteKey,
-    setAddTreeNoteOnNoteKey,
-    trash,
   ] = useNoteStore((state) => [
-    state.detailsNote,
     state.updatedNote,
-    state.updateDetailsNoteKey,
-    state.updateDetailsNote,
-    state.setDone,
-    state.setTitle,
-    state.setExpanded,
     state.setDetailsNoteTitleFocus,
     state.updateUpdatedNote,
-    state.setReloadTreeNoteKey,
-    state.reloadTreeNoteKey,
-    state.addTreeNoteOnNoteKey,
-    state.setAddTreeNoteOnNoteKey,
-    state.trash,
   ]);
 
   const noteToNode = useCallback((note: NoteDataModel, treeNode) => {
@@ -92,26 +271,27 @@ export default function Tree() {
       }
     });
 
-    /*
-    if ('title' in note) {
-      node.title = note.title;
-    }
-    node.data = note.data || {};
-    if ('description' in note) {
-      node.data.description = note.description;
-    }
-    if ('modifiedBy' in note) {
-      node.data.modifiedBy = note.modifiedBy;
-    }
-    node.data.modifiedOn = note.modifiedOn;
-    node.data.createdBy = note.createdBy;
-    node.data.createdOn = note.createdOn;
-    node.data.done = note.done;
-    node.data.priority = note.priority;
-    node.data.type = note.type;
-    node.data.trash = note.trash;
+
+    // if ('title' in note) {
+    //   node.title = note.title;
+    // }
+    // node.data = note.data || {};
+    // if ('description' in note) {
+    //   node.data.description = note.description;
+    // }
+    // if ('modifiedBy' in note) {
+    //   node.data.modifiedBy = note.modifiedBy;
+    // }
+    // node.data.modifiedOn = note.modifiedOn;
+    // node.data.createdBy = note.createdBy;
+    // node.data.createdOn = note.createdOn;
+    // node.data.done = note.done;
+    // node.data.priority = note.priority;
+    // node.data.type = note.type;
+    // node.data.trash = note.trash;
+
     // node.data.tags = note.tags;
-    node.data.linkToKey = note.linkToKey;
+    // node.data.linkToKey = note.linkToKey;
     // node.data.linkedNote = note.linkedNote;
     // node.lazy = true;
     // if (node.data.linkedNote) {
@@ -120,7 +300,7 @@ export default function Tree() {
     // if (node.data.linkedNote || !note.hasChildren) {
     //  node.children = [];
     // }
-    */
+
 
     node.unselectable = note.trash;
 
@@ -133,32 +313,13 @@ export default function Tree() {
     }
     return node;
   }, []);
+  */
 
-  const updateTreeNode = useCallback(
-    (note) => {
-      // console.log('updateTreeNode note=', note);
-      if (fancyTreeRef.current !== null && note !== null) {
-        let node = fancyTreeRef.current.getNodeByKey(note.key);
-        // console.log('updateTreeNode node=', node);
-        if (node !== undefined) {
-          noteToNode(note, node);
-          let parentNode = node;
-          while (parentNode) {
-            // console.log('renderTitle', parentNode.key);
-            parentNode.renderTitle();
-            parentNode = parentNode.parent;
-          }
-        }
-      }
-    },
-    [noteToNode]
-  );
-
-
+  // add note on active node OR given key node
   useEffect(() => {
     (async () => {
-      log.debug('Tree.useEffect() on update addTreeNoteOnNoteKey=', addTreeNoteOnNoteKey);
-      if (addTreeNoteOnNoteKey === undefined) {
+      treeLog.debug('useEffect() on update addTreeNoteOnNoteKey=', addTreeNoteOnNoteKey);
+      if (addTreeNoteOnNoteKey === undefined || addTreeNoteOnNoteKey === null) {
         return;
       }
       if (fancyTreeRef === null || fancyTreeRef.current === null) {
@@ -177,39 +338,25 @@ export default function Tree() {
       if (node === undefined || node === null) {
         return;
       }
-      log.debug('addNote parent node=', node);
+      console.log('addNote parent node=', node);
       await node.setExpanded(true);
 
-      const newNote: NoteDataModel | undefined = await uiController.addNote(
+      const newNote: NoteDataModel | undefined = await nowNoteAPI.addNote(
         node.key,
         { title: '', type: 'note' },
         'over'
       );
       log.debug('addNote newNote=', newNote);
-      updateUpdatedNote(newNote);
+      // set as details note
+      detailsNoteUpdateNote(newNote);
       setAddTreeNoteOnNoteKey(undefined);
     })();
   }, [
     addTreeNoteOnNoteKey,
+    detailsNoteUpdateNote,
     setAddTreeNoteOnNoteKey,
-    uiController,
-    updateUpdatedNote,
   ]);
 
-  useEffect(() => {
-    // console.log('Tree on update detailsNote.key=', detailsNote !== undefined ? detailsNote.key : '~null~');
-    if (detailsNote !== undefined && fancyTreeRef.current !== undefined) {
-      const node = fancyTreeRef.current.getNodeByKey(detailsNote.key);
-      if (node !== undefined && node !== null) {
-        // console.log('Tree on update node=', node);
-        // TODO: funktioniert nicht so wirklich
-        node.setActive();
-	      node.setFocus();
-
-        updateTreeNode(detailsNote);
-      }
-    }
-  }, [detailsNote, updateTreeNode]);
 
   useEffect(() => {
     if (fancyTreeRef.current === null) {
@@ -239,6 +386,9 @@ export default function Tree() {
     runAsync();
   }, [reloadTreeNoteKey]);
 
+
+
+  /*
   useEffect(() => {
     async function refreshNode() {
       // console.log('Tree on update updatedNote=', updatedNote);
@@ -285,6 +435,7 @@ export default function Tree() {
           node.setActive();
           node.setFocus();
           updateDetailsNoteKey(updatedNote.key);
+          // updateDetailsNoteKey2(updatedNote.key);
           setDetailsNoteTitleFocus(true);
           // node.editStart();
         }
@@ -295,42 +446,7 @@ export default function Tree() {
     };
     refreshNode();
   }, [updatedNote, updateTreeNode, updateDetailsNoteKey, setDetailsNoteTitleFocus]);
-
-  const handleChangeDone = useCallback(
-    (key: string, done: boolean) => {
-      // console.log('handleChangeDone key=, done=', key, done);
-      setDone(key, done);
-      uiController.modifyNote({
-        key,
-        done,
-      });
-    },
-    [setDone, uiController]
-  );
-
-  const handleChangeTitle = useCallback(
-    (key: string, title: string) => {
-      // console.log('setTitle key=, title=', key, title);
-      setTitle(key, title);
-      uiController.modifyNote({
-        key,
-        title,
-      });
-    },
-    [setTitle, uiController]
-  );
-
-  const handleChangeExpanded = useCallback(
-    (key: string, expanded: boolean) => {
-      // console.log('handleChangeExpanded key=, title=', key, expanded);
-      setExpanded(key, expanded);
-      uiController.modifyNote({
-        key,
-        expanded,
-      });
-    },
-    [setExpanded, uiController]
-  );
+  */
 
   const mapToTreeData = useCallback((tree) => {
 
@@ -407,8 +523,6 @@ export default function Tree() {
     return tree;
   }, []);
 
-  log.debug(`Tree trash=${trash}`);
-
   const loadTree = useCallback(
     async (event: string | undefined, data) => {
       log.debug(`Tree.loadTree() trash=${trash}`);
@@ -416,7 +530,7 @@ export default function Tree() {
         // console.trace();
       }
       if (event !== undefined && event.type === 'source') {
-        const rootNodes = await uiController.getChildren(null, trash);
+        const rootNodes = await nowNoteAPI.getChildren(null, trash);
         log.debug(
           `Tree.loadTree() trash=${trash} -> rootNodes.length=${rootNodes.length}`
         );
@@ -424,7 +538,7 @@ export default function Tree() {
       }
       if (data !== undefined && data.node) {
         data.result = async () => {
-          const children = await uiController.getChildren(data.node.key, trash);
+          const children = await nowNoteAPI.getChildren(data.node.key, trash);
           log.debug(
             `Tree.loadTree() key=${data.node.key} trash=${trash} -> children.length=${children.length}`
           );
@@ -433,7 +547,7 @@ export default function Tree() {
       }
       return [];
     },
-    [mapToTreeData, trash, uiController]
+    [mapToTreeData, trash]
   );
 
   const initTree = useCallback(async () => {
@@ -445,7 +559,7 @@ export default function Tree() {
 
     if ($domNode.fancytree) {
       try {
-        $domNode.fancytree("destroy");
+        $domNode.fancytree('destroy');
       } catch (error) {
       }
     }
@@ -543,7 +657,7 @@ export default function Tree() {
         handleChangeExpanded(data.node.key, false);
       },
 
-      click: (event, data) => {
+      click: async (event, data) => {
         console.log("tree click event=, data=", event, data, data.targetType);
         // 'title' | 'prefix' | 'expander' | 'checkbox' | 'icon'
         // we could return false to prevent default handling, i.e. generating
@@ -552,7 +666,15 @@ export default function Tree() {
         // if (data.targetType !== 'expander' && data.targetType !== 'checkbox') {
         // fix for click on context menu
         if (data.targetType === 'title') {
-          updateDetailsNoteKey(data.node.key);
+          treeLog.debug('Click title');
+          // updateDetailsNoteKey2(data.node.key);
+          const note: Note = await nowNoteAPI.getNoteWithDescription(data.node.key);
+          treeLog.debug('Click title note=', note);
+          detailsNoteUpdateNote(note);
+          detailsNoteUpdateBacklinks(
+            await nowNoteAPI.getBacklinks(data.node.key)
+          );
+          // updateDetailsNoteKey(data.node.key);
         }
 
         /*
@@ -594,22 +716,23 @@ export default function Tree() {
         actions: async (node, action, options) => {
           console.log("FancyTree contextMenu node, action, options", node, action, options);
           if (action === 'open') {
-            updateDetailsNoteKey(node.key);
+            // updateDetailsNoteKey(node.key);
+            // updateDetailsNoteKey2(node.key);
           } else if (action === 'add') {
-            // const newNote: NoteDTO | undefined = await uiController.addNote(node.key, { title: '', type: 'note' }, 'over');
+            // const newNote: NoteDTO | undefined = await nowNoteAPI.addNote(node.key, { title: '', type: 'note' }, 'over');
             // console.log("handleNoteMenu, added note newNote=", newNote);
             // updateUpdatedNote(newNote);
             setAddTreeNoteOnNoteKey(node.key);
           } else if (action === 'delete') {
             // console.log("handleNoteMenu, delete note=", node);
             if (node.data.trash) {
-              await uiController.deletePermanently(node.key);
+              await nowNoteAPI.deletePermanently(node.key);
             } else {
-              await uiController.moveNoteToTrash(node.key);
+              await nowNoteAPI.moveNoteToTrash(node.key);
             }
             setReloadTreeNoteKey(node.parent.key);
           } else if (action === 'restore') {
-            await uiController.restore(node.key);
+            await nowNoteAPI.restore(node.key);
             setReloadTreeNoteKey(node.parent.key);
           } else if (action === 'gotoLinkedFrom') {
             // TODO: implement linked note
@@ -764,7 +887,7 @@ export default function Tree() {
               } else {
                 log.debug(
                   `Tree.dragDrop(), key=${key}, from=${from}, to=${to}, data.hitMode=${data.hitMode}, node.key=${node.key}`);
-                await uiController.moveNote(
+                await nowNoteAPI.moveNote(
                   key,
                   from,
                   to,
@@ -846,15 +969,15 @@ export default function Tree() {
     $('.fancytree-container', $domNode).addClass('fancytree-connectors');
     fancyTreeRef.current = $.ui.fancytree.getTree($domNode);
   }, [
+    trash,
     loadTree,
     handleChangeTitle,
     handleChangeExpanded,
-    updateDetailsNoteKey,
+    detailsNoteUpdateNote,
+    detailsNoteUpdateBacklinks,
     handleChangeDone,
     setAddTreeNoteOnNoteKey,
-    uiController,
     setReloadTreeNoteKey,
-    trash,
   ]);
 
   useEffect(() => {
@@ -925,6 +1048,8 @@ export default function Tree() {
 	// 		});
 	// 	}
 	// }
+
+  treeLog.debug(`render`);
 
   return <div className="n3-tree" ref={domRef} />;
 }

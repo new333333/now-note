@@ -112,6 +112,7 @@ export default async function addNote(
     linkToKey: note.linkToKey,
     keyPath: '',
     titlePath: '',
+    tags: '',
   });
 
   await setKeyAndTitlePath(newNote);

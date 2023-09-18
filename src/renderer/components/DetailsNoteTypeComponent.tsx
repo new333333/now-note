@@ -2,20 +2,18 @@ import log from 'electron-log';
 import { useContext } from 'react';
 import { Typography, Dropdown } from 'antd';
 import type { MenuProps } from 'antd';
-import { UIControllerContext } from 'renderer/UIControllerContext';
-import { UIController } from 'types';
-import useNoteStore from 'renderer/NoteStore';
+import useDetailsNoteStore from 'renderer/DetailsNoteStore';
+import { nowNoteAPI } from 'renderer/NowNoteAPI';
 
 const { Text, Link } = Typography;
 
-export default function DetailsNoteType() {
-  const [note, setType] = useNoteStore((state) => [
-    state.detailsNote,
-    state.setType,
-  ]);
-
-  const { uiController }: { uiController: UIController } =
-    useContext(UIControllerContext);
+export default function DetailsNoteTypeComponent() {
+  const detailsNoteKey = useDetailsNoteStore((state) => state.noteKey);
+  const detailsNoteType = useDetailsNoteStore((state) => state.type);
+  const detailsNoteTrash = useDetailsNoteStore((state) => state.trash);
+  const detailsNoteUpdateType = useDetailsNoteStore(
+    (state) => state.updateType
+  );
 
   const menuItems: MenuProps['items'] = [
     {
@@ -43,30 +41,32 @@ export default function DetailsNoteType() {
   }
 
   const handleClickMenu: MenuProps['onClick'] = async ({ key }) => {
-    if (note === undefined) {
+    if (detailsNoteKey === undefined) {
       return;
     }
-    setType(note.key, key);
-    uiController.modifyNote({
-      key: note.key,
+    detailsNoteUpdateType(detailsNoteKey, key);
+    nowNoteAPI.modifyNote({
+      key: detailsNoteKey,
       type: key,
     });
   };
 
-  if (note === undefined) {
-    return;
+  if (detailsNoteKey === undefined) {
+    return null;
   }
 
   return (
     <span style={{ marginRight: '5px' }}>
-      {!note.trash && (
+      {!detailsNoteTrash && (
         <Dropdown menu={{ items: menuItems, onClick: handleClickMenu }}>
           <Link strong href="#">
-            {getNoteTypeLabel(note.type)}
+            {getNoteTypeLabel(detailsNoteType)}
           </Link>
         </Dropdown>
       )}
-      {note.trash && <Text strong>{getNoteTypeLabel(note.type)}</Text>}
+      {detailsNoteTrash && (
+        <Text strong>{getNoteTypeLabel(detailsNoteType)}</Text>
+      )}
     </span>
   );
 }

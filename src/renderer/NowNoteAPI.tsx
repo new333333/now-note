@@ -1,18 +1,17 @@
-import { Asset, Note, Tag } from 'main/modules/DataModels';
-import { createContext } from 'react';
+import { Asset, Note } from 'main/modules/DataModels';
 import {
   HitMode,
   NoteDTO,
   PriorityStatistics,
   SearchResult,
   SearchResultOptions,
-  UIController,
   UserSettingsRepository,
   Error,
   RepositorySettings,
+  NowNoteAPI,
 } from 'types';
 
-export class UIControllerContextImpl implements UIController {
+export class NowNoteAPIImpl implements NowNoteAPI {
   private îpcRenderer: UIController;
 
   constructor(îpcRenderer: UIController) {
@@ -169,10 +168,4 @@ export class UIControllerContextImpl implements UIController {
   }
 }
 
-export const uiController = new UIControllerContextImpl(
-  window.electron.ipcRenderer
-);
-
-export const UIControllerContext = createContext({
-  uiController,
-});
+export const nowNoteAPI = new NowNoteAPIImpl(window.electron.ipcRenderer);

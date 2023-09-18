@@ -1,18 +1,20 @@
+import log from 'electron-log';
 import { useEffect, useContext, useCallback } from 'react';
 import { ConfigProvider, Space } from 'antd';
 import './App.scss';
-import useNoteStore from 'renderer/NoteStore';
-import { UIControllerContext } from 'renderer/UIControllerContext';
-import { UIController } from 'types';
+import useNoteStore from 'renderer/GlobalStore';
 import { ReflexContainer, ReflexSplitter, ReflexElement } from 'react-reflex';
 import 'react-reflex/styles.css';
+import { nowNoteAPI } from 'renderer/NowNoteAPI';
 import SelectRepository from './SelectRepository';
 import Footer from './Footer';
 import SearchNotes from './SearchNotes';
-import Note from './Note';
-import Tree from './Tree';
+import TreeComponent from './TreeComponent';
 import AddNoteButton from './AddNoteButton';
 import TrashButton from './TrashButton';
+import DetailsNoteComponent from './DetailsNoteComponent';
+
+const appLog = log.scope('App');
 
 export default function App() {
   const [currentRepository, setCurrentRepository, trash] = useNoteStore(
@@ -23,16 +25,15 @@ export default function App() {
     ]
   );
 
-  const { uiController }: { uiController: UIController } =
-    useContext(UIControllerContext);
-
   const fetchCurrentRepository = useCallback(async () => {
-    setCurrentRepository(await uiController.getCurrentRepository());
-  }, [setCurrentRepository, uiController]);
+    setCurrentRepository(await nowNoteAPI.getCurrentRepository());
+  }, [setCurrentRepository, nowNoteAPI]);
 
   useEffect(() => {
     fetchCurrentRepository();
   }, [fetchCurrentRepository]);
+
+  appLog.debug(`currentRepository=${currentRepository} trash=${trash}`);
 
   return (
     <ConfigProvider
@@ -49,7 +50,7 @@ export default function App() {
             <ReflexElement className="left-bar" minSize="200" flex={0.25}>
               <div className="n3-bar-vertical">
                 <AddNoteButton />
-                <Tree />
+                <TreeComponent />
                 <div id="nn-trash">
                   <TrashButton />
                 </div>
@@ -61,7 +62,7 @@ export default function App() {
                 <div className="nn-header">
                   <SearchNotes />
                 </div>
-                <Note />
+                <DetailsNoteComponent />
               </div>
             </ReflexElement>
           </ReflexContainer>

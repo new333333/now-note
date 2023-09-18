@@ -1,3 +1,4 @@
+import log from 'electron-log';
 import {
   useState,
   useCallback,
@@ -7,44 +8,48 @@ import {
   useEffect,
   useRef,
 } from 'react';
-import useNoteStore from 'renderer/NoteStore';
 import { Input, Typography } from 'antd';
-import { UIControllerContext } from 'renderer/UIControllerContext';
-import { UIController } from 'types';
 import { useDebouncedCallback } from 'use-debounce';
 import { SaveTwoTone } from '@ant-design/icons';
 import { Note } from 'main/modules/DataModels';
+import useDetailsNoteStore from 'renderer/DetailsNoteStore';
+import { nowNoteAPI } from 'renderer/NowNoteAPI';
 
 const { TextArea } = Input;
 const { Paragraph } = Typography;
 
-export default function DetailsTitleComponent() {
+const detailsNoteTitleComponentLog = log.scope('DetailsNoteTitleComponent');
+
+export default function DetailsNoteTitleComponent() {
   const domRef = useRef(null);
 
-  const [note, setTitle, detailsNoteTitleFocus, setDetailsNoteTitleFocus, updateDetailsNote] =
-    useNoteStore((state) => [
-      state.detailsNote,
-      state.setTitle,
-      state.detailsNoteTitleFocus,
-      state.setDetailsNoteTitleFocus,
-      state.updateDetailsNote,
-    ]);
+  const detailsNoteKey = useDetailsNoteStore((state) => state.noteKey);
+  const detailsNoteTitle = useDetailsNoteStore((state) => state.title);
+  const detailsNoteTrash = useDetailsNoteStore((state) => state.trash);
+  const updateNoteProperties = useDetailsNoteStore(
+    (state) => state.updateNoteProperties
+  );
+  const updateBacklinks = useDetailsNoteStore((state) => state.updateBacklinks);
 
+  const [value, setValue] = useState(detailsNoteTitle);
   const [saved, setSaved] = useState(true);
-  const { uiController }: { uiController: UIController } =
-    useContext(UIControllerContext);
 
-  const debounceTitle = useDebouncedCallback(async (value) => {
-    if (value !== null && note !== undefined) {
-      const noteModified: Note = await uiController.modifyNote({
-        key: note.key,
-        title: value,
-      });
-      updateDetailsNote(noteModified);
-      setSaved(true);
-    } else {
-      console.log('debounceTitle SKIP');
+  const debounceTitle = useDebouncedCallback(async (newValue) => {
+    if (
+      newValue === null ||
+      detailsNoteKey === undefined ||
+      detailsNoteKey === null
+    ) {
+      detailsNoteTitleComponentLog.debug('debounceTitle SKIP');
+      return;
     }
+    const modifiedNote: Note = await nowNoteAPI.modifyNote({
+      key: detailsNoteKey,
+      title: newValue,
+    });
+    updateNoteProperties(modifiedNote);
+    setSaved(true);
+    updateBacklinks(await nowNoteAPI.getBacklinks(detailsNoteKey));
   }, 2000);
 
   const handleBlur = useCallback(async () => {
@@ -68,20 +73,26 @@ export default function DetailsTitleComponent() {
 
   const handleEditTitle = useCallback(
     async (event: ChangeEvent<HTMLTextAreaElement>) => {
-      const value = event.target.value
+      const newValue = event.target.value
         // remove /
         .replaceAll(/\//gi, '')
         // remove end of lines
         .replaceAll(/(?:\r\n|\r|\n)/g, '');
       setSaved(false);
-      if (note !== undefined) {
-        setTitle(note.key, value);
-        debounceTitle(value);
-      }
+      // setTitle(note.key, value);
+      setValue(newValue);
+      debounceTitle(newValue);
     },
-    [debounceTitle, note, setTitle]
+    [debounceTitle, setValue]
   );
 
+  // TreeComponent on change title
+  useEffect(() => {
+    setValue(detailsNoteTitle);
+  }, [detailsNoteTitle]);
+
+  /*
+  TODO
   useEffect(() => {
     // console.log(
     //   'Title set focus: detailsNoteTitleFocus=',
@@ -92,26 +103,27 @@ export default function DetailsTitleComponent() {
     }
     setDetailsNoteTitleFocus(false);
   }, [detailsNoteTitleFocus, setDetailsNoteTitleFocus]);
+*/
 
-  if (note === undefined) {
+  if (detailsNoteKey === undefined) {
     return null;
   }
 
   return (
     <div style={{ display: 'flex' }}>
-      {note.trash && (
+      {detailsNoteTrash && (
         <Paragraph strong style={{ marginBottom: 0 }}>
-          {note.title}
+          {detailsNoteTitle}
         </Paragraph>
       )}
-      {!note.trash && (
+      {!detailsNoteTrash && (
         <TextArea
           ref={domRef}
           onKeyDown={handleKeydown}
           onBlur={handleBlur}
           size="large"
           bordered={false}
-          value={note.title}
+          value={value}
           onChange={handleEditTitle}
           autoSize={{
             minRows: 1,

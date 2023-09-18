@@ -1,18 +1,18 @@
 import log from 'electron-log';
 import { useContext, useRef, useState, useCallback, useEffect } from 'react';
-import ReactQuill, { Quill } from 'react-quill';
+import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import 'quill-mention';
 import 'quill-mention/dist/quill.mention.min.css';
 import htmlEditButton from 'quill-html-edit-button';
 import QuillImageDropAndPaste from 'quill-image-drop-and-paste';
-import { UIControllerContext } from 'renderer/UIControllerContext';
-import { SearchResult, SearchResultOptions, UIController } from 'types';
-import useNoteStore from 'renderer/NoteStore';
+import { SearchResult, SearchResultOptions } from 'types';
 import { SaveTwoTone } from '@ant-design/icons';
 import { useDebouncedCallback } from 'use-debounce';
-import { Asset } from 'main/modules/DataModels';
+import { Asset, Note } from 'main/modules/DataModels';
 import ImageAsset from 'renderer/ImageAsset';
+import useDetailsNoteStore from 'renderer/DetailsNoteStore';
+import { nowNoteAPI } from 'renderer/NowNoteAPI';
 
 ReactQuill.Quill.register({
   'modules/htmlEditButton': htmlEditButton,
@@ -20,25 +20,31 @@ ReactQuill.Quill.register({
 ReactQuill.Quill.register('modules/imageDropAndPaste', QuillImageDropAndPaste);
 ReactQuill.Quill.register('formats/imageAsset', ImageAsset);
 
-export default function NoteDescriptionQuill() {
-  const [note, setDescription, updateDetailsNoteKey] = useNoteStore((state) => [
-    state.detailsNote,
-    state.setDescription,
-    state.updateDetailsNoteKey,
-  ]);
+const DetailsNoteDescriptionQuillLog = log.scope(
+  'DetailsNoteDescriptionComponent'
+);
+
+export default function DetailsNoteDescriptionComponent() {
+  const detailsNoteKey = useDetailsNoteStore((state) => state.noteKey);
+  const detailsNoteDescription = useDetailsNoteStore(
+    (state) => state.description
+  );
+  const updateNote = useDetailsNoteStore((state) => state.updateNote);
+  const updateDescription = useDetailsNoteStore(
+    (state) => state.updateDescription
+  );
+  const updateBacklinks = useDetailsNoteStore((state) => state.updateBacklinks);
+
   const [saved, setSaved] = useState(true);
 
-  // log.debug(`NoteDescriptionQuill note=`, note);
+  DetailsNoteDescriptionQuillLog.debug(`render`);
 
   const editorRef = useRef(null);
 
-  const { uiController }: { uiController: UIController } =
-    useContext(UIControllerContext);
-
   const debounceDescription = useDebouncedCallback((value) => {
-    if (value !== null && note !== undefined) {
-      uiController.modifyNote({
-        key: note.key,
+    if (value !== null && detailsNoteKey !== null) {
+      nowNoteAPI.modifyNote({
+        key: detailsNoteKey,
         description: value,
       });
       setSaved(true);
@@ -47,18 +53,18 @@ export default function NoteDescriptionQuill() {
 
   const onChange = useCallback(
     async (content: string, b, source: string) => {
-      console.log(
+      DetailsNoteDescriptionQuillLog.debug(
         `NoteDescriptionQuill.onChange() content=${content} b=, source=${source}, d=`,
         b
       );
-      if (note === undefined || source === 'api') {
+      if (detailsNoteKey === null || source === 'api') {
         return;
       }
-      setDescription(note.key, content);
+      updateDescription(detailsNoteKey, content);
       setSaved(false);
       debounceDescription(content);
     },
-    [debounceDescription, setDescription, note]
+    [debounceDescription, updateDescription, detailsNoteKey]
   );
 
   const handleKeydown = useCallback(
@@ -93,11 +99,16 @@ export default function NoteDescriptionQuill() {
       async (event: PointerEvent) => {
         const key = await clickedNoteLinkKey(event.target);
         if (key !== undefined) {
-          updateDetailsNoteKey(key);
+          const note: Note | undefined =
+            await nowNoteAPI.getNoteWithDescription(key);
+          if (note !== undefined) {
+            updateNote(note);
+            updateBacklinks(await nowNoteAPI.getBacklinks(key));
+          }
         }
       }
     );
-  }, [clickedNoteLinkKey, updateDetailsNoteKey]);
+  }, [clickedNoteLinkKey, updateBacklinks, updateNote]);
 
   const formats = [
     'header',
@@ -118,8 +129,8 @@ export default function NoteDescriptionQuill() {
 
   const mentionSource = useCallback(
     async (searchTerm: string, renderList: Function, mentionChar: string) => {
-      log.debug(
-        `NoteDescriptionQuill mention.source() searchTerm=${searchTerm} mentionChar=${mentionChar}`
+      DetailsNoteDescriptionQuillLog.debug(
+        `mention.source() searchTerm=${searchTerm} mentionChar=${mentionChar}`
       );
       const values = [];
       const searchResultOptions: SearchResultOptions = {
@@ -130,15 +141,15 @@ export default function NoteDescriptionQuill() {
         offset: 0,
       };
 
-      const searchResult: SearchResult = await uiController.search(
+      const searchResult: SearchResult = await nowNoteAPI.search(
         searchTerm,
         20,
         false,
         searchResultOptions
       );
 
-      log.debug(
-        `NoteDescriptionQuill searchTerm=${searchTerm} searchResult=`,
+      DetailsNoteDescriptionQuillLog.debug(
+        `searchTerm=${searchTerm} searchResult=`,
         searchResult
       );
 
@@ -157,7 +168,7 @@ export default function NoteDescriptionQuill() {
 
       renderList(values, searchTerm);
     },
-    [uiController]
+    []
   );
 
   const imageHandler = useCallback(
@@ -166,23 +177,23 @@ export default function NoteDescriptionQuill() {
       const fileName = imageData.name;
       const base64 = imageData.dataUrl;
 
-      const asset: Asset = await uiController.addImageAsBase64(
+      const asset: Asset = await nowNoteAPI.addImageAsBase64(
         fileType,
         fileName,
         base64
       );
 
-      log.debug(`NoteDescriptionQuill imageHandler() asset=`, asset);
+      DetailsNoteDescriptionQuillLog.debug(`imageHandler() asset=`, asset);
 
       const quill = editorRef.current.editor;
-      console.log(`NoteDescriptionQuill imageHandler() quill=`, quill);
+      DetailsNoteDescriptionQuillLog.debug(`NoteDescriptionQuill imageHandler() quill=`, quill);
       let { index } = quill.getSelection() || {};
       if (index === undefined || index < 0) {
         index = quill.getLength();
       }
-      log.debug(`NoteDescriptionQuill imageHandler() index=`, index);
+      DetailsNoteDescriptionQuillLog.debug(`imageHandler() index=`, index);
       const imageSrc = `nn-asset://${asset.key}`;
-      log.debug(`NoteDescriptionQuill imageHandler() imageSrc=`, imageSrc);
+      DetailsNoteDescriptionQuillLog.debug(`imageHandler() imageSrc=`, imageSrc);
 
       // quill.insertEmbed(
       //  index,
@@ -207,9 +218,9 @@ export default function NoteDescriptionQuill() {
       const blob = imageData.toBlob();
       const file = imageData.toFile();
 
-      console.log(`NoteDescriptionQuill imageHandler() blob=`, blob);
-      console.log(`NoteDescriptionQuill imageHandler() blob.text=`, await blob.text());
-      console.log(`NoteDescriptionQuill imageHandler() file=`, file);
+      DetailsNoteDescriptionQuillLog.debug(`NoteDescriptionQuill imageHandler() blob=`, blob);
+      DetailsNoteDescriptionQuillLog.debug(`NoteDescriptionQuill imageHandler() blob.text=`, await blob.text());
+      DetailsNoteDescriptionQuillLog.debug(`NoteDescriptionQuill imageHandler() file=`, file);
 */
   /*
       const blob = imageData.toBlob()
@@ -234,7 +245,7 @@ export default function NoteDescriptionQuill() {
         quill.insertEmbed(index, 'image', res.data.image_url, 'user')
       })*/
     },
-    [uiController]
+    []
   );
 
   const modules = {
@@ -262,7 +273,7 @@ export default function NoteDescriptionQuill() {
     },
   };
 
-  if (note === undefined) {
+  if (detailsNoteKey === undefined) {
     return null;
   }
 
@@ -272,7 +283,7 @@ export default function NoteDescriptionQuill() {
         onKeyDown={handleKeydown}
         ref={editorRef}
         theme="snow"
-        value={note.description || ''}
+        value={detailsNoteDescription || ''}
         onChange={onChange}
         modules={modules}
         formats={formats}

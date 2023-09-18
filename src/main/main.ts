@@ -42,10 +42,15 @@ if (isDebug) {
   require('electron-debug')();
 }
 
+const REACT_PERFORMANCE_DEVTOOLS = {
+  id: 'fcombecpigkkfcbfaeikoeegkmkjfbfm',
+  electron: '^23.0.0',
+};
+
 const installExtensions = async () => {
   const installer = require('electron-devtools-installer');
   const forceDownload = !!process.env.UPGRADE_EXTENSIONS;
-  const extensions = ['REACT_DEVELOPER_TOOLS'];
+  const extensions = ['REACT_DEVELOPER_TOOLS', REACT_PERFORMANCE_DEVTOOLS];
 
   return installer
     .default(
