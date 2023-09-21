@@ -1,4 +1,5 @@
 import log from 'electron-log';
+import { forwardRef, useImperativeHandle, useRef } from 'react';
 import { Divider } from 'antd';
 import useDetailsNoteStore from 'renderer/DetailsNoteStore';
 import DetailsNotePriorityComponent from './DetailsNotePriorityComponent';
@@ -13,10 +14,30 @@ import DetailsNoteMenuComponent from './DetailsNoteMenuComponent';
 
 const noteLog = log.scope('DetailsNoteComponent');
 
-export default function DetailsNoteComponent() {
+const DetailsNoteComponent = forwardRef(function DetailsNoteComponent(
+  props,
+  ref
+) {
+  const detailsNoteTitleComponentRef = useRef(null);
   const noteKey = useDetailsNoteStore((state) => state.noteKey);
 
   noteLog.debug(`noteKey=${noteKey}`);
+
+  useImperativeHandle(
+    ref,
+    () => {
+      return {
+        setFocus: async () => {
+          console.log(`DetailsNoteComponent.setFocus()`);
+          if (detailsNoteTitleComponentRef.current === null) {
+            return;
+          }
+          await detailsNoteTitleComponentRef.current.setFocus();
+        },
+      };
+    },
+    []
+  );
 
   if (noteKey === undefined || noteKey === null) {
     return null;
@@ -31,7 +52,7 @@ export default function DetailsNoteComponent() {
       <div style={{ display: 'flex', alignItems: 'center' }}>
         <DetailsNoteDoneComponent />
         <div style={{ flexBasis: '100%' }}>
-          <DetailsNoteTitleComponent />
+          <DetailsNoteTitleComponent ref={detailsNoteTitleComponentRef} />
         </div>
         <div>
           <DetailsNoteMenuComponent />
@@ -52,4 +73,6 @@ export default function DetailsNoteComponent() {
       </div>
     </div>
   );
-}
+});
+
+export default DetailsNoteComponent;

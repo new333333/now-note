@@ -181,9 +181,15 @@ export default class NowNote {
     return Promise.resolve(undefined);
   }
 
-  async getNoteWithDescription(key: string): Promise<Note | undefined> {
+  async getNoteWithDescription(
+    key: string,
+    withoutDescription?: boolean
+  ): Promise<Note | undefined> {
     if (this.currentRepository !== undefined) {
-      return this.currentRepository.getNoteWithDescription(key);
+      return this.currentRepository.getNoteWithDescription(
+        key,
+        withoutDescription
+      );
     }
     return Promise.resolve(undefined);
   }

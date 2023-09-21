@@ -4,6 +4,7 @@ import { Typography, Dropdown } from 'antd';
 import type { MenuProps } from 'antd';
 import useDetailsNoteStore from 'renderer/DetailsNoteStore';
 import { nowNoteAPI } from 'renderer/NowNoteAPI';
+import { NowNoteDispatch } from './App';
 
 const { Text, Link } = Typography;
 
@@ -14,6 +15,11 @@ export default function DetailsNoteTypeComponent() {
   const detailsNoteUpdateType = useDetailsNoteStore(
     (state) => state.updateType
   );
+  const updateNoteProperties = useDetailsNoteStore(
+    (state) => state.updateNoteProperties
+  );
+
+  const uiApi = useContext(NowNoteDispatch);
 
   const menuItems: MenuProps['items'] = [
     {
@@ -41,14 +47,16 @@ export default function DetailsNoteTypeComponent() {
   }
 
   const handleClickMenu: MenuProps['onClick'] = async ({ key }) => {
-    if (detailsNoteKey === undefined) {
+    if (detailsNoteKey === undefined || uiApi === null) {
       return;
     }
-    detailsNoteUpdateType(detailsNoteKey, key);
-    nowNoteAPI.modifyNote({
+    // detailsNoteUpdateType(detailsNoteKey, key);
+    const modifiedNote = await nowNoteAPI.modifyNote({
       key: detailsNoteKey,
       type: key,
     });
+    updateNoteProperties(modifiedNote);
+    uiApi.updateNodeInTree(modifiedNote);
   };
 
   if (detailsNoteKey === undefined) {

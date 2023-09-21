@@ -43,8 +43,11 @@ const electronHandler: ElectronIPCRenderer = {
     ): Promise<Array<Note> | undefined> =>
       ipcRenderer.invoke('getChildren', key, trash),
 
-    getNoteWithDescription: (key: string): Promise<Note | undefined> =>
-      ipcRenderer.invoke('getNoteWithDescription', key),
+    getNoteWithDescription: (
+      key: string,
+      withoutDescription?: boolean
+    ): Promise<Note | undefined> =>
+      ipcRenderer.invoke('getNoteWithDescription', key, withoutDescription),
 
     getBacklinks: (key: string): Promise<Array<Note>> =>
       ipcRenderer.invoke('getBacklinks', key),

@@ -130,8 +130,12 @@ export default class IpcHandler {
 
     this.ipcMain.handle(
       'getNoteWithDescription',
-      async (_event, key: string): Promise<Note | undefined> => {
-        return this.nowNote.getNoteWithDescription(key);
+      async (
+        _event,
+        key: string,
+        withoutDescription?: boolean
+      ): Promise<Note | undefined> => {
+        return this.nowNote.getNoteWithDescription(key, withoutDescription);
       }
     );
 

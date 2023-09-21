@@ -106,7 +106,10 @@ export interface Repository {
   authenticate(): Promise<void>;
   close(): Promise<void>;
   getChildren(key: string, trash: boolean): Promise<Array<Note> | undefined>;
-  getNoteWithDescription(key: string): Promise<Note | undefined>;
+  getNoteWithDescription(
+    key: string,
+    withoutDescription?: boolean
+  ): Promise<Note | undefined>;
   getBacklinks(key: string): Promise<Array<Note>>;
   search(
     searchText: string,
@@ -159,7 +162,10 @@ export interface Repository {
 // ***************************************************************************
 
 export interface NowNoteAPI {
-  getNoteWithDescription(key: string): Promise<Note | undefined>;
+  getNoteWithDescription(
+    key: string,
+    withoutDescription?: boolean
+  ): Promise<Note | undefined>;
   getChildren(
     key: string | null | undefined,
     trash?: boolean

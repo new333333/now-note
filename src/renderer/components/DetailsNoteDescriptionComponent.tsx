@@ -13,6 +13,7 @@ import { Asset, Note } from 'main/modules/DataModels';
 import ImageAsset from 'renderer/ImageAsset';
 import useDetailsNoteStore from 'renderer/DetailsNoteStore';
 import { nowNoteAPI } from 'renderer/NowNoteAPI';
+import { NowNoteDispatch } from './App';
 
 ReactQuill.Quill.register({
   'modules/htmlEditButton': htmlEditButton,
@@ -29,12 +30,13 @@ export default function DetailsNoteDescriptionComponent() {
   const detailsNoteDescription = useDetailsNoteStore(
     (state) => state.description
   );
-  const updateNote = useDetailsNoteStore((state) => state.updateNote);
+  const detailsNoteTrash = useDetailsNoteStore((state) => state.trash);
+
+  const uiApi = useContext(NowNoteDispatch);
+
   const updateDescription = useDetailsNoteStore(
     (state) => state.updateDescription
   );
-  const updateBacklinks = useDetailsNoteStore((state) => state.updateBacklinks);
-
   const [saved, setSaved] = useState(true);
 
   DetailsNoteDescriptionQuillLog.debug(`render`);
@@ -102,13 +104,12 @@ export default function DetailsNoteDescriptionComponent() {
           const note: Note | undefined =
             await nowNoteAPI.getNoteWithDescription(key);
           if (note !== undefined) {
-            updateNote(note);
-            updateBacklinks(await nowNoteAPI.getBacklinks(key));
+            await uiApi.openDetailNote(note);
           }
         }
       }
     );
-  }, [clickedNoteLinkKey, updateBacklinks, updateNote]);
+  }, [clickedNoteLinkKey]);
 
   const formats = [
     'header',
@@ -287,6 +288,7 @@ export default function DetailsNoteDescriptionComponent() {
         onChange={onChange}
         modules={modules}
         formats={formats}
+        readOnly={detailsNoteTrash || false}
       />
       {saved && <SaveTwoTone twoToneColor="#00ff00" />}
       {!saved && <SaveTwoTone twoToneColor="#ff0000" />}

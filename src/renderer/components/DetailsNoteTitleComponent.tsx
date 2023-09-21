@@ -2,11 +2,13 @@ import log from 'electron-log';
 import {
   useState,
   useCallback,
-  useContext,
   KeyboardEvent,
   ChangeEvent,
   useEffect,
   useRef,
+  forwardRef,
+  useImperativeHandle,
+  useContext,
 } from 'react';
 import { Input, Typography } from 'antd';
 import { useDebouncedCallback } from 'use-debounce';
@@ -14,13 +16,17 @@ import { SaveTwoTone } from '@ant-design/icons';
 import { Note } from 'main/modules/DataModels';
 import useDetailsNoteStore from 'renderer/DetailsNoteStore';
 import { nowNoteAPI } from 'renderer/NowNoteAPI';
+import { NowNoteDispatch } from './App';
 
 const { TextArea } = Input;
 const { Paragraph } = Typography;
 
 const detailsNoteTitleComponentLog = log.scope('DetailsNoteTitleComponent');
 
-export default function DetailsNoteTitleComponent() {
+const DetailsNoteTitleComponent = forwardRef(function DetailsNoteTitleComponent(
+  props,
+  ref
+) {
   const domRef = useRef(null);
 
   const detailsNoteKey = useDetailsNoteStore((state) => state.noteKey);
@@ -34,11 +40,27 @@ export default function DetailsNoteTitleComponent() {
   const [value, setValue] = useState(detailsNoteTitle);
   const [saved, setSaved] = useState(true);
 
+  const uiApi = useContext(NowNoteDispatch);
+
+  useImperativeHandle(
+    ref,
+    () => {
+      return {
+        setFocus: async () => {
+          console.log(`DetailsNoteTitleComponent.setFocus()`);
+          await domRef.current.focus();
+        },
+      };
+    },
+    []
+  );
+
   const debounceTitle = useDebouncedCallback(async (newValue) => {
     if (
       newValue === null ||
       detailsNoteKey === undefined ||
-      detailsNoteKey === null
+      detailsNoteKey === null ||
+      uiApi === null
     ) {
       detailsNoteTitleComponentLog.debug('debounceTitle SKIP');
       return;
@@ -50,6 +72,7 @@ export default function DetailsNoteTitleComponent() {
     updateNoteProperties(modifiedNote);
     setSaved(true);
     updateBacklinks(await nowNoteAPI.getBacklinks(detailsNoteKey));
+    uiApi.updateNodeInTree(modifiedNote);
   }, 2000);
 
   const handleBlur = useCallback(async () => {
@@ -105,6 +128,16 @@ export default function DetailsNoteTitleComponent() {
   }, [detailsNoteTitleFocus, setDetailsNoteTitleFocus]);
 */
 
+/*
+  // set focus on new
+  useEffect(() => {
+    // console.log(
+    //   'Title set focus: detailsNoteTitleFocus=',
+    //   detailsNoteTitleFocus
+    // );
+    domRef.current.focus();
+  }, [detailsNoteKey]);
+*/
   if (detailsNoteKey === undefined) {
     return null;
   }
@@ -122,7 +155,6 @@ export default function DetailsNoteTitleComponent() {
           onKeyDown={handleKeydown}
           onBlur={handleBlur}
           size="large"
-          bordered={false}
           value={value}
           onChange={handleEditTitle}
           autoSize={{
@@ -134,4 +166,7 @@ export default function DetailsNoteTitleComponent() {
       {!saved && <SaveTwoTone twoToneColor="#ff0000" />}
     </div>
   );
-}
+});
+
+export default DetailsNoteTitleComponent;
+

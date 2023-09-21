@@ -5,13 +5,11 @@ import {
   EllipsisOutlined,
   PlusOutlined,
   ApartmentOutlined,
-  UnorderedListOutlined,
   DeleteFilled,
 } from '@ant-design/icons';
-import { Note } from 'main/modules/DataModels';
-import useNoteStore from 'renderer/GlobalStore';
 import useDetailsNoteStore from 'renderer/DetailsNoteStore';
 import { nowNoteAPI } from 'renderer/NowNoteAPI';
+import { NowNoteDispatch } from './App';
 
 const { useToken } = theme;
 
@@ -24,12 +22,7 @@ export default function DetailsNoteMenuComponent() {
   const createdBy = useDetailsNoteStore((state) => state.createdBy);
   const parent = useDetailsNoteStore((state) => state.parent);
 
-  const [updateUpdatedNote, setReloadTreeNoteKey, updateDetailsNote, setAddTreeNoteOnNoteKey] = useNoteStore((state) => [
-    state.updateUpdatedNote,
-    state.setReloadTreeNoteKey,
-    state.updateDetailsNote,
-    state.setAddTreeNoteOnNoteKey,
-  ]);
+  const uiApi = useContext(NowNoteDispatch);
 
   const menuItems = [];
   if (noteKey !== undefined) {
@@ -88,26 +81,22 @@ export default function DetailsNoteMenuComponent() {
       const key = option.key;
       console.log('handleNoteMenu, key=', key);
       if (key === 'add_note') {
-        setAddTreeNoteOnNoteKey(noteKey);
+        uiApi.addNote(noteKey);
       } else if (key === 'open_tree') {
         nowNoteAPI.openNoteInTree(noteKey);
       } else if (key === 'delete') {
         console.log("handleNoteMenu, delete noteKey=", noteKey);
-        nowNoteAPI.moveNoteToTrash(noteKey);
-        setReloadTreeNoteKey(parent);
-        updateDetailsNote(undefined);
+        if (uiApi === null) {
+          return;
+        }
+        uiApi.deleteNote(noteKey);
       } else if (key === 'restore') {
         nowNoteAPI.restore(noteKey);
       } else if (key === 'history') {
         nowNoteAPI.showHistory(noteKey);
       }
     },
-    [
-      noteKey,
-      setAddTreeNoteOnNoteKey,
-      setReloadTreeNoteKey,
-      updateDetailsNote,
-    ]
+    [noteKey, uiApi]
   );
 
   if (noteKey === null) {

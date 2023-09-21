@@ -71,17 +71,6 @@ export default async function deletePermanently(
   await repository
     .getSequelize()!
     .query(
-      `DELETE FROM Tags where key in (select key from Notes where keyPath LIKE :deteKeyPath)`,
-      {
-        replacements: {
-          deteKeyPath,
-        },
-      }
-    );
-
-  await repository
-    .getSequelize()!
-    .query(
       `DELETE FROM Titles where key in (select key from Notes where keyPath LIKE :deteKeyPath)`,
       {
         replacements: {

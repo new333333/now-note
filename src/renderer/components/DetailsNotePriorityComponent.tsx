@@ -1,8 +1,7 @@
-import { useState, useContext, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Dropdown, InputNumber, Typography } from 'antd';
 import type { MenuProps } from 'antd';
 import { PriorityStatistics } from 'types';
-import useNoteStore from 'renderer/GlobalStore';
 import useDetailsNoteStore from 'renderer/DetailsNoteStore';
 import { nowNoteAPI } from 'renderer/NowNoteAPI';
 

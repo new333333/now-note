@@ -156,8 +156,11 @@ export default class RepositorySQLite implements Repository {
     return updateTrashFlag(this, key, trash);
   }
 
-  async getNoteWithDescription(key: string): Promise<Note | undefined> {
-    return getNoteWithDescription(this, key);
+  async getNoteWithDescription(
+    key: string,
+    withoutDescription?: boolean
+  ): Promise<Note | undefined> {
+    return getNoteWithDescription(this, key, withoutDescription);
   }
 
   async getBacklinks(key: string): Promise<Array<Note>> {

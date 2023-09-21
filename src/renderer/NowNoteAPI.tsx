@@ -24,9 +24,12 @@ export class NowNoteAPIImpl implements NowNoteAPI {
     return priorityStat;
   }
 
-  async getNoteWithDescription(key: string): Promise<Note | undefined> {
+  async getNoteWithDescription(
+    key: string,
+    withoutDescription?: boolean
+  ): Promise<Note | undefined> {
     const note: Note | undefined =
-      await this.îpcRenderer.getNoteWithDescription(key);
+      await this.îpcRenderer.getNoteWithDescription(key, withoutDescription);
     return note;
   }
 

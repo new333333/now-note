@@ -1,8 +1,9 @@
 import log from 'electron-log';
-import { useCallback } from 'react';
+import { useCallback, useContext } from 'react';
 import { Checkbox, Tooltip } from 'antd';
 import useDetailsNoteStore from 'renderer/DetailsNoteStore';
 import { nowNoteAPI } from 'renderer/NowNoteAPI';
+import { NowNoteDispatch } from './App';
 
 const noteDoneComponentLog = log.scope('DetailsNoteDoneComponent');
 
@@ -12,7 +13,12 @@ export default function DetailsNoteDoneComponent() {
   const trash = useDetailsNoteStore((state) => state.trash);
   const type = useDetailsNoteStore((state) => state.type);
 
-  const updateDone = useDetailsNoteStore((state) => state.updateDone);
+  // const updateDone = useDetailsNoteStore((state) => state.updateDone);
+  const updateNoteProperties = useDetailsNoteStore(
+    (state) => state.updateNoteProperties
+  );
+
+  const uiApi = useContext(NowNoteDispatch);
 
   noteDoneComponentLog.debug(`noteKey=${noteKey} done=${done} trash=${trash}`);
 
@@ -20,12 +26,14 @@ export default function DetailsNoteDoneComponent() {
     if (noteKey === null || noteKey === undefined) {
       return;
     }
-    updateDone(noteKey, !done);
-    nowNoteAPI.modifyNote({
+    // updateDone(noteKey, !done);
+    const modifiedNote = await nowNoteAPI.modifyNote({
       key: noteKey,
       done: !done,
     });
-  }, [done, noteKey, updateDone]);
+    updateNoteProperties(modifiedNote);
+    uiApi.updateNodeInTree(modifiedNote);
+  }, [done, noteKey, uiApi, updateNoteProperties]);
 
   if (
     noteKey === undefined ||

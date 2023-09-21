@@ -21,7 +21,7 @@ export default async function reindexAll(
 
     note.childrenCount = await getChildrenCount(note.key, note.trash);
     log.debug(
-      `RepositorySQLite.reindexAll() note.key=${note.key} childrenCount=${childrenCount}`
+      `RepositorySQLite.reindexAll() note.key=${note.key} note.childrenCount=${note.childrenCount}`
     );
     await note.save();
 

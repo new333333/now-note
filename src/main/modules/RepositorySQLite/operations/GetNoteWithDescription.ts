@@ -9,7 +9,8 @@ const getNoteWithDescriptionLog = log.scope(
 
 export default async function getNoteWithDescription(
   repository: RepositorySQLite,
-  key: string
+  key: string,
+  withoutDescription?: boolean
 ): Promise<Note | undefined> {
   getNoteWithDescriptionLog.debug(`key=${key}`);
 
@@ -23,11 +24,12 @@ export default async function getNoteWithDescription(
   }
   getNoteWithDescriptionLog.debug(`has Note.findByPk`);
 
-  noteModel.description = await prepareDescriptionToRead(
-    repository,
-    noteModel.description || ''
-  );
-  getNoteWithDescriptionLog.debug(`has prepareDescriptionToRead`);
-
+  if (withoutDescription) {
+    noteModel.description = await prepareDescriptionToRead(
+      repository,
+      noteModel.description || ''
+    );
+    getNoteWithDescriptionLog.debug(`has prepareDescriptionToRead`);
+  }
   return noteModel.get({ plain: true });
 }

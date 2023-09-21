@@ -4,6 +4,7 @@ import { Breadcrumb } from 'antd';
 import useDetailsNoteStore from 'renderer/DetailsNoteStore';
 import { Note } from 'main/modules/DataModels';
 import { nowNoteAPI } from 'renderer/NowNoteAPI';
+import { NowNoteDispatch } from './App';
 
 const noteBreadCrumbLog = log.scope('NoteBreadCrumbComponent');
 
@@ -13,68 +14,20 @@ interface Props {
 }
 
 export default function NoteBreadCrumbComponent({ keyPath, titlePath }: Props) {
-  const updateNote = useDetailsNoteStore((state) => state.updateNote);
-  const updateBacklinks = useDetailsNoteStore((state) => state.updateBacklinks);
+  const uiApi = useContext(NowNoteDispatch);
 
-
-  /*
-
-  useEffect(() => {
-    // update displayed title, when detailsNote chnages
-    // log.debug('NoteBreadCrumb updatedNote=', updatedNote);
-    if (updatedNote === undefined || !('title' in updatedNote)) {
-      return;
-    }
-    const { key } = updatedNote;
-    const { title } = updatedNote;
-
-    // log.debug('NoteBreadCrumb key=, title=', key, title);
-    setParent((prevParenst) => {
-      // log.debug('NoteBreadCrumb prevParenst=', prevParenst);
-      prevParenst.map((note) => {
-        if (note.key === key) {
-          note.title = title || '';
-        }
-        return true;
-      });
-      return [...prevParenst];
-    });
-  }, [updatedNote, setParent]);
-*/
-/*
-  useEffect(() => {
-    // update displayed title, when detailsNote chnages
-    noteBreadCrumbLog.debug('NoteBreadCrumb detailsNote=', detailsNote);
-    if (detailsNote === undefined || !('title' in detailsNote)) {
-      return;
-    }
-
-    const { key } = detailsNote;
-    const { title } = detailsNote;
-
-    noteBreadCrumbLog.debug('NoteBreadCrumb key=, title=', key, title);
-    path.forEach((el: BreadCrumbElementNote) => {
-      if (el.key === key) {
-        el.title = title;
-      }
-    });
-    noteBreadCrumbLog.debug('NoteBreadCrumb path=', path);
-    // setPath([...path]);
-
-  }, [detailsNote, path]);
-*/
   const openNote = useCallback(
     async (key: string) => {
       // log.debug(`NoteBreadCrumb click on key=${key}`);
       const note: Note | undefined = await nowNoteAPI.getNoteWithDescription(
         key
       );
-      if (note !== undefined) {
-        updateNote(note);
-        updateBacklinks(await nowNoteAPI.getBacklinks(key));
+      if (note === undefined && uiApi === null) {
+        return;
       }
+      await uiApi.openDetailNote(note);
     },
-    [updateNote, updateBacklinks]
+    [uiApi]
   );
 
   if (

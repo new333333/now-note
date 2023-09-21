@@ -1,14 +1,16 @@
-import { useState, useEffect, useContext, useCallback } from 'react';
+import { useState, useContext, useCallback } from 'react';
 import { Input, AutoComplete } from 'antd';
 import { SearchResultOptions } from 'types';
 import useNoteStore from 'renderer/GlobalStore';
 import { nowNoteAPI } from 'renderer/NowNoteAPI';
+import { NowNoteDispatch } from './App';
 
 export default function SearchNotes() {
   const [trash, updateDetailsNoteKey] = useNoteStore((state) => [
     state.trash,
-    state.updateDetailsNoteKey,
   ]);
+
+  const uiApi = useContext(NowNoteDispatch);
 
   const [loading, setLoading] = useState<boolean>(false);
   const [valueAutoComplete, setValueAutoComplete] = useState<string>('');
@@ -30,10 +32,11 @@ export default function SearchNotes() {
   }
 
   const openNote = useCallback(
-    (noteKey: string) => {
-      updateDetailsNoteKey(noteKey);
+    async (noteKey: string) => {
+      const note = await nowNoteAPI.getNoteWithDescription(noteKey);
+      uiApi.openDetailNote(note);
     },
-    [updateDetailsNoteKey]
+    [uiApi]
   );
 
   const onSelectAutoComplete = useCallback(
