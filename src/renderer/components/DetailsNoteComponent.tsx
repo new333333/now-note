@@ -44,7 +44,15 @@ const DetailsNoteComponent = forwardRef(function DetailsNoteComponent(
   }
 
   return (
-    <div id="nn-note">
+    <div
+      style={{
+        paddingLeft: 5,
+        paddingRight: 5,
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100%',
+      }}
+    >
       <div>
         <DetailsNoteBreadCrumbComponent />
       </div>

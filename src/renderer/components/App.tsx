@@ -159,29 +159,29 @@ export default function App() {
   const selectRepository = <SelectRepository />;
 
   const reflexContainer = (
-    <>
-      <ReflexContainer orientation="vertical">
-        <ReflexElement className="left-bar" minSize={200} flex={0.25}>
-          <div className="n3-bar-vertical">
-            <AddNoteButtonComponent />
-            <TreeComponent ref={treeComponentRef} />
-            <div id="nn-trash">
+    <ReflexContainer orientation="horizontal">
+      <ReflexElement minSize={35} maxSize={35}>
+        <SearchNotes />
+      </ReflexElement>
+      <ReflexElement>
+        <ReflexContainer orientation="vertical">
+          <ReflexElement className="left-bar" minSize={200} flex={0.25}>
+            <div className="n3-bar-vertical">
+              <AddNoteButtonComponent />
+              <TreeComponent ref={treeComponentRef} />
               <TrashButton />
             </div>
-          </div>
-        </ReflexElement>
-        <ReflexSplitter />
-        <ReflexElement className="right-bar" minSize={200} flex={0.75}>
-          <div className="n3-bar-vertical">
-            <div className="nn-header">
-              <SearchNotes />
-            </div>
+          </ReflexElement>
+          <ReflexSplitter />
+          <ReflexElement className="right-bar" minSize={200} flex={0.75}>
             <DetailsNoteComponent ref={detailsNoteComponentRef} />
-          </div>
-        </ReflexElement>
-      </ReflexContainer>
-      <Footer />
-    </>
+          </ReflexElement>
+        </ReflexContainer>
+      </ReflexElement>
+      <ReflexElement minSize={35} maxSize={35}>
+        <Footer />
+      </ReflexElement>
+    </ReflexContainer>
   );
 
   return (

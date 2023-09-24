@@ -18,8 +18,19 @@ export default function TrashButton() {
     setTrash(false);
   }, [setTrash]);
 
+  let trashButton = (
+    <Button
+      size="small"
+      type="text"
+      icon={<DeleteFilled />}
+      onClick={openTrash}
+    >
+      Open Trash
+    </Button>
+  );
+
   if (trash) {
-    return (
+    trashButton = (
       <Button
         size="small"
         type="text"
@@ -33,13 +44,14 @@ export default function TrashButton() {
   }
 
   return (
-    <Button
-      size="small"
-      type="text"
-      icon={<DeleteFilled />}
-      onClick={openTrash}
+    <div
+      style={{
+        padding: 5,
+        backgroundColor: '#fafafa',
+        borderTop: '1px solid #dddddd',
+      }}
     >
-      Trash
-    </Button>
+      {trashButton}
+    </div>
   );
 }

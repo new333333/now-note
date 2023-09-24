@@ -122,17 +122,28 @@ export default function SearchNotes() {
   );
 
   return (
-    <AutoComplete
-      dropdownMatchSelectWidth={500}
-      value={valueAutoComplete}
-      options={optionsAutoComplete}
-      style={{ width: '100%' }}
-      onSelect={onSelectAutoComplete}
-      onSearch={onSearchAutoComplete}
-      onChange={onChangeAutoComplete}
-      onPopupScroll={onPopupScroll}
+    <div
+      style={{
+        padding: 5,
+        backgroundColor: '#eeeeee',
+        borderBottom: '1px solid #dddddd',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
     >
-      <Input.Search size="small" placeholder="Search" />
-    </AutoComplete>
+      <AutoComplete
+        dropdownMatchSelectWidth={500}
+        value={valueAutoComplete}
+        options={optionsAutoComplete}
+        style={{ width: 200 }}
+        onSelect={onSelectAutoComplete}
+        onSearch={onSearchAutoComplete}
+        onChange={onChangeAutoComplete}
+        onPopupScroll={onPopupScroll}
+      >
+        <Input.Search size="small" placeholder="Search" />
+      </AutoComplete>
+    </div>
   );
 }
