@@ -1,13 +1,12 @@
 import log from 'electron-log';
 import { QueryTypes } from 'sequelize';
-import { NotesIndex } from '../../DataModels';
-import RepositorySQLite from '../RepositorySQLite';
+import { NotesIndexModel, RepositoryIntern } from '../../DataModels';
 
 export default async function updateNoteKeyPath(
-  repository: RepositorySQLite,
+  repository: RepositoryIntern,
   oldKeyPathParam: string,
   newKeyPathParam: string
-) {
+): Promise<void> {
   let oldKeyPath = oldKeyPathParam;
   let newKeyPath = newKeyPathParam;
 
@@ -28,7 +27,7 @@ export default async function updateNoteKeyPath(
   if (oldKeyPath !== newKeyPath) {
     await repository
       .getSequelize()!
-      .query<NotesIndex>(
+      .query<NotesIndexModel>(
         'UPDATE Notes set keyPath = REPLACE(keyPath, :oldKeyPath, :newKeyPath) where keyPath LIKE :likeOldKeyPath',
         {
           replacements: {

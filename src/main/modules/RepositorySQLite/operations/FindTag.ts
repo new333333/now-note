@@ -1,15 +1,18 @@
 import log from 'electron-log';
 import { QueryTypes } from 'sequelize';
-import { Note } from '../../DataModels';
-import RepositorySQLite from '../RepositorySQLite';
+import { RepositoryIntern } from 'main/modules/DataModels';
+
+interface SelectResult {
+  tags: string;
+}
 
 export default async function findTag(
-  repository: RepositorySQLite,
+  repository: RepositoryIntern,
   tag: string
 ): Promise<string[]> {
   const results = await repository
     .getSequelize()
-    .query(
+    .query<SelectResult>(
       `SELECT distinct(tags) FROM Notes where tags is not null and tags != ''`,
       {
         raw: true,
@@ -18,17 +21,17 @@ export default async function findTag(
     );
 
   const tags: string[] = [];
-  results.forEach((row) => {
+  results.forEach((row: SelectResult) => {
     log.debug(`RepositorySQLite.findTag row=`, row);
-    let noteTags: string = row['tags'];
+    let noteTags: string = row.tags;
     if (noteTags.length >= 4) {
       noteTags = noteTags.substring(2, noteTags.length - 2);
     }
     const noteTagsList = noteTags.split('|');
-    noteTagsList.forEach(tag => {
-      if (tags.indexOf(tag) === -1) {
-        tags.push(tag);
-     }
+    noteTagsList.forEach((nextTag) => {
+      if (nextTag.startsWith(tag) && tags.indexOf(tag) === -1) {
+        tags.push(nextTag);
+      }
     });
   });
 

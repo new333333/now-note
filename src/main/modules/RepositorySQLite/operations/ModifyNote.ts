@@ -1,23 +1,26 @@
 import log from 'electron-log';
 import { NoteDTO } from 'types';
 import {
-  Description,
-  Note,
+  DescriptionModel,
+  NoteModel,
   NoteNotFoundByKeyError,
-  Title,
+  RepositoryIntern,
+  TitleModel,
 } from '../../DataModels';
-import RepositorySQLite from '../RepositorySQLite';
 import { setKeyAndTitlePath } from '../RepositorySQLiteUtils';
 
 const modifyNotenLog = log.scope('RepositorySQLite.modifyNote');
 
 export default async function modifyNote(
-  repository: RepositorySQLite,
+  repository: RepositoryIntern,
   note: NoteDTO,
   skipVersioning: boolean = false
-): Promise<Note | undefined> {
+): Promise<NoteDTO | undefined> {
   modifyNotenLog.debug(`start note=${note}`);
-  const noteToModify = await Note.findByPk(note.key);
+  if (note.key === null || note.key === undefined) {
+    return undefined;
+  }
+  const noteToModify = await NoteModel.findByPk(note.key);
   if (noteToModify === null) {
     throw new NoteNotFoundByKeyError(note.key);
   }
@@ -27,19 +30,19 @@ export default async function modifyNote(
 
   if (note.title !== undefined) {
     if (!skipVersioning) {
-      await Title.create({
+      await TitleModel.create({
         key: noteToModify.key,
         title: noteToModify.title,
       });
     }
-    noteToModify.title = note.title;
+    noteToModify.title = note.title || '';
   }
   if (note.description !== undefined) {
-    let html: string = note.description;
-    html = await repository.prepareDescriptionToSave(note.key, html);
+    let html: string | null = note.description;
+    html = await repository.prepareDescriptionToSave(note.key, html || '');
 
     if (!skipVersioning) {
-      await Description.create({
+      await DescriptionModel.create({
         key: noteToModify.key,
         description:
           noteToModify.description !== null ? noteToModify.description : '',
@@ -47,16 +50,16 @@ export default async function modifyNote(
     }
     noteToModify.description = html;
   }
-  if (note.type !== undefined) {
+  if (note.type !== undefined && note.type !== null) {
     noteToModify.type = note.type;
   }
-  if (note.done !== undefined) {
+  if (note.done !== undefined && note.done !== null) {
     noteToModify.done = note.done;
   }
-  if (note.priority !== undefined) {
+  if (note.priority !== undefined && note.priority !== null) {
     noteToModify.priority = note.priority;
   }
-  if (note.expanded !== undefined) {
+  if (note.expanded !== undefined && note.expanded !== null) {
     noteToModify.expanded = note.expanded;
   }
   if (prevTitle !== noteToModify.title) {
@@ -76,5 +79,5 @@ export default async function modifyNote(
     );
   }
   modifyNotenLog.debug(`ready`);
-  return noteToModify.dataValues;
+  return noteToModify.toDTO();
 }

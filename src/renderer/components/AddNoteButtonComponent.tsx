@@ -3,7 +3,7 @@ import { useContext, useState } from 'react';
 import { PlusOutlined } from '@ant-design/icons';
 import { Button, Space } from 'antd';
 import useNoteStore from 'renderer/GlobalStore';
-import { NowNoteDispatch } from './App';
+import UIApiDispatch from 'renderer/UIApiDispatch';
 
 const AAddNoteButtonComponentLog = log.scope('AddNoteButtonComponent');
 
@@ -15,21 +15,18 @@ export default function AddNoteButtonComponent() {
 
   let button = null;
 
-  const uiApi = useContext(NowNoteDispatch);
+  const uiApi = useContext(UIApiDispatch);
+
+  const handleClick = async () => {
+    setLoading(true);
+    const { addNote } = uiApi;
+    await addNote('ON_ACTIVE_TREE_NODE');
+    setLoading(false);
+  };
 
   if (!trash) {
     button = (
-      <Button
-        size="small"
-        loading={loading}
-        onClick={async () => {
-          // nowNoteDispatch({ method: 'addNote', key: 'ON_ACTIVE_TREE_NODE' });
-          setLoading(true);
-          await uiApi.addNote('ON_ACTIVE_TREE_NODE');
-          console.log(`addNote ready`);
-          setLoading(false);
-        }}
-      >
+      <Button size="small" loading={loading} onClick={handleClick}>
         <PlusOutlined /> Add
       </Button>
     );

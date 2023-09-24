@@ -1,6 +1,6 @@
 import log from 'electron-log';
-import { Note } from '../../DataModels';
-import RepositorySQLite from '../RepositorySQLite';
+import { NoteDTO } from 'types';
+import { NoteModel, RepositoryIntern } from '../../DataModels';
 import prepareDescriptionToRead from './PrepareDescriptionToRead';
 
 const getNoteWithDescriptionLog = log.scope(
@@ -8,21 +8,21 @@ const getNoteWithDescriptionLog = log.scope(
 );
 
 export default async function getNoteWithDescription(
-  repository: RepositorySQLite,
+  repository: RepositoryIntern,
   key: string,
   withoutDescription?: boolean
-): Promise<Note | undefined> {
+): Promise<NoteDTO | undefined> {
   getNoteWithDescriptionLog.debug(`key=${key}`);
 
   if (key === undefined) {
     return undefined;
   }
 
-  const noteModel = await Note.findByPk(key);
+  const noteModel = await NoteModel.findByPk(key);
   if (noteModel === null) {
     return undefined;
   }
-  getNoteWithDescriptionLog.debug(`has Note.findByPk`);
+  getNoteWithDescriptionLog.debug(`has NoteModel.findByPk`);
 
   if (withoutDescription) {
     noteModel.description = await prepareDescriptionToRead(
@@ -31,5 +31,5 @@ export default async function getNoteWithDescription(
     );
     getNoteWithDescriptionLog.debug(`has prepareDescriptionToRead`);
   }
-  return noteModel.get({ plain: true });
+  return noteModel.toDTO();
 }

@@ -1,10 +1,9 @@
 import log from 'electron-log';
-import { useCallback, useEffect, useState, useContext } from 'react';
+import { useCallback, useContext } from 'react';
 import { Breadcrumb } from 'antd';
-import useDetailsNoteStore from 'renderer/DetailsNoteStore';
-import { Note } from 'main/modules/DataModels';
 import { nowNoteAPI } from 'renderer/NowNoteAPI';
-import { NowNoteDispatch } from './App';
+import { NoteDTO } from 'types';
+import UIApiDispatch from 'renderer/UIApiDispatch';
 
 const noteBreadCrumbLog = log.scope('NoteBreadCrumbComponent');
 
@@ -14,12 +13,12 @@ interface Props {
 }
 
 export default function NoteBreadCrumbComponent({ keyPath, titlePath }: Props) {
-  const uiApi = useContext(NowNoteDispatch);
+  const uiApi = useContext(UIApiDispatch);
 
   const openNote = useCallback(
     async (key: string) => {
       // log.debug(`NoteBreadCrumb click on key=${key}`);
-      const note: Note | undefined = await nowNoteAPI.getNoteWithDescription(
+      const note: NoteDTO | undefined = await nowNoteAPI.getNoteWithDescription(
         key
       );
       if (note === undefined && uiApi === null) {

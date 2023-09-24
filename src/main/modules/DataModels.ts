@@ -1,17 +1,20 @@
 /* eslint-disable no-use-before-define */
+/* eslint-disable no-unused-vars */
 /* eslint max-classes-per-file: ["error", 99] */
 import {
   Model,
   InferAttributes,
   InferCreationAttributes,
   CreationOptional,
+  Sequelize,
 } from 'sequelize';
+import { AssetDTO, NoteDTO, Repository, SettingsDTO } from 'types';
 
 export const SQLITE3_TYPE: string = 'sqlite3';
 
-export class Note extends Model<
-  InferAttributes<Note>,
-  InferCreationAttributes<Note>
+export class NoteModel extends Model<
+  InferAttributes<NoteModel>,
+  InferCreationAttributes<NoteModel>
 > {
   declare key: CreationOptional<string>;
 
@@ -50,20 +53,24 @@ export class Note extends Model<
   declare childrenCount: number;
 
   declare tags: string;
+
+  toDTO(): NoteDTO {
+    return this.dataValues;
+  }
 }
 
-export class NotesIndex extends Model<
-  InferAttributes<NotesIndex>,
-  InferCreationAttributes<NotesIndex>
+export class NotesIndexModel extends Model<
+  InferAttributes<NotesIndexModel>,
+  InferCreationAttributes<NotesIndexModel>
 > {
   declare key: CreationOptional<string>;
 
   declare text: string | null;
 }
 
-export class Asset extends Model<
-  InferAttributes<Asset>,
-  InferCreationAttributes<Asset>
+export class AssetModel extends Model<
+  InferAttributes<AssetModel>,
+  InferCreationAttributes<AssetModel>
 > {
   declare key: CreationOptional<string>;
 
@@ -76,11 +83,15 @@ export class Asset extends Model<
   declare createdAt: CreationOptional<Date>;
 
   declare updatedAt: CreationOptional<Date>;
+
+  toDTO(): AssetDTO {
+    return this.dataValues;
+  }
 }
 
-export class Description extends Model<
-  InferAttributes<Description>,
-  InferCreationAttributes<Description>
+export class DescriptionModel extends Model<
+  InferAttributes<DescriptionModel>,
+  InferCreationAttributes<DescriptionModel>
 > {
   declare id: CreationOptional<number>;
 
@@ -93,9 +104,9 @@ export class Description extends Model<
   declare updatedAt: CreationOptional<Date>;
 }
 
-export class Link extends Model<
-  InferAttributes<Link>,
-  InferCreationAttributes<Link>
+export class LinkModel extends Model<
+  InferAttributes<LinkModel>,
+  InferCreationAttributes<LinkModel>
 > {
   declare id: CreationOptional<number>;
 
@@ -110,9 +121,9 @@ export class Link extends Model<
   declare updatedAt: CreationOptional<Date>;
 }
 
-export class Title extends Model<
-  InferAttributes<Title>,
-  InferCreationAttributes<Title>
+export class TitleModel extends Model<
+  InferAttributes<TitleModel>,
+  InferCreationAttributes<TitleModel>
 > {
   declare id: CreationOptional<number>;
 
@@ -125,6 +136,17 @@ export class Title extends Model<
   declare updatedAt: CreationOptional<Date>;
 }
 
+export class SettingsModel extends Model<
+  InferAttributes<SettingsModel>,
+  InferCreationAttributes<SettingsModel>
+> {
+  declare detailsNoteKey: string | null;
+
+  toDTO(): SettingsDTO {
+    return this.dataValues;
+  }
+}
+
 export class NoteNotFoundByKeyError extends Error {
   private key: string | null | undefined;
 
@@ -132,4 +154,28 @@ export class NoteNotFoundByKeyError extends Error {
     super(`Note not found by key: ${key}"`);
     this.key = key;
   }
+}
+
+export interface RepositoryIntern extends Repository {
+  getUserName(): string;
+  getSequelize(): Sequelize;
+  prepareDescriptionToSave(key: string, html: string): Promise<string>;
+  updateNoteTitlePath(
+    oldTitlePathParam: string,
+    newTitlePathParam: string,
+    keyPathParam: string
+  ): Promise<void>;
+  addNoteIndex(note: NoteModel): Promise<void>;
+  deleteNoteIndex(key: string): Promise<void>;
+  isIndexed(): Promise<boolean>;
+  updateNoteKeyPath(
+    oldKeyPathParam: string,
+    newKeyPathParam: string
+  ): Promise<void>;
+  updateTrashFlag(key: string, trash: boolean): Promise<void>;
+  addLocalFile(
+    fileType: string | null,
+    fileName: string,
+    filePath: string
+  ): Promise<AssetModel>;
 }

@@ -3,7 +3,7 @@ import { useCallback, useContext } from 'react';
 import { Checkbox, Tooltip } from 'antd';
 import useDetailsNoteStore from 'renderer/DetailsNoteStore';
 import { nowNoteAPI } from 'renderer/NowNoteAPI';
-import { NowNoteDispatch } from './App';
+import UIApiDispatch from 'renderer/UIApiDispatch';
 
 const noteDoneComponentLog = log.scope('DetailsNoteDoneComponent');
 
@@ -18,7 +18,7 @@ export default function DetailsNoteDoneComponent() {
     (state) => state.updateNoteProperties
   );
 
-  const uiApi = useContext(NowNoteDispatch);
+  const uiApi = useContext(UIApiDispatch);
 
   noteDoneComponentLog.debug(`noteKey=${noteKey} done=${done} trash=${trash}`);
 

@@ -2,11 +2,16 @@ import log from 'electron-log';
 import * as cheerio from 'cheerio';
 import path = require('path');
 import { Op } from 'sequelize';
-import RepositorySQLite from '../RepositorySQLite';
-import { Asset, Link, Note } from '../../DataModels';
+import { AssetDTO } from 'types';
+import {
+  AssetModel,
+  LinkModel,
+  NoteModel,
+  RepositoryIntern,
+} from '../../DataModels';
 
 async function prepareLinksToSave(
-  repository: RepositorySQLite,
+  repository: RepositoryIntern,
   key: string,
   description: string | undefined | null
 ) {
@@ -34,13 +39,13 @@ async function prepareLinksToSave(
     );
     if (linkToNoteKey !== undefined) {
       // eslint-disable-next-line no-await-in-loop
-      const linkToNote = await Note.findByPk(linkToNoteKey);
+      const linkToNote = await NoteModel.findByPk(linkToNoteKey);
       if (linkToNote !== undefined) {
         if (!newLinks.includes(linkToNoteKey)) {
           newLinks.push(linkToNoteKey);
         }
         // eslint-disable-next-line no-await-in-loop
-        await Link.findOrCreate({
+        await LinkModel.findOrCreate({
           where: {
             from: key,
             to: linkToNoteKey,
@@ -64,7 +69,7 @@ async function prepareLinksToSave(
     }
   }
 
-  const allLinks: Link[] = await Link.findAll({
+  const allLinks: LinkModel[] = await LinkModel.findAll({
     where: {
       from: key,
       type: {
@@ -79,7 +84,7 @@ async function prepareLinksToSave(
   for (let i = 0; i < allLinks.length; i += 1) {
     const link = allLinks[i];
     // eslint-disable-next-line no-await-in-loop
-    const linkToNote = await Note.findByPk(link.to);
+    const linkToNote = await NoteModel.findByPk(link.to);
     if (linkToNote !== undefined) {
       if (!newLinks.includes(link.to)) {
         // eslint-disable-next-line no-await-in-loop
@@ -95,7 +100,7 @@ async function prepareLinksToSave(
 }
 
 async function prepareInlineImagesToSave(
-  repository: RepositorySQLite,
+  repository: RepositoryIntern,
   htmltext: string
 ) {
   try {
@@ -120,7 +125,7 @@ async function prepareInlineImagesToSave(
           const fileName = 'img.png';
           const filePathOrBase64 = imgSrc.substring(22);
           // eslint-disable-next-line no-await-in-loop
-          const asset: Asset = await repository.addImageAsBase64(
+          const asset: AssetDTO = await repository.addImageAsBase64(
             fileType,
             fileName,
             filePathOrBase64
@@ -130,7 +135,7 @@ async function prepareInlineImagesToSave(
           // copy/paste e.g. from outlook
           const filePath = imgSrc.substring('file:///'.length);
           // eslint-disable-next-line no-await-in-loop
-          const asset: Asset = await repository.addLocalFile(
+          const asset: AssetModel = await repository.addLocalFile(
             null,
             path.basename(filePath),
             filePath
@@ -140,7 +145,7 @@ async function prepareInlineImagesToSave(
           // copy/paste e.g. from outlook
           const filePath = imgSrc.substring('file://'.length);
           // eslint-disable-next-line no-await-in-loop
-          const asset: Asset = await repository.addLocalFile(
+          const asset: AssetModel = await repository.addLocalFile(
             null,
             path.basename(filePath),
             filePath
@@ -157,10 +162,10 @@ async function prepareInlineImagesToSave(
 }
 
 export default async function prepareDescriptionToSave(
-  repository: RepositorySQLite,
+  repository: RepositoryIntern,
   key: string,
   html: string
-) {
+): Promise<string> {
   let htmlResult = await prepareLinksToSave(repository, key, html);
   htmlResult = await prepareInlineImagesToSave(repository, htmlResult);
   return htmlResult;

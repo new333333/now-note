@@ -1,16 +1,16 @@
 import log from 'electron-log';
-import { Note } from '../../DataModels';
-import RepositorySQLite from '../RepositorySQLite';
+import { NoteDTO } from 'types';
+import { NoteModel, RepositoryIntern } from '../../DataModels';
 
 // load root nodes, if key undefined
 // load children notes if key defined
 export default async function getChildren(
-  repository: RepositorySQLite,
+  repository: RepositoryIntern,
   key: string | null | undefined,
   trash: boolean = false
-): Promise<Array<Note>> {
+): Promise<Array<NoteDTO>> {
   log.debug(`RepositorySQLite.getChildren() key=${key}, trash=${trash}`);
-  const notes = await Note.findAll({
+  const notes = await NoteModel.findAll({
     where: {
       parent: key === undefined ? null : key,
       trash,
@@ -18,10 +18,10 @@ export default async function getChildren(
     order: [['position', 'ASC']],
   });
 
-  const resultNotes: Array<Note> = [];
+  const resultNotes: Array<NoteDTO> = [];
   for (let i = 0; i < notes.length; i += 1) {
     const noteModel = notes[i];
-    resultNotes.push(noteModel.dataValues);
+    resultNotes.push(noteModel.toDTO());
   }
   return resultNotes;
 }

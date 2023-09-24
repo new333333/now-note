@@ -20,6 +20,7 @@ import { Note, Note as NoteDataModel } from 'main/modules/DataModels';
 import useNoteStore from 'renderer/GlobalStore';
 import useDetailsNoteStore from 'renderer/DetailsNoteStore';
 import { nowNoteAPI } from 'renderer/NowNoteAPI';
+import { NoteDTO } from 'types';
 
 const treeLog = log.scope('Tree');
 
@@ -354,7 +355,7 @@ const TreeComponent = forwardRef(function TreeComponent(props, ref) {
       console.log('addNote parent node=', node);
       await node.setExpanded(true);
 
-      const newNote: NoteDataModel | undefined = await nowNoteAPI.addNote(
+      const newNote: NoteDTO | undefined = await nowNoteAPI.addNote(
         node.key,
         { title: '', type: 'note' },
         'over'

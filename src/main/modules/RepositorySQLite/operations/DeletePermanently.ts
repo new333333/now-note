@@ -1,18 +1,14 @@
 import log from 'electron-log';
+import { QueryTypes } from 'sequelize';
 import {
-  Description,
-  Link,
-  Note,
+  NoteModel,
   NoteNotFoundByKeyError,
-  Tag,
-  Title,
+  RepositoryIntern,
 } from '../../DataModels';
-import RepositorySQLite from '../RepositorySQLite';
-import { Op, QueryTypes } from 'sequelize';
 import getChildrenCount from './GetChildrenCount';
 
 export default async function deletePermanently(
-  repository: RepositorySQLite,
+  repository: RepositoryIntern,
   key: string | undefined
 ): Promise<boolean> {
   log.debug(`RepositorySQLite.deletePermanently() key=${key}`);
@@ -21,7 +17,7 @@ export default async function deletePermanently(
     return false;
   }
 
-  const deleteNote = await Note.findByPk(key);
+  const deleteNote = await NoteModel.findByPk(key);
   if (deleteNote === null) {
     throw new NoteNotFoundByKeyError(key);
   }
@@ -109,7 +105,7 @@ export default async function deletePermanently(
     );
 
   if (parent !== null) {
-    const parentNote = await Note.findByPk(parent);
+    const parentNote = await NoteModel.findByPk(parent);
     if (parentNote !== null) {
       parentNote.childrenCount = await getChildrenCount(
         parentNote.key,

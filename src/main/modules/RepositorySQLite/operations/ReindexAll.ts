@@ -1,15 +1,14 @@
 import log from 'electron-log';
-import { Note } from '../../DataModels';
-import RepositorySQLite from '../RepositorySQLite';
+import { NoteModel, RepositoryIntern } from '../../DataModels';
 import { setKeyAndTitlePath } from '../RepositorySQLiteUtils';
 import getChildrenCount from './GetChildrenCount';
 
 export default async function reindexAll(
-  repository: RepositorySQLite,
+  repository: RepositoryIntern,
   key: string | undefined
-) {
+): Promise<void> {
   log.debug(`RepositorySQLite.reindexAll()`);
-  const notes = await Note.findAll({
+  const notes = await NoteModel.findAll({
     where: {
       parent: key === undefined ? null : key,
     },

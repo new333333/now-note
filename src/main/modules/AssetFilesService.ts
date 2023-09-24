@@ -1,6 +1,6 @@
 import path from 'path';
 import fs from 'fs';
-import { Asset } from './DataModels';
+import { AssetModel } from './DataModels';
 
 export default class AssetFilesService {
   private assetsDirectory: string;
@@ -12,7 +12,7 @@ export default class AssetFilesService {
   }
 
   async saveBase64ToFile(
-    asset: Asset,
+    asset: AssetModel,
     fileName: string,
     base64: string
   ): Promise<string | undefined> {
@@ -40,7 +40,7 @@ export default class AssetFilesService {
   }
 
   async saveLocalFile(
-    asset: Asset,
+    asset: AssetModel,
     fileName: string,
     filePathOrBase64: string
   ): Promise<string> {
@@ -55,7 +55,7 @@ export default class AssetFilesService {
     return assetFile;
   }
 
-  async createReadStream(asset: Asset) {
+  async createReadStream(asset: AssetModel) {
     const assetSrc = path.join(
       this.assetsDirectory,
       this.ASSET_FOLDER_NAME,
@@ -65,7 +65,7 @@ export default class AssetFilesService {
     return fs.createReadStream(assetSrc);
   }
 
-  getAssetFileLocalPath(asset: Asset) {
+  getAssetFileLocalPath(asset: AssetModel) {
     return path.join(
       this.assetsDirectory,
       this.ASSET_FOLDER_NAME,

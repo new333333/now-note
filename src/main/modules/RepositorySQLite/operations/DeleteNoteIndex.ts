@@ -1,10 +1,10 @@
 import log from 'electron-log';
-import RepositorySQLite from '../RepositorySQLite';
+import { RepositoryIntern } from 'main/modules/DataModels';
 
 export default async function deleteNoteIndex(
-  repository: RepositorySQLite,
+  repository: RepositoryIntern,
   key: string
-) {
+): Promise<void> {
   if (key === null) {
     return;
   }

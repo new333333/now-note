@@ -1,11 +1,10 @@
 import log from 'electron-log';
 import { QueryTypes } from 'sequelize';
-import { SearchResult, SearchResultOptions } from 'types';
-import { Note } from '../../DataModels';
-import RepositorySQLite from '../RepositorySQLite';
+import { NoteDTO, SearchResult, SearchResultOptions } from 'types';
+import { NoteModel, RepositoryIntern } from '../../DataModels';
 
 export default async function search(
-  repository: RepositorySQLite,
+  repository: RepositoryIntern,
   searchText: string,
   limit: number,
   trash: boolean,
@@ -43,9 +42,9 @@ export default async function search(
   const selectFromNotesIndex = `select * from notes where key in (SELECT key FROM Notes_index where ${whereNotesIndex} key in (SELECT key FROM Notes where ${whereNotes}) ${orderByNotesIndex}) `;
   const selectFromNotesIndexCount = `SELECT count(*) FROM Notes_index where ${whereNotesIndex} key in (SELECT key FROM Notes where ${whereNotes}) `;
 
-  const selectResults: Note[] = await repository
+  const selectResults: NoteDTO[] = await repository
     .getSequelize()!
-    .query<Note>(`${selectFromNotesIndex} ${limitNotesIndex}`, {
+    .query<NoteModel>(`${selectFromNotesIndex} ${limitNotesIndex}`, {
       replacements: {
         searchText: `${searchText.trim()} *`,
         limit,

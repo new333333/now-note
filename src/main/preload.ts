@@ -10,8 +10,9 @@ import {
   SearchResultOptions,
   Repository,
   RepositorySettings,
+  AssetDTO,
 } from '../types';
-import { Asset, Note, Tag } from './modules/DataModels';
+import { AssetModel } from './modules/DataModels';
 
 export interface ElectronIPCRenderer {
   ipcRenderer: Repository;
@@ -40,16 +41,16 @@ const electronHandler: ElectronIPCRenderer = {
     getChildren: (
       key: string,
       trash: boolean
-    ): Promise<Array<Note> | undefined> =>
+    ): Promise<Array<NoteDTO> | undefined> =>
       ipcRenderer.invoke('getChildren', key, trash),
 
     getNoteWithDescription: (
       key: string,
       withoutDescription?: boolean
-    ): Promise<Note | undefined> =>
+    ): Promise<NoteDTO | undefined> =>
       ipcRenderer.invoke('getNoteWithDescription', key, withoutDescription),
 
-    getBacklinks: (key: string): Promise<Array<Note>> =>
+    getBacklinks: (key: string): Promise<Array<NoteDTO>> =>
       ipcRenderer.invoke('getBacklinks', key),
 
     search: (
@@ -60,7 +61,7 @@ const electronHandler: ElectronIPCRenderer = {
     ): Promise<SearchResult> =>
       ipcRenderer.invoke('search', searchText, limit, trash, options),
 
-    modifyNote: (note: NoteDTO): Promise<Note> =>
+    modifyNote: (note: NoteDTO): Promise<NoteDTO> =>
       ipcRenderer.invoke('modifyNote', note),
 
     connectRepository: (
@@ -75,7 +76,7 @@ const electronHandler: ElectronIPCRenderer = {
       fileType: string | null,
       fileName: string,
       base64: string
-    ): Promise<Asset> =>
+    ): Promise<AssetDTO> =>
       ipcRenderer.invoke('addImageAsBase64', fileType, fileName, base64),
 
     addTag: (key: string, tag: string): Promise<string> =>
@@ -91,7 +92,7 @@ const electronHandler: ElectronIPCRenderer = {
       note: NoteDTO,
       hitMode: HitMode,
       relativeToKey?: string
-    ): Promise<Note | undefined> =>
+    ): Promise<NoteDTO | undefined> =>
       ipcRenderer.invoke(
         'addNote',
         parentNoteKey,

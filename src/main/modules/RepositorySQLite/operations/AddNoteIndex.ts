@@ -1,14 +1,13 @@
 import log from 'electron-log';
 import { QueryTypes } from 'sequelize';
 import * as cheerio from 'cheerio';
-import { Note, NotesIndex } from '../../DataModels';
-import RepositorySQLite from '../RepositorySQLite';
+import { NoteModel, NotesIndexModel, RepositoryIntern } from '../../DataModels';
 
 // TODO: add tags to note index
 export default async function addNoteIndex(
-  repository: RepositorySQLite,
-  note: Note
-) {
+  repository: RepositoryIntern,
+  note: NoteModel
+): Promise<void> {
   if (note === null) {
     return;
   }
@@ -19,7 +18,7 @@ export default async function addNoteIndex(
 
   await repository
     .getSequelize()!
-    .query<NotesIndex>(
+    .query<NotesIndexModel>(
       'INSERT INTO Notes_index (key, text) VALUES (:key, :text)',
       {
         replacements: {

@@ -4,7 +4,7 @@ import { Typography, Dropdown } from 'antd';
 import type { MenuProps } from 'antd';
 import useDetailsNoteStore from 'renderer/DetailsNoteStore';
 import { nowNoteAPI } from 'renderer/NowNoteAPI';
-import { NowNoteDispatch } from './App';
+import UIApiDispatch from 'renderer/UIApiDispatch';
 
 const { Text, Link } = Typography;
 
@@ -15,11 +15,8 @@ export default function DetailsNoteTypeComponent() {
   const detailsNoteUpdateType = useDetailsNoteStore(
     (state) => state.updateType
   );
-  const updateNoteProperties = useDetailsNoteStore(
-    (state) => state.updateNoteProperties
-  );
 
-  const uiApi = useContext(NowNoteDispatch);
+  const uiApi = useContext(UIApiDispatch);
 
   const menuItems: MenuProps['items'] = [
     {
@@ -50,13 +47,13 @@ export default function DetailsNoteTypeComponent() {
     if (detailsNoteKey === undefined || uiApi === null) {
       return;
     }
-    // detailsNoteUpdateType(detailsNoteKey, key);
+    detailsNoteUpdateType(detailsNoteKey, key);
     const modifiedNote = await nowNoteAPI.modifyNote({
       key: detailsNoteKey,
       type: key,
     });
-    updateNoteProperties(modifiedNote);
-    uiApi.updateNodeInTree(modifiedNote);
+    const { updateNodeInTree } = uiApi;
+    updateNodeInTree(modifiedNote);
   };
 
   if (detailsNoteKey === undefined) {

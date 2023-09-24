@@ -1,18 +1,22 @@
 import log from 'electron-log';
 import { QueryTypes } from 'sequelize';
 import { HitMode, NoteDTO } from 'types';
-import { Link, Note, NoteNotFoundByKeyError } from '../../DataModels';
-import RepositorySQLite from '../RepositorySQLite';
+import {
+  LinkModel,
+  NoteModel,
+  NoteNotFoundByKeyError,
+  RepositoryIntern,
+} from '../../DataModels';
 import { setKeyAndTitlePath } from '../RepositorySQLiteUtils';
 import getChildrenCount from './GetChildrenCount';
 
 export default async function addNote(
-  repository: RepositorySQLite,
+  repository: RepositoryIntern,
   parentNoteKey: string,
   note: NoteDTO,
   hitMode: HitMode,
   relativeToKey?: string
-): Promise<Note | undefined> {
+): Promise<NoteDTO | undefined> {
   let parent: string | null = parentNoteKey.startsWith('root_')
     ? null
     : parentNoteKey;
@@ -35,7 +39,7 @@ export default async function addNote(
 
     position = 0;
   } else if (hitMode === 'over') {
-    const max: number = await Note.max('position', {
+    const max: number = await NoteModel.max('position', {
       where: {
         parent: parentNoteKey,
       },
@@ -43,7 +47,9 @@ export default async function addNote(
 
     position = max == null ? 0 : max + 1;
   } else if (hitMode === 'after') {
-    const relativNote: Note | null = await Note.findByPk(relativeToKey);
+    const relativNote: NoteModel | null = await NoteModel.findByPk(
+      relativeToKey
+    );
     if (relativNote === null) {
       throw new NoteNotFoundByKeyError(relativeToKey);
     }
@@ -67,7 +73,9 @@ export default async function addNote(
     parent = relativNote.parent;
     position = relativNote.position + 1;
   } else if (hitMode === 'before') {
-    const relativNote: Note | null = await Note.findByPk(relativeToKey);
+    const relativNote: NoteModel | null = await NoteModel.findByPk(
+      relativeToKey
+    );
     if (relativNote === null) {
       throw new NoteNotFoundByKeyError(relativeToKey);
     }
@@ -99,7 +107,7 @@ export default async function addNote(
   const done: boolean = note.done || false;
 
   // create Note because need key
-  const newNote = Note.build({
+  const newNote = NoteModel.build({
     title: note.title || '',
     parent,
     position: position || 0,
@@ -113,6 +121,7 @@ export default async function addNote(
     keyPath: '',
     titlePath: '',
     tags: '',
+    childrenCount: 0,
   });
 
   await setKeyAndTitlePath(newNote);
@@ -131,7 +140,7 @@ export default async function addNote(
   await newNote.save();
 
   if (newNote.linkToKey) {
-    await Link.create({
+    await LinkModel.create({
       from: newNote.key,
       to: newNote.linkToKey,
       type: 'note',
@@ -141,7 +150,7 @@ export default async function addNote(
   await repository.addNoteIndex(newNote);
 
   if (parent !== null) {
-    const parentNote = await Note.findByPk(parent);
+    const parentNote = await NoteModel.findByPk(parent);
     if (parentNote !== null) {
       parentNote.childrenCount = await getChildrenCount(
         parentNote.key,
@@ -151,5 +160,5 @@ export default async function addNote(
     }
   }
 
-  return newNote.dataValues;
+  return newNote.toDTO();
 }

@@ -1,13 +1,23 @@
 import log from 'electron-log';
 import { DataTypes } from 'sequelize';
-import { Asset, Description, Link, Note, NotesIndex, Tag, Title } from '../../DataModels';
-import RepositorySQLite from '../RepositorySQLite';
+import {
+  AssetModel,
+  DescriptionModel,
+  LinkModel,
+  NoteModel,
+  NotesIndexModel,
+  RepositoryIntern,
+  SettingsModel,
+  TitleModel,
+} from '../../DataModels';
 
-export default async function authenticate(repository: RepositorySQLite) {
+export default async function authenticate(
+  repository: RepositoryIntern
+): Promise<void> {
   log.debug(`RepositorySQLite.authenticate()...`);
   await repository.getSequelize().authenticate();
 
-  NotesIndex.init(
+  NotesIndexModel.init(
     {
       key: {
         type: DataTypes.UUID,
@@ -25,7 +35,7 @@ export default async function authenticate(repository: RepositorySQLite) {
     }
   );
 
-  Note.init(
+  NoteModel.init(
     {
       key: {
         type: DataTypes.UUID,
@@ -107,6 +117,7 @@ export default async function authenticate(repository: RepositorySQLite) {
     },
     {
       sequelize: repository.getSequelize(),
+      tableName: 'Notes',
       indexes: [
         {
           unique: false,
@@ -116,7 +127,7 @@ export default async function authenticate(repository: RepositorySQLite) {
     }
   );
 
-  Title.init(
+  TitleModel.init(
     {
       id: {
         type: DataTypes.BIGINT,
@@ -136,10 +147,11 @@ export default async function authenticate(repository: RepositorySQLite) {
     },
     {
       sequelize: repository.getSequelize(),
+      tableName: 'Titles',
     }
   );
 
-  Description.init(
+  DescriptionModel.init(
     {
       id: {
         type: DataTypes.BIGINT,
@@ -159,10 +171,11 @@ export default async function authenticate(repository: RepositorySQLite) {
     },
     {
       sequelize: repository.getSequelize(),
+      tableName: 'Descriptions',
     }
   );
 
-  Link.init(
+  LinkModel.init(
     {
       id: {
         type: DataTypes.BIGINT,
@@ -186,10 +199,11 @@ export default async function authenticate(repository: RepositorySQLite) {
     },
     {
       sequelize: repository.getSequelize(),
+      tableName: 'Links',
     }
   );
 
-  Asset.init(
+  AssetModel.init(
     {
       key: {
         type: DataTypes.UUID,
@@ -213,6 +227,19 @@ export default async function authenticate(repository: RepositorySQLite) {
     },
     {
       sequelize: repository.getSequelize(),
+      tableName: 'Assets',
+    }
+  );
+
+  SettingsModel.init(
+    {
+      detailsNoteKey: {
+        type: DataTypes.UUID,
+      },
+    },
+    {
+      sequelize: repository.getSequelize(),
+      tableName: 'Settings',
     }
   );
 

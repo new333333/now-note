@@ -1,11 +1,14 @@
 import log from 'electron-log';
-import { useEffect, useRef, useCallback, createContext, useMemo } from 'react';
-import { ConfigProvider, Space } from 'antd';
+import { useEffect, useRef, useCallback, useMemo } from 'react';
+import { ConfigProvider } from 'antd';
 import '../css/App.scss';
 import useNoteStore from 'renderer/GlobalStore';
 import { ReflexContainer, ReflexSplitter, ReflexElement } from 'react-reflex';
 import 'react-reflex/styles.css';
 import { nowNoteAPI } from 'renderer/NowNoteAPI';
+import { NoteDTO } from 'types';
+import UIApiDispatch, { UIApi } from 'renderer/UIApiDispatch';
+import useDetailsNoteStore from 'renderer/DetailsNoteStore';
 import SelectRepository from './SelectRepository';
 import Footer from './Footer';
 import SearchNotes from './SearchNotes';
@@ -13,16 +16,24 @@ import TreeComponent from './TreeComponent';
 import AddNoteButtonComponent from './AddNoteButtonComponent';
 import TrashButton from './TrashButton';
 import DetailsNoteComponent from './DetailsNoteComponent';
-import useDetailsNoteStore from 'renderer/DetailsNoteStore';
-import { Note } from 'main/modules/DataModels';
 
 const appLog = log.scope('App');
 
-export const NowNoteDispatch = createContext(null);
+interface TreeComponentAPI {
+  addNote(key: string): Promise<NoteDTO | undefined>;
+  removeNode(key: string): Promise<NoteDTO | undefined>;
+  updateNode(note: NoteDTO): Promise<void>;
+  focusNode(key: string): Promise<void>;
+  reloadNode(key: string): Promise<boolean>;
+}
 
-export function App() {
-  const treeComponentRef = useRef(null);
-  const detailsNoteComponentRef = useRef(null);
+interface DetailsNoteComponentAPI {
+  setFocus(): Promise<void>;
+}
+
+export default function App() {
+  const treeComponentRef = useRef<TreeComponentAPI>(null);
+  const detailsNoteComponentRef = useRef<DetailsNoteComponentAPI>(null);
 
   const [currentRepository, setCurrentRepository, trash] = useNoteStore(
     (state) => [
@@ -52,9 +63,9 @@ export function App() {
     (state) => state.updateNoteProperties
   );
 
-  const uiApi = useMemo(() => {
+  const uiApi: UIApi = useMemo(() => {
     return {
-      addNote: async (key: string): Promise<Note | undefined> => {
+      addNote: async (key: string): Promise<NoteDTO | undefined> => {
         console.log(`addNote! call! key`, key);
         if (treeComponentRef.current === null) {
           return undefined;
@@ -69,42 +80,44 @@ export function App() {
       },
       deleteNote: async (key: string) => {
         if (treeComponentRef.current === null) {
-          return undefined;
+          return false;
         }
         await nowNoteAPI.moveNoteToTrash(key);
         await treeComponentRef.current.removeNode(key);
-        // TODO: open node again?
-        await uiApi.openDetailNote(
-          await nowNoteAPI.getNoteWithDescription(key)
-        );
+        const note = await nowNoteAPI.getNoteWithDescription(key);
+        if (note !== undefined) {
+          await uiApi.openDetailNote(note);
+        }
         return true;
       },
-      openDetailNote: async (note: Note) => {
+      openDetailNote: async (note: NoteDTO) => {
         console.log(`openDetailNote note=`, note);
         detailsNoteUpdateNote(note);
-        detailsNoteUpdateBacklinks(await nowNoteAPI.getBacklinks(note.key));
-        await uiApi.focusNodeInTree(note.key);
+        if (note.key !== undefined && note.key !== null) {
+          detailsNoteUpdateBacklinks(await nowNoteAPI.getBacklinks(note.key));
+          await uiApi.focusNodeInTree(note.key);
+        }
       },
-      updateDetailNote: async (note: Note) => {
+      updateDetailNote: async (note: NoteDTO) => {
         console.log(`updateDetailNote note=`, note);
         detailsNoteUpdateNoteProperties(note);
-        detailsNoteUpdateBacklinks(await nowNoteAPI.getBacklinks(note.key));
+        if (note.key !== undefined && note.key !== null) {
+          detailsNoteUpdateBacklinks(await nowNoteAPI.getBacklinks(note.key));
+        }
       },
-      updateNodeInTree: async (note: Note) => {
+      updateNodeInTree: async (note: NoteDTO): Promise<void> => {
         console.log(`updateNodeInTree note=`, note);
         if (treeComponentRef.current === null) {
-          return undefined;
+          return;
         }
         await treeComponentRef.current.updateNode(note);
-        return undefined;
       },
       focusNodeInTree: async (key: string) => {
         console.log(`focusNodeInTree key=`, key);
         if (treeComponentRef.current === null) {
-          return undefined;
+          return;
         }
         await treeComponentRef.current.focusNode(key);
-        return undefined;
       },
     };
   }, [
@@ -115,6 +128,32 @@ export function App() {
 
   const selectRepository = <SelectRepository />;
 
+  const reflexContainer = (
+    <>
+      <ReflexContainer orientation="vertical">
+        <ReflexElement className="left-bar" minSize={200} flex={0.25}>
+          <div className="n3-bar-vertical">
+            <AddNoteButtonComponent />
+            <TreeComponent ref={treeComponentRef} />
+            <div id="nn-trash">
+              <TrashButton />
+            </div>
+          </div>
+        </ReflexElement>
+        <ReflexSplitter />
+        <ReflexElement className="right-bar" minSize={200} flex={0.75}>
+          <div className="n3-bar-vertical">
+            <div className="nn-header">
+              <SearchNotes />
+            </div>
+            <DetailsNoteComponent ref={detailsNoteComponentRef} />
+          </div>
+        </ReflexElement>
+      </ReflexContainer>
+      <Footer />
+    </>
+  );
+
   return (
     <ConfigProvider
       theme={{
@@ -123,32 +162,10 @@ export function App() {
         },
       }}
     >
-      {currentRepository === undefined && selectRepository}
-      {currentRepository !== undefined &&
-        <NowNoteDispatch.Provider value={uiApi}>
-          <ReflexContainer orientation="vertical">
-            <ReflexElement className="left-bar" minSize="200" flex={0.25}>
-              <div className="n3-bar-vertical">
-                <AddNoteButtonComponent />
-                <TreeComponent ref={treeComponentRef} />
-                <div id="nn-trash">
-                  <TrashButton />
-                </div>
-              </div>
-            </ReflexElement>
-            <ReflexSplitter />
-            <ReflexElement className="right-bar" minSize="200" flex={0.75}>
-              <div className="n3-bar-vertical">
-                <div className="nn-header">
-                  <SearchNotes />
-                </div>
-                <DetailsNoteComponent ref={detailsNoteComponentRef} />
-              </div>
-            </ReflexElement>
-          </ReflexContainer>
-          <Footer />
-        </NowNoteDispatch.Provider>
-      }
+      <UIApiDispatch.Provider value={uiApi}>
+        {currentRepository === undefined && selectRepository}
+        {currentRepository !== undefined && reflexContainer}
+      </UIApiDispatch.Provider>
     </ConfigProvider>
   );
 }

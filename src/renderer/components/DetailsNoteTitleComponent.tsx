@@ -12,11 +12,10 @@ import {
 } from 'react';
 import { Input, Typography } from 'antd';
 import { useDebouncedCallback } from 'use-debounce';
-import { SaveTwoTone } from '@ant-design/icons';
-import { Note } from 'main/modules/DataModels';
 import useDetailsNoteStore from 'renderer/DetailsNoteStore';
 import { nowNoteAPI } from 'renderer/NowNoteAPI';
-import { NowNoteDispatch } from './App';
+import { NoteDTO } from 'types';
+import UIApiDispatch from 'renderer/UIApiDispatch';
 
 const { TextArea } = Input;
 const { Paragraph } = Typography;
@@ -27,7 +26,7 @@ const DetailsNoteTitleComponent = forwardRef(function DetailsNoteTitleComponent(
   props,
   ref
 ) {
-  const domRef = useRef(null);
+  const domRef = useRef<HTMLTextAreaElement>(null);
 
   const detailsNoteKey = useDetailsNoteStore((state) => state.noteKey);
   const detailsNoteTitle = useDetailsNoteStore((state) => state.title);
@@ -40,7 +39,7 @@ const DetailsNoteTitleComponent = forwardRef(function DetailsNoteTitleComponent(
   const [value, setValue] = useState(detailsNoteTitle);
   const [saved, setSaved] = useState(true);
 
-  const uiApi = useContext(NowNoteDispatch);
+  const uiApi = useContext(UIApiDispatch);
 
   useImperativeHandle(
     ref,
@@ -48,7 +47,10 @@ const DetailsNoteTitleComponent = forwardRef(function DetailsNoteTitleComponent(
       return {
         setFocus: async () => {
           console.log(`DetailsNoteTitleComponent.setFocus()`);
-          await domRef.current.focus();
+          if (domRef.current === null) {
+            return;
+          }
+          domRef.current.focus();
         },
       };
     },
@@ -65,7 +67,7 @@ const DetailsNoteTitleComponent = forwardRef(function DetailsNoteTitleComponent(
       detailsNoteTitleComponentLog.debug('debounceTitle SKIP');
       return;
     }
-    const modifiedNote: Note = await nowNoteAPI.modifyNote({
+    const modifiedNote: NoteDTO = await nowNoteAPI.modifyNote({
       key: detailsNoteKey,
       title: newValue,
     });
@@ -114,36 +116,12 @@ const DetailsNoteTitleComponent = forwardRef(function DetailsNoteTitleComponent(
     setValue(detailsNoteTitle);
   }, [detailsNoteTitle]);
 
-  /*
-  TODO
-  useEffect(() => {
-    // console.log(
-    //   'Title set focus: detailsNoteTitleFocus=',
-    //   detailsNoteTitleFocus
-    // );
-    if (detailsNoteTitleFocus && domRef.current !== null) {
-      domRef.current.focus();
-    }
-    setDetailsNoteTitleFocus(false);
-  }, [detailsNoteTitleFocus, setDetailsNoteTitleFocus]);
-*/
-
-/*
-  // set focus on new
-  useEffect(() => {
-    // console.log(
-    //   'Title set focus: detailsNoteTitleFocus=',
-    //   detailsNoteTitleFocus
-    // );
-    domRef.current.focus();
-  }, [detailsNoteKey]);
-*/
   if (detailsNoteKey === undefined) {
     return null;
   }
 
   return (
-    <div style={{ display: 'flex' }}>
+    <div style={{ display: 'flex', paddingRight: 5 }}>
       {detailsNoteTrash && (
         <Paragraph strong style={{ marginBottom: 0 }}>
           {detailsNoteTitle}
@@ -151,22 +129,28 @@ const DetailsNoteTitleComponent = forwardRef(function DetailsNoteTitleComponent(
       )}
       {!detailsNoteTrash && (
         <TextArea
+          styles={
+            !saved
+              ? {
+                  textarea: {
+                    borderColor: 'orange',
+                  },
+                }
+              : {}
+          }
           ref={domRef}
           onKeyDown={handleKeydown}
           onBlur={handleBlur}
           size="large"
-          value={value}
+          value={value || ''}
           onChange={handleEditTitle}
           autoSize={{
             minRows: 1,
           }}
         />
       )}
-      {saved && <SaveTwoTone twoToneColor="#00ff00" />}
-      {!saved && <SaveTwoTone twoToneColor="#ff0000" />}
     </div>
   );
 });
 
 export default DetailsNoteTitleComponent;
-

@@ -1,10 +1,9 @@
 import log from 'electron-log';
 import { QueryTypes } from 'sequelize';
-import { NotesIndex } from '../../DataModels';
-import RepositorySQLite from '../RepositorySQLite';
+import { NotesIndexModel, RepositoryIntern } from '../../DataModels';
 
 export default async function updateNoteTitlePath(
-  repository: RepositorySQLite,
+  repository: RepositoryIntern,
   oldTitlePathParam: string,
   newTitlePathParam: string,
   keyPathParam: string
@@ -14,22 +13,13 @@ export default async function updateNoteTitlePath(
   let keyPath = keyPathParam;
 
   if (oldTitlePath.length > 0) {
-    oldTitlePath = oldTitlePath.substring(
-      0,
-      oldTitlePath.length - 1
-    );
+    oldTitlePath = oldTitlePath.substring(0, oldTitlePath.length - 1);
   }
   if (newTitlePath.length > 0) {
-    newTitlePath = newTitlePath.substring(
-      0,
-      newTitlePath.length - 1
-    );
+    newTitlePath = newTitlePath.substring(0, newTitlePath.length - 1);
   }
   if (keyPath.length > 0) {
-    keyPath = `${keyPath.substring(
-      0,
-      keyPath.length - 1
-    )}%`;
+    keyPath = `${keyPath.substring(0, keyPath.length - 1)}%`;
   }
 
   log.debug(
@@ -43,7 +33,7 @@ export default async function updateNoteTitlePath(
   if (oldTitlePath !== newTitlePath) {
     await repository
       .getSequelize()!
-      .query<NotesIndex>(
+      .query<NotesIndexModel>(
         'UPDATE Notes set titlePath = REPLACE(titlePath, :oldTitlePath, :newTitlePath) where keyPath LIKE :keyPath',
         {
           replacements: {

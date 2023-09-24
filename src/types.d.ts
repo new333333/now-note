@@ -1,26 +1,6 @@
 /* eslint-disable no-unused-vars */
 /* eslint max-classes-per-file: ["error", 99] */
 import fs from 'fs';
-import { Asset, Note, Tag } from 'main/modules/DataModels';
-
-
-// ***************************************************************************
-// ***************************************************************************
-
-export interface SearchResult {
-  offset: number;
-  limit: number;
-  maxResults: number;
-  results: Array<Note>;
-}
-
-export interface SearchResultOptions {
-  parentNotesKey: string[];
-  types: string[];
-  dones: number[];
-  sortBy: string;
-  offset: number;
-}
 
 // ***************************************************************************
 // ***************************************************************************
@@ -80,23 +60,54 @@ export interface PriorityStatistics {
 }
 
 export interface NoteDTO {
-  key?: string | undefined;
-  title?: string | undefined;
-  description?: string | undefined;
-  type?: string | undefined;
-  createdBy?: string | undefined;
-  createdAt?: Date | undefined;
-  updatedAt?: Date | undefined;
-  done?: boolean | undefined;
-  priority?: number | undefined;
-  expanded?: boolean | undefined;
-  trash?: boolean | undefined;
-  linkToKey?: string | undefined;
+  key?: string | null;
+  title?: string | null;
+  description?: string | null;
+  type?: string | null;
+  createdBy?: string | null;
+  createdAt?: Date | null;
+  updatedAt?: Date | null;
+  done?: boolean | null;
+  priority?: number | null;
+  expanded?: boolean | null;
+  trash?: boolean | null;
+  linkToKey?: string | null;
   // TODO: not in use?
-  linkedNote?: NoteDTO | undefined;
-  parents?: Array<NoteDTO> | undefined;
-  position?: number | undefined;
-  hasChildren?: boolean | undefined;
+  linkedNote?: NoteDTO | null;
+  position?: number | null;
+  hasChildren?: boolean | null;
+  tags?: string | null;
+}
+
+export interface AssetDTO {
+  key?: string | null;
+  type: string | null;
+  name: string | null;
+  createdBy: string | null;
+  createdAt: Date | null;
+  updatedAt: Date | null;
+}
+
+export interface SettingsDTO {
+  detailsNoteKey?: string | null;
+}
+
+// ***************************************************************************
+// ***************************************************************************
+
+export interface SearchResult {
+  offset: number;
+  limit: number;
+  maxResults: number;
+  results: Array<NoteDTO>;
+}
+
+export interface SearchResultOptions {
+  parentNotesKey: string[];
+  types: string[];
+  dones: number[];
+  sortBy: string;
+  offset: number;
 }
 
 // ***************************************************************************
@@ -105,12 +116,12 @@ export interface NoteDTO {
 export interface Repository {
   authenticate(): Promise<void>;
   close(): Promise<void>;
-  getChildren(key: string, trash: boolean): Promise<Array<Note> | undefined>;
+  getChildren(key: string, trash: boolean): Promise<Array<NoteDTO> | undefined>;
   getNoteWithDescription(
     key: string,
     withoutDescription?: boolean
-  ): Promise<Note | undefined>;
-  getBacklinks(key: string): Promise<Array<Note>>;
+  ): Promise<NoteDTO | undefined>;
+  getBacklinks(key: string): Promise<Array<NoteDTO>>;
   search(
     searchText: string,
     limit: number,
@@ -120,7 +131,7 @@ export interface Repository {
   modifyNote(
     note: NoteDTO,
     skipVersioning?: boolean | undefined
-  ): Promise<Note | undefined>;
+  ): Promise<NoteDTO | undefined>;
   findTag(tag: string): Promise<string[]>;
   addTag(key: string, tag: string): Promise<string>;
   removeTag(key: string, tag: string): Promise<string>;
@@ -129,7 +140,7 @@ export interface Repository {
     note: NoteDTO,
     hitMode: HitMode,
     relativeToKey?: string
-  ): Promise<Note | undefined>;
+  ): Promise<NoteDTO | undefined>;
   moveNote(
     key: string,
     from: string,
@@ -146,7 +157,7 @@ export interface Repository {
     filepath: string,
     hitMode: HitMode,
     relativeToKey: string
-  ): Promise<Note | undefined>;
+  ): Promise<NoteDTO | undefined>;
   getAssetFileName(assetKey: string): Promise<string | undefined>;
   getAssetFileReadStream(assetKey: string): Promise<fs.ReadStream | undefined>;
   getAssetFileLocalPath(assetKey: string): Promise<string | undefined>;
@@ -155,7 +166,7 @@ export interface Repository {
     fileType: string | null,
     fileName: string,
     base64: string
-  ): Promise<Asset>;
+  ): Promise<AssetDTO>;
 }
 
 // ***************************************************************************
@@ -165,25 +176,25 @@ export interface NowNoteAPI {
   getNoteWithDescription(
     key: string,
     withoutDescription?: boolean
-  ): Promise<Note | undefined>;
+  ): Promise<NoteDTO | undefined>;
   getChildren(
     key: string | null | undefined,
     trash?: boolean
-  ): Promise<Array<Note> | undefined>;
-  getBacklinks(key: string): Promise<Array<Note>>;
+  ): Promise<Array<NoteDTO> | undefined>;
+  getBacklinks(key: string): Promise<Array<NoteDTO>>;
   search(
     searchText: string,
     limit: number,
     trash: boolean,
     options: SearchResultOptions
   ): Promise<SearchResult>;
-  modifyNote(note: Note): Promise<NoteDTO>;
+  modifyNote(note: NoteDTO): Promise<NoteDTO>;
   addNote(
     parentNoteKey: string,
     note: NoteDTO,
     hitMode: HitMode,
     relativeToKey?: string
-  ): Promise<Note | undefined>;
+  ): Promise<NoteDTO | undefined>;
   moveNote(
     key: string,
     from: string,
@@ -216,5 +227,5 @@ export interface NowNoteAPI {
     fileType: string | null,
     fileName: string,
     base64: string
-  ): Promise<Asset>;
+  ): Promise<AssetDTO>;
 }

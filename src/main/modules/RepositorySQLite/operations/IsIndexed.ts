@@ -1,17 +1,23 @@
 import log from 'electron-log';
 import { QueryTypes } from 'sequelize';
-import RepositorySQLite from '../RepositorySQLite';
+import { RepositoryIntern } from 'main/modules/DataModels';
+
+interface SearchResult {
+  countNotesIndex: number;
+}
 
 export default async function isIndexed(
-  repository: RepositorySQLite
+  repository: RepositoryIntern
 ): Promise<boolean> {
-  const countResults: any = await repository
+  const countResults = await repository
     .getSequelize()!
-    .query(`SELECT count(*) FROM Notes_Index`, {
-      raw: true,
-      type: QueryTypes.SELECT,
-    });
+    .query<SearchResult>(
+      `SELECT count(*) as countNotesIndex FROM Notes_Index`,
+      {
+        raw: true,
+        type: QueryTypes.SELECT,
+      });
 
   log.debug(`RepositorySQLite.isIndexed() countResults=`, countResults);
-  return countResults[0]['count(*)'] !== 0;
+  return countResults[0].countNotesIndex !== 0;
 }

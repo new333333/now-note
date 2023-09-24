@@ -24,11 +24,11 @@ import ReactDOMServer from 'react-dom/server';
 //import 'font-awesome/css/font-awesome.min.css';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import { blue } from '@ant-design/colors';
-import { Note, Note as NoteDataModel } from 'main/modules/DataModels';
 import useNoteStore from 'renderer/GlobalStore';
 import useDetailsNoteStore from 'renderer/DetailsNoteStore';
 import { nowNoteAPI } from 'renderer/NowNoteAPI';
-import { NowNoteDispatch } from './App';
+import { NoteDTO } from 'types';
+import UIApiDispatch from 'renderer/UIApiDispatch';
 
 const treeLog = log.scope('Tree');
 
@@ -38,14 +38,10 @@ const TreeComponent = React.memo(
     const fancyTreeRef = useRef(null);
 
 
-    const uiApi = useContext(NowNoteDispatch);
+    const uiApi = useContext(UIApiDispatch);
 
     // is trash view? reload tree -> in useEffect(() => initTree, trash
     const trash = useNoteStore((state) => state.trash);
-
-    const detailsNoteUpdateExpanded = useDetailsNoteStore(
-      (state) => state.updateExpanded
-    );
 
     const noteToNode = useCallback((note: NoteDataModel, treeNode?) => {
       // console.log('noteToNode note=, treeNode=', note, treeNode);
@@ -131,7 +127,7 @@ const TreeComponent = React.memo(
     }, []);
 
     const addNote = useCallback(
-      async (key: string): Promise<Note | undefined> => {
+      async (key: string): Promise<NoteDTO | undefined> => {
         treeLog.debug('addNote() on update key=', key);
         if (uiApi === null) {
           return undefined;
@@ -160,7 +156,7 @@ const TreeComponent = React.memo(
         }
         await node.setExpanded(true);
 
-        const newNote: NoteDataModel | undefined = await nowNoteAPI.addNote(
+        const newNote: NoteDTO | undefined = await nowNoteAPI.addNote(
           node.key,
           { title: '', type: 'note' },
           'over'
@@ -185,14 +181,14 @@ const TreeComponent = React.memo(
     );
 
     const removeNode = useCallback(
-      async (key: string): Promise<Note | undefined> => {
+      async (key: string): Promise<NoteDTO | undefined> => {
         let node = fancyTreeRef.current.getNodeByKey(key);
         node.remove();
       },
       []
     );
 
-    const updateNode = useCallback(async (note: Note) => {
+    const updateNode = useCallback(async (note: NoteDTO) => {
       treeLog.debug('updateNode() note=', note);
 
       if (
@@ -222,7 +218,7 @@ const TreeComponent = React.memo(
       }
       let node = fancyTreeRef.current.getNodeByKey(key);
       if (node === undefined || node === null) {
-        const note: Note = await nowNoteAPI.getNoteWithDescription(key, true);
+        const note: NoteDTO = await nowNoteAPI.getNoteWithDescription(key, true);
         if (
           note !== undefined &&
           note.keyPath !== null &&
@@ -268,19 +264,19 @@ const TreeComponent = React.memo(
       ref,
       () => {
         return {
-          addNote: async (key: string): Promise<Note | undefined> => {
+          addNote: async (key: string): Promise<NoteDTO | undefined> => {
             return addNote(key);
           },
-          removeNode: async (key: string): Promise<Note | undefined> => {
+          removeNode: async (key: string): Promise<NoteDTO | undefined> => {
             return removeNode(key);
           },
-          updateNode: async (note: Note) => {
+          updateNode: async (note: NoteDTO): Promise<void> => {
             return updateNode(note);
           },
-          focusNode: async (key: string) => {
+          focusNode: async (key: string): Promise<void> => {
             return focusNode(key);
           },
-          reloadNode: async (key: string) => {
+          reloadNode: async (key: string): Promise<boolean> => {
             if (fancyTreeRef.current === null) {
               return false;
             }
@@ -558,7 +554,7 @@ const TreeComponent = React.memo(
           // fix for click on context menu
           if (data.targetType === 'title') {
             treeLog.debug('Click title');
-            const note: Note = await nowNoteAPI.getNoteWithDescription(data.node.key);
+            const note: NoteDTO = await nowNoteAPI.getNoteWithDescription(data.node.key);
             await uiApi.openDetailNote(note);
           }
 
@@ -599,7 +595,7 @@ const TreeComponent = React.memo(
           actions: async (node, action, options) => {
             console.log("FancyTree contextMenu node, action, options", node, action, options);
             if (action === 'open' && uiApi !== null) {
-              const note: Note = await nowNoteAPI.getNoteWithDescription(node.key);
+              const note: NoteDTO = await nowNoteAPI.getNoteWithDescription(node.key);
               await uiApi.openDetailNote(note);
             } else if (action === 'add' && uiApi !== null) {
               const newNote = await uiApi.addNote(node.key);

@@ -1,4 +1,4 @@
-import { Asset, Note } from 'main/modules/DataModels';
+import { AssetModel } from 'main/modules/DataModels';
 import {
   HitMode,
   NoteDTO,
@@ -9,6 +9,7 @@ import {
   Error,
   RepositorySettings,
   NowNoteAPI,
+  AssetDTO,
 } from 'types';
 
 export class NowNoteAPIImpl implements NowNoteAPI {
@@ -27,22 +28,22 @@ export class NowNoteAPIImpl implements NowNoteAPI {
   async getNoteWithDescription(
     key: string,
     withoutDescription?: boolean
-  ): Promise<Note | undefined> {
-    const note: Note | undefined =
+  ): Promise<NoteDTO | undefined> {
+    const note: NoteDTO | undefined =
       await this.îpcRenderer.getNoteWithDescription(key, withoutDescription);
     return note;
   }
 
-  async getChildren(key: string, trash: boolean): Promise<Note[] | undefined> {
-    const children: Note[] | undefined = await this.îpcRenderer.getChildren(
+  async getChildren(key: string, trash: boolean): Promise<NoteDTO[] | undefined> {
+    const children: NoteDTO[] | undefined = await this.îpcRenderer.getChildren(
       key,
       trash
     );
     return children;
   }
 
-  async getBacklinks(key: string): Promise<Note[]> {
-    const backlinks: Note[] | undefined = await this.îpcRenderer.getBacklinks(
+  async getBacklinks(key: string): Promise<NoteDTO[]> {
+    const backlinks: NoteDTO[] | undefined = await this.îpcRenderer.getBacklinks(
       key
     );
     return backlinks;
@@ -63,7 +64,7 @@ export class NowNoteAPIImpl implements NowNoteAPI {
     return searchResult;
   }
 
-  async modifyNote(note: NoteDTO): Promise<Note> {
+  async modifyNote(note: NoteDTO): Promise<NoteDTO> {
     return this.îpcRenderer.modifyNote(note);
   }
 
@@ -72,7 +73,7 @@ export class NowNoteAPIImpl implements NowNoteAPI {
     note: NoteDTO,
     hitMode: HitMode,
     relativeToKey?: string
-  ): Promise<Note | undefined> {
+  ): Promise<NoteDTO | undefined> {
     return this.îpcRenderer.addNote(
       parentNoteKey,
       note,
@@ -112,7 +113,7 @@ export class NowNoteAPIImpl implements NowNoteAPI {
     fileType: string | null,
     fileName: string,
     base64: string
-  ): Promise<Asset> {
+  ): Promise<AssetDTO> {
     const asset = await this.îpcRenderer.addImageAsBase64(
       fileType,
       fileName,

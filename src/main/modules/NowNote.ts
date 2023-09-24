@@ -17,7 +17,7 @@ import {
 } from '../../types';
 import RepositorySettingsService from './RepositorySettings/RepositorySettingsService';
 import RepositorySQLiteSetup from './RepositorySQLite/RepositorySQLiteSetup';
-import { Asset, Note, SQLITE3_TYPE, Tag } from './DataModels';
+import { AssetModel, SQLITE3_TYPE } from './DataModels';
 import AssetFilesService from './AssetFilesService';
 
 export default class NowNote {
@@ -174,7 +174,7 @@ export default class NowNote {
   async getChildren(
     key: string,
     trash: boolean
-  ): Promise<Array<Note> | undefined> {
+  ): Promise<Array<NoteDTO> | undefined> {
     if (this.currentRepository !== undefined) {
       return this.currentRepository.getChildren(key, trash);
     }
@@ -184,7 +184,7 @@ export default class NowNote {
   async getNoteWithDescription(
     key: string,
     withoutDescription?: boolean
-  ): Promise<Note | undefined> {
+  ): Promise<NoteDTO | undefined> {
     if (this.currentRepository !== undefined) {
       return this.currentRepository.getNoteWithDescription(
         key,
@@ -194,7 +194,7 @@ export default class NowNote {
     return Promise.resolve(undefined);
   }
 
-  async getBacklinks(key: string): Promise<Array<Note> | undefined> {
+  async getBacklinks(key: string): Promise<Array<NoteDTO> | undefined> {
     if (this.currentRepository !== undefined) {
       return this.currentRepository.getBacklinks(key);
     }
@@ -213,7 +213,7 @@ export default class NowNote {
     return Promise.resolve(undefined);
   }
 
-  async modifyNote(note: NoteDTO): Promise<Note | undefined> {
+  async modifyNote(note: NoteDTO): Promise<NoteDTO | undefined> {
     if (this.currentRepository !== undefined) {
       return this.currentRepository.modifyNote(note);
     }
@@ -231,7 +231,7 @@ export default class NowNote {
     fileType: string | null,
     fileName: string,
     base64: string
-  ): Promise<Asset | undefined> {
+  ): Promise<AssetDTO | undefined> {
     if (this.currentRepository !== undefined) {
       return this.currentRepository.addImageAsBase64(
         fileType,
@@ -268,7 +268,7 @@ export default class NowNote {
     note: NoteDTO,
     hitMode: HitMode,
     relativeToKey?: string
-  ): Promise<Note | undefined> {
+  ): Promise<NoteDTO | undefined> {
     if (this.currentRepository !== undefined) {
       return this.currentRepository.addNote(
         parentNoteKey,
@@ -337,7 +337,7 @@ export default class NowNote {
     filepath: string,
     hitMode: HitMode,
     relativeToKey: string
-  ): Promise<Note | undefined> {
+  ): Promise<NoteDTO | undefined> {
     if (this.currentRepository !== undefined) {
       return this.currentRepository.addFileAsNote(
         parentKey,

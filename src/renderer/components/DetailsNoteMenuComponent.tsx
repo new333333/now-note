@@ -9,7 +9,7 @@ import {
 } from '@ant-design/icons';
 import useDetailsNoteStore from 'renderer/DetailsNoteStore';
 import { nowNoteAPI } from 'renderer/NowNoteAPI';
-import { NowNoteDispatch } from './App';
+import UIApiDispatch from 'renderer/UIApiDispatch';
 
 const { useToken } = theme;
 
@@ -22,7 +22,7 @@ export default function DetailsNoteMenuComponent() {
   const createdBy = useDetailsNoteStore((state) => state.createdBy);
   const parent = useDetailsNoteStore((state) => state.parent);
 
-  const uiApi = useContext(NowNoteDispatch);
+  const uiApi = useContext(UIApiDispatch);
 
   const menuItems = [];
   if (noteKey !== undefined) {

@@ -3,14 +3,12 @@ import { Input, AutoComplete } from 'antd';
 import { SearchResultOptions } from 'types';
 import useNoteStore from 'renderer/GlobalStore';
 import { nowNoteAPI } from 'renderer/NowNoteAPI';
-import { NowNoteDispatch } from './App';
+import UIApiDispatch from 'renderer/UIApiDispatch';
 
 export default function SearchNotes() {
-  const [trash, updateDetailsNoteKey] = useNoteStore((state) => [
-    state.trash,
-  ]);
+  const [trash] = useNoteStore((state) => [state.trash]);
 
-  const uiApi = useContext(NowNoteDispatch);
+  const uiApi = useContext(UIApiDispatch);
 
   const [loading, setLoading] = useState<boolean>(false);
   const [valueAutoComplete, setValueAutoComplete] = useState<string>('');

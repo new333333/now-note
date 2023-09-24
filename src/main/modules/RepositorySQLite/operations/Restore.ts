@@ -1,12 +1,15 @@
 import log from 'electron-log';
 import { QueryTypes } from 'sequelize';
-import { Note, NoteNotFoundByKeyError } from '../../DataModels';
-import RepositorySQLite from '../RepositorySQLite';
+import {
+  NoteModel,
+  NoteNotFoundByKeyError,
+  RepositoryIntern,
+} from '../../DataModels';
 import { setKeyAndTitlePath } from '../RepositorySQLiteUtils';
 import getChildrenCount from './GetChildrenCount';
 
 export default async function restore(
-  repository: RepositorySQLite,
+  repository: RepositoryIntern,
   key: string | undefined
 ): Promise<boolean> {
   log.debug(`RepositorySQLite.restore()...`);
@@ -14,7 +17,7 @@ export default async function restore(
     return false;
   }
 
-  const modifyNote = await Note.findByPk(key);
+  const modifyNote = await NoteModel.findByPk(key);
   if (modifyNote === null) {
     throw new NoteNotFoundByKeyError(key);
   }
@@ -39,7 +42,7 @@ export default async function restore(
       }
     );
 
-  const max: number = await Note.max('position', {
+  const max: number = await NoteModel.max('position', {
     where: {
       parent: modifyNote.parent,
       trash: false,
@@ -74,7 +77,7 @@ export default async function restore(
   await repository.addNoteIndex(modifyNote);
 
   if (modifyNote.parent !== null) {
-    const parentNote = await Note.findByPk(modifyNote.parent);
+    const parentNote = await NoteModel.findByPk(modifyNote.parent);
     if (parentNote !== null) {
       parentNote.childrenCount = await getChildrenCount(
         parentNote.key,
@@ -84,7 +87,7 @@ export default async function restore(
     }
   }
   if (prevParent !== null) {
-    const parentNote = await Note.findByPk(prevParent);
+    const parentNote = await NoteModel.findByPk(prevParent);
     if (parentNote !== null) {
       parentNote.childrenCount = await getChildrenCount(
         parentNote.key,

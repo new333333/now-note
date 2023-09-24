@@ -1,5 +1,5 @@
 import log from 'electron-log';
-import { Note } from '../DataModels';
+import { NoteModel } from '../DataModels';
 
 export function getPath(
   parentsPath: string | null | undefined,
@@ -37,13 +37,13 @@ export async function getKeyAndTitlePath(
   key: string,
   title: string
 ) {
-  let parentNote: Note | null = null;
+  let parentNote: NoteModel | null = null;
 
   if (
     (!trash && parent !== null) ||
     (trash && restoreParentKey === null && parent !== null)
   ) {
-    parentNote = await Note.findByPk(parent);
+    parentNote = await NoteModel.findByPk(parent);
   }
 
   log.debug(`RepositorySQLite->getKeyAndTitlePath() parentNote=${parentNote}`);
@@ -61,7 +61,7 @@ export async function getKeyAndTitlePath(
   return [keyPath, titlePath];
 }
 
-export async function getKeyAndTitlePathOnNote(note: Note) {
+export async function getKeyAndTitlePathOnNote(note: NoteModel) {
   return getKeyAndTitlePath(
     note.parent,
     note.restoreParentKey,
@@ -71,7 +71,7 @@ export async function getKeyAndTitlePathOnNote(note: Note) {
   );
 }
 
-export async function setKeyAndTitlePath(note: Note) {
+export async function setKeyAndTitlePath(note: NoteModel) {
   const [keyPath, titlePath] = await getKeyAndTitlePathOnNote(note);
   log.debug(
     `RepositorySQLite->setKeyAndTitlePath() keyPath=${keyPath} titlePath=${titlePath}`

@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars */
 import log from 'electron-log';
-import { Note } from 'main/modules/DataModels';
+import { NoteDTO } from 'types';
 import { create } from 'zustand';
 
 const detailsNoteStateLog = log.scope('DetailsNoteState');
@@ -44,7 +44,7 @@ type DetailsNoteState = {
 
   tags: string | null;
 
-  backlinks: Note[];
+  backlinks: NoteDTO[];
 };
 
 type DetailsNoteAction = {
@@ -85,11 +85,11 @@ type DetailsNoteAction = {
 
   updateTrash: (trash: DetailsNoteState['trash']) => void;
 
-  updateNote: (note: Note) => void;
+  updateNote: (note: NoteDTO) => void;
 
-  updateNoteProperties: (note: Note) => void;
+  updateNoteProperties: (note: NoteDTO) => void;
 
-  updateBacklinks: (backlinks: Note[]) => void;
+  updateBacklinks: (backlinks: NoteDTO[]) => void;
 };
 
 const useDetailsNoteStore = create<DetailsNoteState & DetailsNoteAction>(
@@ -213,7 +213,7 @@ const useDetailsNoteStore = create<DetailsNoteState & DetailsNoteAction>(
       }
     },
 
-    updateBacklinks: (backlinks: Note[]) => {
+    updateBacklinks: (backlinks: NoteDTO[]) => {
       detailsNoteStateLog.debug(
         `updateBacklinks backlinks.length=${backlinks.length}`
       );

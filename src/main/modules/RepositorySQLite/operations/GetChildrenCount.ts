@@ -1,11 +1,11 @@
 import log from 'electron-log';
-import { Note } from '../../DataModels';
+import { NoteModel } from '../../DataModels';
 
 export default async function getChildrenCount(
   key: string | undefined,
   trash: boolean
 ) {
-  const childrenCount: number = await Note.count({
+  const childrenCount: number = await NoteModel.count({
     where: {
       parent: key,
       trash,

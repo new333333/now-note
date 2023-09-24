@@ -27,7 +27,7 @@ const DetailsNoteComponent = forwardRef(function DetailsNoteComponent(
     ref,
     () => {
       return {
-        setFocus: async () => {
+        setFocus: async (): Promise<void> => {
           console.log(`DetailsNoteComponent.setFocus()`);
           if (detailsNoteTitleComponentRef.current === null) {
             return;

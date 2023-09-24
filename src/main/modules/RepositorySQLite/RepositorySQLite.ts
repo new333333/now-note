@@ -2,22 +2,17 @@
 /* eslint max-classes-per-file: ["error", 99] */
 import log from 'electron-log';
 import { Sequelize } from 'sequelize';
-import * as cheerio from 'cheerio';
 import path = require('path');
 import fs from 'fs';
 import {
+  AssetDTO,
   HitMode,
   NoteDTO,
   PriorityStatistics,
-  Repository,
   SearchResult,
   SearchResultOptions,
 } from '../../../types';
-import {
-  Note,
-  Asset,
-  NoteNotFoundByKeyError,
-} from '../DataModels';
+import { NoteModel, AssetModel, RepositoryIntern } from '../DataModels';
 import AssetFilesService from '../AssetFilesService';
 import moveNote from './operations/MoveNote';
 import authenticate from './operations/Authenticate';
@@ -44,7 +39,7 @@ import removeTag from './operations/RemoveTag';
 import addTag from './operations/AddTag';
 import findTag from './operations/FindTag';
 
-export default class RepositorySQLite implements Repository {
+export default class RepositorySQLite implements RepositoryIntern {
   private sequelize: Sequelize;
 
   private userName: string;
@@ -61,19 +56,19 @@ export default class RepositorySQLite implements Repository {
     this.userName = userName;
   }
 
-  getSequelize() {
+  getSequelize(): Sequelize {
     return this.sequelize;
   }
 
-  getUserName() {
+  getUserName(): string {
     return this.userName;
   }
 
-  async authenticate() {
+  async authenticate(): Promise<void> {
     return authenticate(this);
   }
 
-  async close() {
+  async close(): Promise<void> {
     return close(this);
   }
 
@@ -81,7 +76,7 @@ export default class RepositorySQLite implements Repository {
     return isIndexed(this);
   }
 
-  async reindexAll(key: string | undefined) {
+  async reindexAll(key: string | undefined): Promise<void> {
     return reindexAll(this, key);
   }
 
@@ -90,26 +85,26 @@ export default class RepositorySQLite implements Repository {
     note: NoteDTO,
     hitMode: HitMode,
     relativeToKey?: string
-  ): Promise<Note | undefined> {
+  ): Promise<NoteDTO | undefined> {
     return addNote(this, parentNoteKey, note, hitMode, relativeToKey);
   }
 
-  async prepareDescriptionToSave(key: string, html: string) {
+  async prepareDescriptionToSave(key: string, html: string): Promise<string> {
     return prepareDescriptionToSave(this, key, html);
   }
 
-  async addNoteIndex(note: Note) {
+  async addNoteIndex(note: NoteModel): Promise<void> {
     return addNoteIndex(this, note);
   }
 
-  async deleteNoteIndex(key: string) {
+  async deleteNoteIndex(key: string): Promise<void> {
     return deleteNoteIndex(this, key);
   }
 
   async modifyNote(
     note: NoteDTO,
     skipVersioning: boolean = false
-  ): Promise<Note | undefined> {
+  ): Promise<NoteDTO | undefined> {
     return modifyNote(this, note, skipVersioning);
   }
 
@@ -117,7 +112,7 @@ export default class RepositorySQLite implements Repository {
     oldTitlePathParam: string,
     newTitlePathParam: string,
     keyPathParam: string
-  ) {
+  ): Promise<void> {
     return updateNoteTitlePath(
       this,
       oldTitlePathParam,
@@ -148,7 +143,10 @@ export default class RepositorySQLite implements Repository {
     return deletePermanently(this, key);
   }
 
-  async updateNoteKeyPath(oldKeyPathParam: string, newKeyPathParam: string) {
+  async updateNoteKeyPath(
+    oldKeyPathParam: string,
+    newKeyPathParam: string
+  ): Promise<void> {
     return updateNoteKeyPath(this, oldKeyPathParam, newKeyPathParam);
   }
 
@@ -159,11 +157,11 @@ export default class RepositorySQLite implements Repository {
   async getNoteWithDescription(
     key: string,
     withoutDescription?: boolean
-  ): Promise<Note | undefined> {
+  ): Promise<NoteDTO | undefined> {
     return getNoteWithDescription(this, key, withoutDescription);
   }
 
-  async getBacklinks(key: string): Promise<Array<Note>> {
+  async getBacklinks(key: string): Promise<Array<NoteDTO>> {
     return getBacklinks(this, key);
   }
 
@@ -183,7 +181,7 @@ export default class RepositorySQLite implements Repository {
   async getChildren(
     key: string | null | undefined,
     trash: boolean = false
-  ): Promise<Array<Note>> {
+  ): Promise<Array<NoteDTO>> {
     return getChildren(this, key, trash);
   }
 
@@ -203,23 +201,23 @@ export default class RepositorySQLite implements Repository {
     fileType: string | null,
     fileName: string,
     base64: string
-  ): Promise<Asset> {
-    const assetModel = await Asset.create({
+  ): Promise<AssetDTO> {
+    const assetModel = await AssetModel.create({
       type: fileType,
       name: fileName,
       createdBy: this.userName,
     });
 
     this.assetFilesService.saveBase64ToFile(assetModel, fileName, base64);
-    return assetModel.dataValues;
+    return assetModel.toDTO();
   }
 
   async addLocalFile(
     fileType: string | null,
     fileName: string,
-    filePath: string,
-  ): Promise<Asset> {
-    const assetModel = await Asset.create({
+    filePath: string
+  ): Promise<AssetModel> {
+    const assetModel = await AssetModel.create({
       type: fileType,
       name: fileName,
       createdBy: this.userName,
@@ -237,7 +235,7 @@ export default class RepositorySQLite implements Repository {
   async getAssetFileReadStream(
     assetKey: string
   ): Promise<fs.ReadStream | undefined> {
-    const assetModel: Asset | null = await Asset.findByPk(assetKey);
+    const assetModel: AssetModel | null = await AssetModel.findByPk(assetKey);
     if (assetModel === null) {
       return undefined;
     }
@@ -245,7 +243,7 @@ export default class RepositorySQLite implements Repository {
   }
 
   async getAssetFileName(assetKey: string): Promise<string | undefined> {
-    const assetModel = await Asset.findByPk(assetKey);
+    const assetModel = await AssetModel.findByPk(assetKey);
     if (assetModel === null) {
       return undefined;
     }
@@ -253,7 +251,7 @@ export default class RepositorySQLite implements Repository {
   }
 
   async getAssetFileLocalPath(assetKey: string): Promise<string | undefined> {
-    const assetModel = await Asset.findByPk(assetKey);
+    const assetModel = await AssetModel.findByPk(assetKey);
     if (assetModel === null) {
       return undefined;
     }
@@ -265,12 +263,12 @@ export default class RepositorySQLite implements Repository {
     filepath: string,
     hitMode: HitMode,
     relativeToKey: string
-  ): Promise<Note | undefined> {
+  ): Promise<NoteDTO | undefined> {
     if (filepath === undefined) {
       return undefined;
     }
 
-    let resultNote;
+    let resultNote: NoteDTO | undefined;
 
     const stats = await fs.promises.stat(filepath);
     if (stats.isDirectory()) {
@@ -290,7 +288,6 @@ export default class RepositorySQLite implements Repository {
           trash: undefined,
           linkToKey: undefined,
           linkedNote: undefined,
-          parents: undefined,
           position: undefined,
           tags: undefined,
           hasChildren: undefined,
@@ -313,7 +310,7 @@ export default class RepositorySQLite implements Repository {
         );
       }
     } else if (stats.isFile()) {
-      const asset: Asset = await this.addLocalFile(
+      const asset: AssetModel = await this.addLocalFile(
         null,
         path.basename(filepath),
         filepath
@@ -337,7 +334,6 @@ export default class RepositorySQLite implements Repository {
           trash: undefined,
           linkToKey: undefined,
           linkedNote: undefined,
-          parents: undefined,
           position: undefined,
           tags: undefined,
           hasChildren: undefined,
@@ -348,5 +344,4 @@ export default class RepositorySQLite implements Repository {
     }
     return resultNote;
   }
-
 }

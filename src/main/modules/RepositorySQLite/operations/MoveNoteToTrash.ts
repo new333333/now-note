@@ -1,20 +1,23 @@
 
 import log from 'electron-log';
 import { QueryTypes } from 'sequelize';
-import { Note, NoteNotFoundByKeyError } from '../../DataModels';
-import RepositorySQLite from '../RepositorySQLite';
+import {
+  NoteModel,
+  NoteNotFoundByKeyError,
+  RepositoryIntern,
+} from '../../DataModels';
 import getChildrenCount from './GetChildrenCount';
 
 
 export default async function moveNoteToTrash(
-  repository: RepositorySQLite,
+  repository: RepositoryIntern,
   key: string | undefined
 ): Promise<boolean> {
   if (key === undefined) {
     return false;
   }
 
-  const modifyNote = await Note.findByPk(key);
+  const modifyNote = await NoteModel.findByPk(key);
   if (modifyNote === null) {
     throw new NoteNotFoundByKeyError(key);
   }
@@ -39,7 +42,7 @@ export default async function moveNoteToTrash(
       }
     );
 
-  const max: number = await Note.max('position', {
+  const max: number = await NoteModel.max('position', {
     where: {
       parent: null,
       trash: true,
@@ -69,7 +72,7 @@ export default async function moveNoteToTrash(
   await repository.addNoteIndex(modifyNote);
 
   if (prevParent !== null) {
-    const prevParentNote = await Note.findByPk(prevParent);
+    const prevParentNote = await NoteModel.findByPk(prevParent);
     if (prevParentNote !== null) {
       prevParentNote.childrenCount = await getChildrenCount(
         prevParentNote.key,

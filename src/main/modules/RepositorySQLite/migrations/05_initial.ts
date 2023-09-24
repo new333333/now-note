@@ -1,5 +1,4 @@
 import log from 'electron-log';
-import { Note } from '../../DataModels';
 import { QueryInterface, DataTypes, Sequelize, QueryTypes } from 'sequelize';
 import { MigrationFn } from 'umzug';
 

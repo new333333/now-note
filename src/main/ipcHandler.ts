@@ -10,8 +10,9 @@ import {
   SearchResult,
   SearchResultOptions,
   RepositorySettings,
+  AssetDTO,
 } from '../types';
-import { Asset, Note, Tag } from './modules/DataModels';
+import { AssetModel } from './modules/DataModels';
 
 export default class IpcHandler {
   private browserWindow: BrowserWindow;
@@ -123,7 +124,7 @@ export default class IpcHandler {
 
     this.ipcMain.handle(
       'getChildren',
-      async (_event, key, trash): Promise<Array<Note> | undefined> => {
+      async (_event, key, trash): Promise<Array<NoteDTO> | undefined> => {
         return this.nowNote.getChildren(key, trash);
       }
     );
@@ -134,14 +135,14 @@ export default class IpcHandler {
         _event,
         key: string,
         withoutDescription?: boolean
-      ): Promise<Note | undefined> => {
+      ): Promise<NoteDTO | undefined> => {
         return this.nowNote.getNoteWithDescription(key, withoutDescription);
       }
     );
 
     this.ipcMain.handle(
       'getBacklinks',
-      async (_event, key: string): Promise<Array<Note> | undefined> => {
+      async (_event, key: string): Promise<Array<NoteDTO> | undefined> => {
         return this.nowNote.getBacklinks(key);
       }
     );
@@ -161,7 +162,7 @@ export default class IpcHandler {
 
     this.ipcMain.handle(
       'modifyNote',
-      async (_event, note: NoteDTO): Promise<Note | undefined> => {
+      async (_event, note: NoteDTO): Promise<NoteDTO | undefined> => {
         return this.nowNote.modifyNote(note);
       }
     );
@@ -180,7 +181,7 @@ export default class IpcHandler {
         fileType: string | null,
         fileName: string,
         base64: string
-      ): Promise<Asset | undefined> => {
+      ): Promise<AssetDTO | undefined> => {
         return this.nowNote.addImageAsBase64(fileType, fileName, base64);
       }
     );
@@ -207,7 +208,7 @@ export default class IpcHandler {
         note: NoteDTO,
         hitMode: HitMode,
         relativeToKey?: string
-      ): Promise<Note | undefined> => {
+      ): Promise<NoteDTO | undefined> => {
         return this.nowNote.addNote(
           parentNoteKey,
           note,
@@ -267,7 +268,7 @@ export default class IpcHandler {
         path: string,
         hitMode: HitMode,
         relativeToKey: string
-      ): Promise<Note | undefined> => {
+      ): Promise<NoteDTO | undefined> => {
         return this.nowNote.addFileAsNote(parentKey, path, hitMode, relativeToKey);
       }
     );

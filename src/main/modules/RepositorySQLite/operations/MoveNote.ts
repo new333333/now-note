@@ -1,13 +1,16 @@
 import log from 'electron-log';
 import { QueryTypes } from 'sequelize';
 import { HitMode } from 'types';
-import { Note, NoteNotFoundByKeyError } from '../../DataModels';
-import RepositorySQLite from '../RepositorySQLite';
-import { getPath, setKeyAndTitlePath } from '../RepositorySQLiteUtils';
+import {
+  NoteModel,
+  NoteNotFoundByKeyError,
+  RepositoryIntern,
+} from '../../DataModels';
+import { setKeyAndTitlePath } from '../RepositorySQLiteUtils';
 import getChildrenCount from './GetChildrenCount';
 
 export default async function moveNote(
-  repository: RepositorySQLite,
+  repository: RepositoryIntern,
   key: string,
   from: string,
   to: string | undefined,
@@ -21,7 +24,7 @@ export default async function moveNote(
     toLocal = to;
   }
 
-  const modifyNote = await Note.findByPk(key);
+  const modifyNote = await NoteModel.findByPk(key);
   if (modifyNote === null) {
     throw new NoteNotFoundByKeyError(key);
   }
@@ -30,7 +33,6 @@ export default async function moveNote(
   const prevKeyPath = modifyNote.keyPath;
   const prevTitlePath = modifyNote.titlePath;
 
-  // count parent and position
   if (hitMode === 'over') {
     await repository
       .getSequelize()
@@ -49,7 +51,7 @@ export default async function moveNote(
       );
 
     modifyNote.parent = toLocal;
-    const max: number = await Note.max('position', {
+    const max: number = await NoteModel.max('position', {
       where: {
         parent: toLocal,
         trash: false,
@@ -58,7 +60,7 @@ export default async function moveNote(
 
     modifyNote.position = max == null ? 0 : max + 1;
   } else if (hitMode === 'before') {
-    const relativNote = await Note.findByPk(relativTo);
+    const relativNote = await NoteModel.findByPk(relativTo);
     if (relativNote === null) {
       throw new NoteNotFoundByKeyError(relativTo);
     }
@@ -137,7 +139,7 @@ export default async function moveNote(
       modifyNote.position = relativNote.position;
     }
   } else if (hitMode === 'after') {
-    const relativNote = await Note.findByPk(relativTo);
+    const relativNote = await NoteModel.findByPk(relativTo);
     if (relativNote === null) {
       throw new NoteNotFoundByKeyError(relativTo);
     }
@@ -253,7 +255,7 @@ export default async function moveNote(
     );
 
     if (modifyNote.parent !== null) {
-      const newNote = await Note.findByPk(modifyNote.parent);
+      const newNote = await NoteModel.findByPk(modifyNote.parent);
       if (newNote !== null) {
         newNote.childrenCount = await getChildrenCount(
           newNote.key,
@@ -264,7 +266,7 @@ export default async function moveNote(
     }
 
     if (prevParent !== null) {
-      const prevParentNote = await Note.findByPk(prevParent);
+      const prevParentNote = await NoteModel.findByPk(prevParent);
       if (prevParentNote !== null) {
         prevParentNote.childrenCount = await getChildrenCount(
           prevParentNote.key,

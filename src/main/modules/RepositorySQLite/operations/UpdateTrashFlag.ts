@@ -1,10 +1,9 @@
 import log from 'electron-log';
 import { QueryTypes } from 'sequelize';
-import { Note } from '../../DataModels';
-import RepositorySQLite from '../RepositorySQLite';
+import { NoteModel, RepositoryIntern } from '../../DataModels';
 
 export default async function updateTrashFlag(
-  repository: RepositorySQLite,
+  repository: RepositoryIntern,
   keyPathParam: string,
   trash: boolean
 ): Promise<void> {
@@ -12,7 +11,7 @@ export default async function updateTrashFlag(
 
   await repository
     .getSequelize()!
-    .query<Note>(
+    .query<NoteModel>(
       'UPDATE Notes set trash = :trash where keyPath LIKE :keyPath',
       {
         replacements: {

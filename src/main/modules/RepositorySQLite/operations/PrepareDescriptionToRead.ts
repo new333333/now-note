@@ -1,7 +1,6 @@
 import log from 'electron-log';
 import * as cheerio from 'cheerio';
-import RepositorySQLite from '../RepositorySQLite';
-import { Note } from '../../DataModels';
+import { NoteModel, RepositoryIntern } from '../../DataModels';
 
 const prepareDescriptionToReadLog = log.scope(
   'RepositorySQLite.prepareDescriptionToReadLog'
@@ -9,7 +8,7 @@ const prepareDescriptionToReadLog = log.scope(
 
 // support old repository implementations
 async function prepareInlineImagesPathToRead(
-  repository: RepositorySQLite,
+  repository: RepositoryIntern,
   html: string | undefined
 ): Promise<string> {
   prepareDescriptionToReadLog.debug(`prepareInlineImagesPathToRead`);
@@ -32,7 +31,7 @@ async function prepareInlineImagesPathToRead(
 }
 
 async function prepareAttachmentsPathToRead(
-  repository: RepositorySQLite,
+  repository: RepositoryIntern,
   htmltext: string
 ): Promise<string> {
   prepareDescriptionToReadLog.debug(`prepareAttachmentsPathToRead`);
@@ -81,7 +80,7 @@ async function fixOldLinksToRead(htmlText: string): Promise<string> {
 }
 
 async function prepareLinksToRead(
-  repository: RepositorySQLite,
+  repository: RepositoryIntern,
   htmlTextParam: string
 ): Promise<string> {
   prepareDescriptionToReadLog.debug(`prepareLinksToRead start`);
@@ -107,7 +106,8 @@ async function prepareLinksToRead(
         `prepareLinksToRead reload link to ${linkToNoteKey}`
       );
 
-      const note = await Note.findByPk(linkToNoteKey);
+      // eslint-disable-next-line no-await-in-loop
+      const note = await NoteModel.findByPk(linkToNoteKey);
       if (
         note !== null &&
         note.titlePath !== undefined &&
@@ -132,7 +132,7 @@ async function prepareLinksToRead(
 }
 
 export default async function prepareDescriptionToRead(
-  repository: RepositorySQLite,
+  repository: RepositoryIntern,
   descriptionParam: string
 ) {
   prepareDescriptionToReadLog.debug(`start`);
