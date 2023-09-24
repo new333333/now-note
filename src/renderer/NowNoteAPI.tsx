@@ -1,4 +1,4 @@
-import { AssetModel } from 'main/modules/DataModels';
+import log from 'electron-log';
 import {
   HitMode,
   NoteDTO,
@@ -7,15 +7,17 @@ import {
   SearchResultOptions,
   UserSettingsRepository,
   Error,
-  RepositorySettings,
   NowNoteAPI,
   AssetDTO,
+  SettingsDTO,
 } from 'types';
 
-export class NowNoteAPIImpl implements NowNoteAPI {
-  private îpcRenderer: UIController;
+const nowNoteAPILog = log.scope('NowNoteAPI');
 
-  constructor(îpcRenderer: UIController) {
+export class NowNoteAPIImpl implements NowNoteAPI {
+  private îpcRenderer: any;
+
+  constructor(îpcRenderer: any) {
     this.îpcRenderer = îpcRenderer;
   }
 
@@ -34,7 +36,10 @@ export class NowNoteAPIImpl implements NowNoteAPI {
     return note;
   }
 
-  async getChildren(key: string, trash: boolean): Promise<NoteDTO[] | undefined> {
+  async getChildren(
+    key: string,
+    trash: boolean
+  ): Promise<NoteDTO[] | undefined> {
     const children: NoteDTO[] | undefined = await this.îpcRenderer.getChildren(
       key,
       trash
@@ -42,10 +47,9 @@ export class NowNoteAPIImpl implements NowNoteAPI {
     return children;
   }
 
-  async getBacklinks(key: string): Promise<NoteDTO[]> {
-    const backlinks: NoteDTO[] | undefined = await this.îpcRenderer.getBacklinks(
-      key
-    );
+  async getBacklinks(key: string): Promise<NoteDTO[] | undefined> {
+    const backlinks: NoteDTO[] | undefined =
+      await this.îpcRenderer.getBacklinks(key);
     return backlinks;
   }
 
@@ -145,14 +149,6 @@ export class NowNoteAPIImpl implements NowNoteAPI {
     return this.îpcRenderer.getRepositories();
   }
 
-  async getRepositorySettings(): Promise<RepositorySettings | undefined> {
-    return this.îpcRenderer.getRepositorySettings();
-  }
-
-  async setRepositorySettings(settings: UserSettingsRepository): Promise<void> {
-    return this.îpcRenderer.setRepositorySettings(settings);
-  }
-
   async getCurrentRepository(): Promise<UserSettingsRepository | undefined> {
     return this.îpcRenderer.getCurrentRepository();
   }
@@ -163,12 +159,35 @@ export class NowNoteAPIImpl implements NowNoteAPI {
     return this.îpcRenderer.connectRepository(path);
   }
 
+  async modifySettings(settingsDTO: SettingsDTO): Promise<SettingsDTO> {
+    nowNoteAPILog.debug(`settingsDTO=${settingsDTO}`);
+    return this.îpcRenderer.modifySettings(settingsDTO);
+  }
+
+  async getSettings(): Promise<SettingsDTO> {
+    return this.îpcRenderer.getSettings();
+  }
+
   async closeRepository(): Promise<void> {
     return this.îpcRenderer.closeRepository();
   }
 
   async reindexAll(key: string | undefined): Promise<void> {
     return this.îpcRenderer.reindexAll(key);
+  }
+
+  async addFileAsNote(
+    parentKey: string,
+    filepath: string,
+    hitMode: HitMode,
+    relativeToKey: string
+  ): Promise<NoteDTO | undefined> {
+    return this.îpcRenderer.addFileAsNote(
+      parentKey,
+      filepath,
+      hitMode,
+      relativeToKey
+    );
   }
 }
 

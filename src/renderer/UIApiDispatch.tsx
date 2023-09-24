@@ -5,6 +5,8 @@ import { NoteDTO } from 'types';
 export type UIApi = {
   addNote(key: string): Promise<NoteDTO | undefined>;
   deleteNote(key: string): Promise<boolean>;
+  restoreNote(key: string): Promise<boolean>;
+
   openDetailNote(note: NoteDTO): Promise<void>;
   updateDetailNote(note: NoteDTO): Promise<void>;
   updateNodeInTree(note: NoteDTO): Promise<void>;

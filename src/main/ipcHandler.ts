@@ -9,8 +9,8 @@ import {
   PriorityStatistics,
   SearchResult,
   SearchResultOptions,
-  RepositorySettings,
   AssetDTO,
+  SettingsDTO,
 } from '../types';
 import { AssetModel } from './modules/DataModels';
 
@@ -29,11 +29,6 @@ export default class IpcHandler {
     this.browserWindow = browserWindow;
     this.ipcMain = ipcMain;
     this.nowNote = nowNote;
-
-    this.ipcMain.handle('quit', async () => {
-      log.debug('IpcHandler.quit()');
-      app.quit();
-    });
 
     this.ipcMain.handle(
       'selectRepositoryFolder',
@@ -77,20 +72,6 @@ export default class IpcHandler {
       'getRepositories',
       async (): Promise<Array<UserSettingsRepository> | undefined> => {
         return this.nowNote.getRepositories();
-      }
-    );
-
-    this.ipcMain.handle(
-      'getRepositorySettings',
-      async (): Promise<RepositorySettings | undefined> => {
-        return this.nowNote.getRepositorySettings();
-      }
-    );
-
-    this.ipcMain.handle(
-      'setRepositorySettings',
-      async (_event, settings: RepositorySettings): Promise<void> => {
-        this.nowNote.setRepositorySettings(settings);
       }
     );
 
@@ -269,22 +250,12 @@ export default class IpcHandler {
         hitMode: HitMode,
         relativeToKey: string
       ): Promise<NoteDTO | undefined> => {
-        return this.nowNote.addFileAsNote(parentKey, path, hitMode, relativeToKey);
-      }
-    );
-
-    this.ipcMain.handle(
-      'openAssetFile',
-      async (_event, url: string): Promise<string | undefined> => {
-        const assetKey = url.substring('nn-asset:'.length);
-        const assetFileLocalPath = await this.nowNote.getAssetFileLocalPath(
-          assetKey
+        return this.nowNote.addFileAsNote(
+          parentKey,
+          path,
+          hitMode,
+          relativeToKey
         );
-        if (assetFileLocalPath !== undefined) {
-          const openPathStatus = shell.openPath(assetFileLocalPath);
-          return Promise.resolve(openPathStatus);
-        }
-        return Promise.resolve(undefined);
       }
     );
 
@@ -295,5 +266,21 @@ export default class IpcHandler {
       }
     );
 
+    this.ipcMain.handle(
+      'modifySettings',
+      async (
+        _event,
+        settingsDTO: SettingsDTO
+      ): Promise<SettingsDTO | undefined> => {
+        return this.nowNote.modifySettings(settingsDTO);
+      }
+    );
+
+    this.ipcMain.handle(
+      'getSettings',
+      async (_event): Promise<SettingsDTO | undefined> => {
+        return this.nowNote.getSettings();
+      }
+    );
   }
 }

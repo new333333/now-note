@@ -233,6 +233,11 @@ export default async function authenticate(
 
   SettingsModel.init(
     {
+      id: {
+        type: DataTypes.BIGINT,
+        primaryKey: true,
+        autoIncrement: true,
+      },
       detailsNoteKey: {
         type: DataTypes.UUID,
       },
@@ -240,6 +245,7 @@ export default async function authenticate(
     {
       sequelize: repository.getSequelize(),
       tableName: 'Settings',
+      timestamps: false,
     }
   );
 

@@ -8,32 +8,26 @@ import {
   UserSettingsRepository,
   SearchResult,
   SearchResultOptions,
-  Repository,
-  RepositorySettings,
   AssetDTO,
+  SettingsDTO,
+  NowNoteAPI,
 } from '../types';
-import { AssetModel } from './modules/DataModels';
 
 export interface ElectronIPCRenderer {
-  ipcRenderer: Repository;
+  ipcRenderer: NowNoteAPI;
 }
 
 const electronHandler: ElectronIPCRenderer = {
   ipcRenderer: {
-    selectRepositoryFolder: (): Promise<UserSettingsRepository | Error> =>
-      ipcRenderer.invoke('selectRepositoryFolder'),
+    selectRepositoryFolder: (): Promise<
+      UserSettingsRepository | Error | undefined
+    > => ipcRenderer.invoke('selectRepositoryFolder'),
 
     isRepositoryInitialized: (): Promise<Boolean> =>
       ipcRenderer.invoke('isRepositoryInitialized'),
 
     getRepositories: (): Promise<Array<UserSettingsRepository>> =>
       ipcRenderer.invoke('getRepositories'),
-
-    getRepositorySettings: (): Promise<RepositorySettings | undefined> =>
-      ipcRenderer.invoke('getRepositorySettings'),
-
-    setRepositorySettings: (settings: UserSettingsRepository) =>
-      ipcRenderer.invoke('setRepositorySettings', settings),
 
     getCurrentRepository: (): Promise<UserSettingsRepository | undefined> =>
       ipcRenderer.invoke('getCurrentRepository'),
@@ -110,13 +104,13 @@ const electronHandler: ElectronIPCRenderer = {
     ): Promise<void> =>
       ipcRenderer.invoke('moveNote', key, from, to, hitMode, relativTo),
 
-    moveNoteToTrash: (key: string): Promise<boolean | undefined> =>
+    moveNoteToTrash: (key: string): Promise<boolean> =>
       ipcRenderer.invoke('moveNoteToTrash', key),
 
-    restore: (key: string): Promise<boolean | undefined> =>
+    restore: (key: string): Promise<boolean> =>
       ipcRenderer.invoke('restore', key),
 
-    deletePermanently: (key: string): Promise<boolean | undefined> =>
+    deletePermanently: (key: string): Promise<boolean> =>
       ipcRenderer.invoke('deletePermanently', key),
 
     reindexAll: (key: string | undefined): Promise<void> =>
@@ -129,13 +123,20 @@ const electronHandler: ElectronIPCRenderer = {
       path: string,
       hitMode: HitMode,
       relativeToKey: string
-    ) => ipcRenderer.invoke('addFileAsNote', parentKey, path, hitMode, relativeToKey),
+    ) =>
+      ipcRenderer.invoke(
+        'addFileAsNote',
+        parentKey,
+        path,
+        hitMode,
+        relativeToKey
+      ),
 
-    openAssetFile: (url: string) => ipcRenderer.invoke('openAssetFile', url),
+    modifySettings: (settingsDTO: SettingsDTO) =>
+      ipcRenderer.invoke('modifySettings', settingsDTO),
 
-    quit: () => ipcRenderer.invoke('quit'),
+    getSettings: () => ipcRenderer.invoke('getSettings'),
   },
 };
 
 contextBridge.exposeInMainWorld('electron', electronHandler);
-

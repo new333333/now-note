@@ -6,7 +6,7 @@ import useNoteStore from 'renderer/GlobalStore';
 import { ReflexContainer, ReflexSplitter, ReflexElement } from 'react-reflex';
 import 'react-reflex/styles.css';
 import { nowNoteAPI } from 'renderer/NowNoteAPI';
-import { NoteDTO } from 'types';
+import { NoteDTO, SettingsDTO } from 'types';
 import UIApiDispatch, { UIApi } from 'renderer/UIApiDispatch';
 import useDetailsNoteStore from 'renderer/DetailsNoteStore';
 import SelectRepository from './SelectRepository';
@@ -22,6 +22,7 @@ const appLog = log.scope('App');
 interface TreeComponentAPI {
   addNote(key: string): Promise<NoteDTO | undefined>;
   removeNode(key: string): Promise<NoteDTO | undefined>;
+  restoreNote(key: string): Promise<NoteDTO | undefined>;
   updateNode(note: NoteDTO): Promise<void>;
   focusNode(key: string): Promise<void>;
   reloadNode(key: string): Promise<boolean>;
@@ -42,16 +43,6 @@ export default function App() {
       state.trash,
     ]
   );
-
-  const fetchCurrentRepository = useCallback(async () => {
-    setCurrentRepository(await nowNoteAPI.getCurrentRepository());
-  }, [setCurrentRepository]);
-
-  useEffect(() => {
-    fetchCurrentRepository();
-  }, [fetchCurrentRepository]);
-
-  appLog.debug(`currentRepository=${currentRepository} trash=${trash}`);
 
   const detailsNoteUpdateNote = useDetailsNoteStore(
     (state) => state.updateNote
@@ -90,12 +81,27 @@ export default function App() {
         }
         return true;
       },
+      restoreNote: async (key: string) => {
+        if (treeComponentRef.current === null) {
+          return false;
+        }
+        await nowNoteAPI.restore(key);
+        await treeComponentRef.current.removeNode(key);
+        const note = await nowNoteAPI.getNoteWithDescription(key);
+        if (note !== undefined) {
+          await uiApi.openDetailNote(note);
+        }
+        return true;
+      },
       openDetailNote: async (note: NoteDTO) => {
         console.log(`openDetailNote note=`, note);
         detailsNoteUpdateNote(note);
         if (note.key !== undefined && note.key !== null) {
           detailsNoteUpdateBacklinks(await nowNoteAPI.getBacklinks(note.key));
           await uiApi.focusNodeInTree(note.key);
+          nowNoteAPI.modifySettings({
+            detailsNoteKey: note.key,
+          });
         }
       },
       updateDetailNote: async (note: NoteDTO) => {
@@ -125,6 +131,30 @@ export default function App() {
     detailsNoteUpdateNote,
     detailsNoteUpdateNoteProperties,
   ]);
+
+  const fetchCurrentRepository = useCallback(async () => {
+    setCurrentRepository(await nowNoteAPI.getCurrentRepository());
+    const settings: SettingsDTO = await nowNoteAPI.getSettings();
+    if (
+      settings !== null &&
+      settings !== undefined &&
+      settings.detailsNoteKey !== null &&
+      settings.detailsNoteKey !== undefined
+    ) {
+      const note: NoteDTO | undefined = await nowNoteAPI.getNoteWithDescription(
+        settings.detailsNoteKey
+      );
+      if (note !== null && note !== undefined) {
+        uiApi.openDetailNote(note);
+      }
+    }
+  }, [setCurrentRepository, uiApi]);
+
+  useEffect(() => {
+    fetchCurrentRepository();
+  }, [fetchCurrentRepository]);
+
+  appLog.debug(`currentRepository=${currentRepository} trash=${trash}`);
 
   const selectRepository = <SelectRepository />;
 

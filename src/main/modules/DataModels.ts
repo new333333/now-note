@@ -140,6 +140,8 @@ export class SettingsModel extends Model<
   InferAttributes<SettingsModel>,
   InferCreationAttributes<SettingsModel>
 > {
+  declare id: CreationOptional<number>;
+
   declare detailsNoteKey: string | null;
 
   toDTO(): SettingsDTO {

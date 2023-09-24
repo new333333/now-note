@@ -2,9 +2,13 @@ import log from 'electron-log';
 import { QueryInterface, DataTypes, Sequelize, QueryTypes } from 'sequelize';
 import { MigrationFn } from 'umzug';
 
-
 async function createTableSettings(queryInterface: QueryInterface) {
   await queryInterface.createTable('Settings', {
+    id: {
+      type: DataTypes.INTEGER,
+      autoIncrement: true,
+      primaryKey: true,
+    },
     detailsNoteKey: {
       type: DataTypes.UUID,
     },

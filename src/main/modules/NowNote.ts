@@ -13,19 +13,17 @@ import {
   Repository,
   SearchResult,
   SearchResultOptions,
-  RepositorySettings,
+  SettingsDTO,
+  AssetDTO,
 } from '../../types';
-import RepositorySettingsService from './RepositorySettings/RepositorySettingsService';
 import RepositorySQLiteSetup from './RepositorySQLite/RepositorySQLiteSetup';
-import { AssetModel, SQLITE3_TYPE } from './DataModels';
+import { SQLITE3_TYPE } from './DataModels';
 import AssetFilesService from './AssetFilesService';
+
+const nowNoteLog = log.scope('NowNote');
 
 export default class NowNote {
   private userSettingsManger: UserSettingsService;
-
-  private currentRepositorySettingsService:
-    | RepositorySettingsService
-    | undefined = undefined;
 
   private currentRepository: Repository | undefined = undefined;
 
@@ -102,9 +100,6 @@ export default class NowNote {
       } catch (error) {
         log.error('connectRepository error', error);
       }
-      this.currentRepositorySettingsService = new RepositorySettingsService(
-        this.currentUserSettingsRepository.path
-      );
       return this.currentUserSettingsRepository;
     }
     throw Error(`"${repository.type}" is unknown repository type.`);
@@ -144,21 +139,6 @@ export default class NowNote {
 
   async getRepositories(): Promise<UserSettingsRepository[] | undefined> {
     return this.userSettingsManger.getRepositories();
-  }
-
-  async getRepositorySettings(): Promise<RepositorySettings | undefined> {
-    if (this.currentRepositorySettingsService !== undefined) {
-      return this.currentRepositorySettingsService.getRepositorySettings();
-    }
-    return Promise.resolve(undefined);
-  }
-
-  async setRepositorySettings(repositorySettings: RepositorySettings) {
-    if (this.currentRepositorySettingsService !== undefined) {
-      this.currentRepositorySettingsService.setRepositorySettings(
-        repositorySettings
-      );
-    }
   }
 
   async getCurrentRepository(): Promise<UserSettingsRepository | undefined> {
@@ -368,6 +348,23 @@ export default class NowNote {
   ): Promise<fs.ReadStream | undefined> {
     if (this.currentRepository !== undefined) {
       return this.currentRepository.getAssetFileReadStream(assetKey);
+    }
+    return Promise.resolve(undefined);
+  }
+
+  async modifySettings(
+    settingsDTO: SettingsDTO
+  ): Promise<SettingsDTO | undefined> {
+    nowNoteLog.debug(`settingsDTO=${settingsDTO}`);
+    if (this.currentRepository !== undefined) {
+      return this.currentRepository.modifySettings(settingsDTO);
+    }
+    return Promise.resolve(undefined);
+  }
+
+  async getSettings(): Promise<SettingsDTO | undefined> {
+    if (this.currentRepository !== undefined) {
+      return this.currentRepository.getSettings();
     }
     return Promise.resolve(undefined);
   }

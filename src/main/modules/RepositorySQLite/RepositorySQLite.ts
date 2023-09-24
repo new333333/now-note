@@ -11,6 +11,7 @@ import {
   PriorityStatistics,
   SearchResult,
   SearchResultOptions,
+  SettingsDTO,
 } from '../../../types';
 import { NoteModel, AssetModel, RepositoryIntern } from '../DataModels';
 import AssetFilesService from '../AssetFilesService';
@@ -38,6 +39,8 @@ import getChildren from './operations/GetChildren';
 import removeTag from './operations/RemoveTag';
 import addTag from './operations/AddTag';
 import findTag from './operations/FindTag';
+import modifySettings from './operations/ModifySettings';
+import getSettings from './operations/GetSettings';
 
 export default class RepositorySQLite implements RepositoryIntern {
   private sequelize: Sequelize;
@@ -256,6 +259,16 @@ export default class RepositorySQLite implements RepositoryIntern {
       return undefined;
     }
     return this.assetFilesService.getAssetFileLocalPath(assetModel);
+  }
+
+  async modifySettings(
+    settingsDTO: SettingsDTO
+  ): Promise<SettingsDTO | undefined> {
+    return modifySettings(this, settingsDTO);
+  }
+
+  async getSettings(): Promise<SettingsDTO | undefined> {
+    return getSettings(this);
   }
 
   async addFileAsNote(

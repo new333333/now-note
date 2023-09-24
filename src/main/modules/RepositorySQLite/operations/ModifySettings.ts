@@ -8,7 +8,9 @@ export default async function modifySettings(
   repository: RepositoryIntern,
   settingsDTO: SettingsDTO
 ): Promise<SettingsDTO | undefined> {
+  modifySettingsLog.debug(`settingsDTO=${settingsDTO}`);
   const [settings, created] = await SettingsModel.findOrCreate({
+    where: {},
     defaults: {
       detailsNoteKey: settingsDTO.detailsNoteKey,
     },

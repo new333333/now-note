@@ -180,13 +180,13 @@ const TreeComponent = React.memo(
       [uiApi, noteToNode]
     );
 
-    const removeNode = useCallback(
-      async (key: string): Promise<NoteDTO | undefined> => {
-        let node = fancyTreeRef.current.getNodeByKey(key);
-        node.remove();
-      },
-      []
-    );
+    const removeNode = useCallback(async (key: string): Promise<void> => {
+      if (fancyTreeRef.current === null) {
+        return;
+      }
+      const node = fancyTreeRef.current.getNodeByKey(key);
+      await node.remove();
+    }, []);
 
     const updateNode = useCallback(async (note: NoteDTO) => {
       treeLog.debug('updateNode() note=', note);

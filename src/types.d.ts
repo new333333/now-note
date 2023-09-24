@@ -19,33 +19,6 @@ export interface UserSettings {
 // ***************************************************************************
 // ***************************************************************************
 
-export interface RepositorySettings {
-  filter: {
-    onlyNotes: boolean;
-    onlyTasks: boolean;
-    onlyDone: boolean;
-    onlyNotDone: boolean;
-  };
-
-  state: {
-    details: {
-      key: string | undefined;
-    };
-    list: {
-      key: string | undefined;
-    };
-  };
-
-  // v1, don't need any more
-  filterOnlyNotes?: boolean;
-  filterOnlyTasks?: boolean;
-  filterOnlyDone?: boolean;
-  filterOnlyNotDone?: boolean;
-}
-
-// ***************************************************************************
-// ***************************************************************************
-
 export interface Error {
   message: string;
 }
@@ -121,7 +94,7 @@ export interface Repository {
     key: string,
     withoutDescription?: boolean
   ): Promise<NoteDTO | undefined>;
-  getBacklinks(key: string): Promise<Array<NoteDTO>>;
+  getBacklinks(key: string): Promise<Array<NoteDTO> | undefined>;
   search(
     searchText: string,
     limit: number,
@@ -167,6 +140,8 @@ export interface Repository {
     fileName: string,
     base64: string
   ): Promise<AssetDTO>;
+  modifySettings(settingsDTO: SettingsDTO): Promise<SettingsDTO | undefined>;
+  getSettings(): Promise<SettingsDTO | undefined>;
 }
 
 // ***************************************************************************
@@ -181,7 +156,7 @@ export interface NowNoteAPI {
     key: string | null | undefined,
     trash?: boolean
   ): Promise<Array<NoteDTO> | undefined>;
-  getBacklinks(key: string): Promise<Array<NoteDTO>>;
+  getBacklinks(key: string): Promise<Array<NoteDTO> | undefined>;
   search(
     searchText: string,
     limit: number,
@@ -215,8 +190,6 @@ export interface NowNoteAPI {
   selectRepositoryFolder(): Promise<UserSettingsRepository | Error | undefined>;
   isRepositoryInitialized(): Promise<Boolean>;
   getRepositories(): Promise<Array<UserSettingsRepository>>;
-  getRepositorySettings(): Promise<RepositorySettings | undefined>;
-  setRepositorySettings(settings: UserSettingsRepository): Promise<void>;
   getCurrentRepository(): Promise<UserSettingsRepository | undefined>;
   connectRepository(path: string): Promise<UserSettingsRepository | undefined>;
   closeRepository(): Promise<void>;
@@ -228,4 +201,14 @@ export interface NowNoteAPI {
     fileName: string,
     base64: string
   ): Promise<AssetDTO>;
+
+  addFileAsNote(
+    parentKey: string,
+    filepath: string,
+    hitMode: HitMode,
+    relativeToKey: string
+  ): Promise<NoteDTO | undefined>;
+
+  modifySettings(settingsDTO: SettingsDTO): Promise<SettingsDTO | undefined>;
+  getSettings(): Promise<SettingsDTO | undefined>;
 }

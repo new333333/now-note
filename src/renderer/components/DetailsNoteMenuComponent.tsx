@@ -77,22 +77,23 @@ export default function DetailsNoteMenuComponent() {
 
   const handleClickMenu = useCallback(
     (option): MenuProps['onClick'] => {
+      const { addNote, deleteNote, restoreNote, focusNodeInTree } = uiApi;
       console.log('handleNoteMenu, noteKey=, option=', noteKey, option);
-      const key = option.key;
+      const { key } = option;
       console.log('handleNoteMenu, key=', key);
+      if (noteKey === null || noteKey === undefined) {
+        return;
+      }
       if (key === 'add_note') {
-        uiApi.addNote(noteKey);
+        addNote(noteKey);
       } else if (key === 'open_tree') {
-        nowNoteAPI.openNoteInTree(noteKey);
+        focusNodeInTree(noteKey);
       } else if (key === 'delete') {
-        console.log("handleNoteMenu, delete noteKey=", noteKey);
-        if (uiApi === null) {
-          return;
-        }
-        uiApi.deleteNote(noteKey);
+        deleteNote(noteKey);
       } else if (key === 'restore') {
-        nowNoteAPI.restore(noteKey);
+        restoreNote(noteKey);
       } else if (key === 'history') {
+        // TODO
         nowNoteAPI.showHistory(noteKey);
       }
     },
