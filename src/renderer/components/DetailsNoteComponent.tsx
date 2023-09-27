@@ -56,7 +56,6 @@ const DetailsNoteComponent = forwardRef(function DetailsNoteComponent(
       <div>
         <DetailsNoteBreadCrumbComponent />
       </div>
-      <Divider style={{ margin: '5px 0' }} />
       <div style={{ display: 'flex', alignItems: 'center' }}>
         <DetailsNoteDoneComponent />
         <div style={{ flexBasis: '100%' }}>
@@ -66,13 +65,11 @@ const DetailsNoteComponent = forwardRef(function DetailsNoteComponent(
           <DetailsNoteMenuComponent />
         </div>
       </div>
-      <Divider style={{ margin: '5px 0' }} />
       <div style={{ padding: '5px 0' }}>
         <DetailsNoteTypeComponent />
         <DetailsNotePriorityComponent />
         <DetailsNoteTagsComponent />
       </div>
-      <Divider style={{ margin: '5px 0' }} />
       <div style={{ flex: 1 }}>
         <DetailsNoteDescriptionComponent />
       </div>
