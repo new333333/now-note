@@ -4,7 +4,8 @@ import { Typography, Tooltip, Button } from 'antd';
 import useNoteStore from 'renderer/GlobalStore';
 import { nowNoteAPI } from 'renderer/NowNoteAPI';
 
-const { Link } = Typography;
+const { Text } = Typography;
+
 
 export default function Footer() {
   const [currentRepository, setCurrentRepository] = useNoteStore((state) => [
@@ -27,19 +28,22 @@ export default function Footer() {
   return (
     <div
       style={{
-        padding: 5,
+        paddingLeft: 5,
+        paddingTop: 5,
         backgroundColor: '#eeeeee',
         borderTop: '1px solid #dddddd',
         display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
+        alignItems: 'left',
+        justifyContent: 'left',
+        height: '100%',
       }}
     >
       <Tooltip title="Choose other Repository">
-        <Link onClick={changeRepository}>
-          <strong>Repository:</strong> {currentRepository && currentRepository.path}
+        <Text onClick={changeRepository}>
+          <strong style={{ paddingRight: 3 }}>Repository:</strong>
+          {currentRepository && currentRepository.path}
           {!currentRepository && <>No repository initialized</>}
-        </Link>
+        </Text>
       </Tooltip>&nbsp;
       <Button size="small" onClick={reindexAllHandler} loading={loading}>
         Reindex Repository
