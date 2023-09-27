@@ -178,7 +178,7 @@ export default function App() {
           </ReflexElement>
         </ReflexContainer>
       </ReflexElement>
-      <ReflexElement minSize={35} maxSize={35}>
+      <ReflexElement minSize={37} maxSize={37} style={{ overflow: 'hidden' }}>
         <Footer />
       </ReflexElement>
     </ReflexContainer>
