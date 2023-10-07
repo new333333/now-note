@@ -366,8 +366,6 @@ body {
 .n3-tree {
 	overflow: auto;
 	flex: 1;
-	/* left place for context menu */
-		padding-left: 15px;
 }
 
 .fancytree-node {
@@ -439,21 +437,15 @@ span.fancytree-title {
   outline: none;
 }
 
-
-.fancytree-node {
-	/* to fire mouse over on node event*/
-		padding-left: 50px;
-		margin-left: -50px;
-	/* to position context menu trigger relativ to it */
-		position: relative;
+.context-menu-list {
+  -webkit-box-shadow: none !important;
+  box-shadow: none !important;
+  font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,'Noto Sans',sans-serif,'Apple Color Emoji','Segoe UI Emoji','Segoe UI Symbol','Noto Color Emoji' !important;
+  font-size: 14px !important;
 }
 
-/*  position context menu trigger relativ to node span */
-.nn-fancytree-node-context-menu-trigger {
-	position: absolute;
-	left: 35px;
-	top: 2px;
-	cursor: pointer;
+.context-menu-item.context-menu-hover {
+  color: rgba(0, 0, 0, 0.88) !important;
+  cursor: pointer;
+  background-color: rgba(0, 0, 0, 0.04) !important;
 }
-
-
