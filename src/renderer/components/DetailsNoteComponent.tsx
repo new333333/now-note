@@ -53,7 +53,7 @@ const DetailsNoteComponent = forwardRef(function DetailsNoteComponent(
         height: '100%',
       }}
     >
-      <div>
+      <div style={{ paddingBottom: 5 }}>
         <DetailsNoteBreadCrumbComponent />
       </div>
       <div style={{ display: 'flex', alignItems: 'center' }}>

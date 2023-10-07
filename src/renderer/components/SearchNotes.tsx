@@ -124,7 +124,7 @@ export default function SearchNotes() {
   return (
     <div
       style={{
-        padding: 5,
+        padding: 8,
         backgroundColor: '#eeeeee',
         borderBottom: '1px solid #dddddd',
         display: 'flex',
