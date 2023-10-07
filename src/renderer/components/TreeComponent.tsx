@@ -15,7 +15,7 @@ import 'jquery.fancytree/dist/modules/jquery.fancytree.edit';
 import 'jquery.fancytree/dist/modules/jquery.fancytree.clones';
 import 'jquery-contextmenu/dist/jquery.contextMenu.min.css';
 import 'jquery-contextmenu/dist/jquery.contextMenu.min.js';
-import '../js/jquery.fancytree.contextMenu-nowNote';
+import '../js/jquery.fancytree.contextMenu';
 import $ from 'jquery';
 import Fancytree, { FancytreeClickFolderMode } from 'jquery.fancytree';
 //import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'

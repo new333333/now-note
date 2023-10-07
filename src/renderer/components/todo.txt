@@ -1,5 +1,5 @@
+- query note!
 - reomve from nowNoteAPI references to nowNoteAPI and uiAPI?
-- right click menu
 - move note in menu
 - context search
 - search in screenshots

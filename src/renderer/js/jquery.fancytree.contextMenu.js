@@ -1,14 +1,15 @@
-/**!
- * jquery.fancytree.contextmenu.js
- *
- * Integrate the 'jQuery contextMenu' plugin as Fancytree extension:
- * https://github.com/swisnl/jQuery-contextMenu
- *
- * Copyright (c) 2008-2018, Martin Wendt (https://wwWendt.de)
- * Released under the MIT license
- * https://github.com/mar10/fancytree/wiki/LicenseInfo
- */
- (function ($, document) {
+(function (factory) {
+	if (typeof define === "function" && define.amd) {
+		// AMD. Register as an anonymous module.
+		define(["jquery"], factory);
+	} else if (typeof module === "object" && module.exports) {
+		// Node/CommonJS
+		module.exports = factory(require("jquery"));
+	} else {
+		// Browser globals
+		factory(jQuery);
+	}
+})(function ($, document) {
 	"use strict";
 
 	var initContextMenu = function (tree, selector, menu, actions) {
@@ -86,4 +87,4 @@
 			);
 		},
 	});
-})(window.jQuery, document);
+});
