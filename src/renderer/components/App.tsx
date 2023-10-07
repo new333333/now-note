@@ -20,7 +20,8 @@ import DetailsNoteComponent from './DetailsNoteComponent';
 const appLog = log.scope('App');
 
 interface TreeComponentAPI {
-  addNote(key: string): Promise<NoteDTO | undefined>;
+  getActiveNodeKey(): string | undefined;
+  addNote(newNote: NoteDTO): Promise<NoteDTO | undefined>;
   removeNode(key: string): Promise<NoteDTO | undefined>;
   restoreNote(key: string): Promise<NoteDTO | undefined>;
   updateNode(note: NoteDTO): Promise<void>;
@@ -57,11 +58,31 @@ export default function App() {
   const uiApi: UIApi = useMemo(() => {
     return {
       addNote: async (key: string): Promise<NoteDTO | undefined> => {
-        console.log(`addNote! call! key`, key);
         if (treeComponentRef.current === null) {
           return undefined;
         }
-        const newNote = await treeComponentRef.current.addNote(key);
+
+        let parentKey: string | undefined = key;
+
+        if (key === 'ON_ACTIVE_TREE_NODE') {
+          parentKey = treeComponentRef.current.getActiveNodeKey();
+        }
+
+        if (parentKey === undefined) {
+          return undefined;
+        }
+
+        const newNote: NoteDTO | undefined = await nowNoteAPI.addNote(
+          parentKey,
+          { title: '', type: 'note' },
+          'firstChild'
+        );
+
+        if (newNote === undefined) {
+          return undefined;
+        }
+
+        await treeComponentRef.current.addNote(newNote);
         if (detailsNoteComponentRef.current === null) {
           return undefined;
         }

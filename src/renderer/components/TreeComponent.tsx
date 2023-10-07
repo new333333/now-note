@@ -126,13 +126,24 @@ const TreeComponent = React.memo(
       return node;
     }, []);
 
+    const getActiveNodeKey = useCallback((): string | undefined => {
+      if (fancyTreeRef === null || fancyTreeRef.current === null) {
+        return undefined;
+      }
+      let node = fancyTreeRef.current.getActiveNode();
+      if (node === null) {
+        node = fancyTreeRef.current.getRootNode();
+      }
+      if (node === null) {
+        return undefined;
+      }
+      return node.key;
+    }, []);
+
     const addNote = useCallback(
-      async (key: string): Promise<NoteDTO | undefined> => {
-        treeLog.debug('addNote() on update key=', key);
-        if (uiApi === null) {
-          return undefined;
-        }
-        if (key === undefined || key === null) {
+      async (newNote: NoteDTO): Promise<NoteDTO | undefined> => {
+        treeLog.debug('addNote() on update newNote=', newNote);
+        if (newNote === undefined || newNote === null) {
           return undefined;
         }
         treeLog.debug('addNote() on update fancyTreeRef=' + fancyTreeRef);
@@ -140,31 +151,16 @@ const TreeComponent = React.memo(
           return undefined;
         }
 
-        let node;
-        if (key === 'ON_ACTIVE_TREE_NODE') {
-          node = fancyTreeRef.current.getActiveNode();
-          console.log('addNote parent getActiveNode=', node);
-          if (!node) {
-            node = fancyTreeRef.current.getRootNode();
-          }
-        } else {
-          node = fancyTreeRef.current.getNodeByKey(key);
-        }
-        console.log('addNote parent node=', node);
-        if (node === undefined || node === null) {
+        const parentNode = fancyTreeRef.current.getNodeByKey(newNote.parent);
+        if (parentNode === null) {
           return undefined;
         }
-        await node.setExpanded(true);
+        await parentNode.setExpanded(true);
 
-        const newNote: NoteDTO | undefined = await nowNoteAPI.addNote(
-          node.key,
-          { title: '', type: 'note' },
-          'over'
+        const newNode = await parentNode.addNode(
+          noteToNode(newNote),
+          'firstChild'
         );
-
-        const newNode = await node.addNode(noteToNode(newNote), 'child');
-
-        console.log('addNote newNode=', newNode);
 
         console.log('addNote newNote=', newNote);
 
@@ -177,7 +173,7 @@ const TreeComponent = React.memo(
 
         return newNote;
       },
-      [uiApi, noteToNode]
+      [noteToNode]
     );
 
     const removeNode = useCallback(async (key: string): Promise<void> => {
@@ -264,10 +260,13 @@ const TreeComponent = React.memo(
       ref,
       () => {
         return {
-          addNote: async (key: string): Promise<NoteDTO | undefined> => {
-            return addNote(key);
+          getActiveNodeKey: (): string | undefined => {
+            return getActiveNodeKey();
           },
-          removeNode: async (key: string): Promise<NoteDTO | undefined> => {
+          addNote: async (newNote: NoteDTO): Promise<NoteDTO | undefined> => {
+            return addNote(newNote);
+          },
+          removeNode: async (key: string): Promise<void> => {
             return removeNode(key);
           },
           updateNode: async (note: NoteDTO): Promise<void> => {
@@ -285,7 +284,7 @@ const TreeComponent = React.memo(
           },
         };
       },
-      [addNote, focusNode, reloadNode, removeNode, updateNode]
+      [addNote, focusNode, getActiveNodeKey, reloadNode, removeNode, updateNode]
     );
 
     const handleChangeDone = useCallback(

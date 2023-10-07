@@ -300,10 +300,8 @@ export default class RepositorySQLite implements RepositoryIntern {
           expanded: undefined,
           trash: undefined,
           linkToKey: undefined,
-          linkedNote: undefined,
           position: undefined,
           tags: undefined,
-          hasChildren: undefined,
         },
         hitMode,
         relativeToKey
@@ -346,10 +344,8 @@ export default class RepositorySQLite implements RepositoryIntern {
           expanded: undefined,
           trash: undefined,
           linkToKey: undefined,
-          linkedNote: undefined,
           position: undefined,
           tags: undefined,
-          hasChildren: undefined,
         },
         hitMode,
         relativeToKey

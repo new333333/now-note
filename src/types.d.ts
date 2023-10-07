@@ -36,19 +36,21 @@ export interface NoteDTO {
   key?: string | null;
   title?: string | null;
   description?: string | null;
+  parent?: string | null;
+  position?: number | null;
   type?: string | null;
   createdBy?: string | null;
-  createdAt?: Date | null;
-  updatedAt?: Date | null;
   done?: boolean | null;
   priority?: number | null;
   expanded?: boolean | null;
   trash?: boolean | null;
+  createdAt?: Date | null;
+  updatedAt?: Date | null;
+  restoreParentKey?: string | null;
   linkToKey?: string | null;
-  // TODO: not in use?
-  linkedNote?: NoteDTO | null;
-  position?: number | null;
-  hasChildren?: boolean | null;
+  keyPath?: string;
+  titlePath?: string;
+  childrenCount?: number;
   tags?: string | null;
 }
 
