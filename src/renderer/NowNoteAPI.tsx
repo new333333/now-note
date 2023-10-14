@@ -172,8 +172,12 @@ export class NowNoteAPIImpl implements NowNoteAPI {
     return this.îpcRenderer.closeRepository();
   }
 
-  async reindexAll(key: string | undefined): Promise<void> {
-    return this.îpcRenderer.reindexAll(key);
+  async reindex(key: string | undefined): Promise<void> {
+    return this.îpcRenderer.reindex(key);
+  }
+
+  async getReindexingProgress(): Promise<number> {
+    return this.îpcRenderer.getReindexingProgress();
   }
 
   async addFileAsNote(

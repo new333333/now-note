@@ -1,27 +1,36 @@
-import { useState, useContext, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { Input, AutoComplete } from 'antd';
-import { SearchResultOptions } from 'types';
-import useNoteStore from 'renderer/GlobalStore';
+import { NoteDTO, SearchResultOptions } from 'types';
 import { nowNoteAPI } from 'renderer/NowNoteAPI';
-import UIApiDispatch from 'renderer/UIApiDispatch';
+import { gray6 } from 'renderer/css/Styles';
 
-export default function SearchNotes() {
-  const [trash] = useNoteStore((state) => [state.trash]);
+interface Props {
+  trash: boolean;
+  onSelect: Function;
+  excludeParentNotesKeyProp: string[];
+}
 
-  const uiApi = useContext(UIApiDispatch);
-
+export default function SearchNotes({
+  trash,
+  onSelect,
+  excludeParentNotesKeyProp,
+}: Props) {
   const [loading, setLoading] = useState<boolean>(false);
   const [valueAutoComplete, setValueAutoComplete] = useState<string>('');
   const [optionsAutoComplete, setOptionsAutoComplete] = useState([]); // TODO: type
   const [startSearchPosition, setStartSearchPosition] = useState<number>(0);
 
-  function resultToListOption(results) {
-    return results.map((note) => {
+  function resultToListOption(results: NoteDTO[]) {
+    return results.map((note: NoteDTO) => {
       return {
         label: (
-          <div className="nn-search-option">
-            <div className="nn-search-title">{note.title}</div>
-            <div className="nn-search-breadCrumb">{note.path}</div>
+          <div>
+            <div>{note.title}</div>
+            <div style={{ color: gray6, whiteSpace: 'break-spaces' }}>
+              {note.titlePath
+                ?.substring(2, note.titlePath.length - 2)
+                .replaceAll('/', ' / ')}
+            </div>
           </div>
         ),
         value: note.key,
@@ -29,23 +38,14 @@ export default function SearchNotes() {
     });
   }
 
-  const openNote = useCallback(
-    async (noteKey: string) => {
-      const note = await nowNoteAPI.getNoteWithDescription(noteKey);
-      uiApi.openDetailNote(note);
-    },
-    [uiApi]
-  );
-
   const onSelectAutoComplete = useCallback(
     async (noteKey: string) => {
       setValueAutoComplete('');
       setOptionsAutoComplete([]);
       setStartSearchPosition(0);
-
-      openNote(noteKey);
+      onSelect(noteKey);
     },
-    [openNote]
+    [onSelect]
   );
 
   const onChangeAutoComplete = useCallback(async (data: string) => {
@@ -56,6 +56,7 @@ export default function SearchNotes() {
     async (searchText: string) => {
       const searchResultOptions: SearchResultOptions = {
         parentNotesKey: [],
+        excludeParentNotesKey: excludeParentNotesKeyProp,
         types: [],
         dones: [],
         sortBy: '',
@@ -122,28 +123,17 @@ export default function SearchNotes() {
   );
 
   return (
-    <div
-      style={{
-        padding: 8,
-        backgroundColor: '#eeeeee',
-        borderBottom: '1px solid #dddddd',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}
+    <AutoComplete
+      dropdownMatchSelectWidth={500}
+      value={valueAutoComplete}
+      options={optionsAutoComplete}
+      style={{ width: 200 }}
+      onSelect={onSelectAutoComplete}
+      onSearch={onSearchAutoComplete}
+      onChange={onChangeAutoComplete}
+      onPopupScroll={onPopupScroll}
     >
-      <AutoComplete
-        dropdownMatchSelectWidth={500}
-        value={valueAutoComplete}
-        options={optionsAutoComplete}
-        style={{ width: 200 }}
-        onSelect={onSelectAutoComplete}
-        onSearch={onSearchAutoComplete}
-        onChange={onChangeAutoComplete}
-        onPopupScroll={onPopupScroll}
-      >
-        <Input.Search size="small" placeholder="Search" />
-      </AutoComplete>
-    </div>
+      <Input.Search size="small" placeholder="Search" />
+    </AutoComplete>
   );
 }

@@ -2,6 +2,8 @@ import log from 'electron-log';
 import { QueryInterface, DataTypes } from 'sequelize';
 import { MigrationFn } from 'umzug';
 
+const repositorySQLiteSetupLog = log.scope('RepositorySQLiteSetup');
+
 async function createTableNotes(queryInterface: QueryInterface) {
   await queryInterface.createTable('Notes', {
     key: {
@@ -194,7 +196,7 @@ async function createTableAssets(queryInterface: QueryInterface) {
 }
 
 export const up: MigrationFn = async ({ context: sequelize }) => {
-  log.debug('RepositorySQLite 00_initial up');
+  repositorySQLiteSetupLog.debug('RepositorySQLite 00_initial up');
   const queryInterface: QueryInterface = sequelize.getQueryInterface();
   await createTableNotes(queryInterface);
   await createTableTitles(queryInterface);
@@ -205,14 +207,7 @@ export const up: MigrationFn = async ({ context: sequelize }) => {
 };
 
 export const down: MigrationFn = async ({ context: sequelize }) => {
-  log.debug('RepositorySQLite 00_initial down');
-  const queryInterface: QueryInterface = sequelize.getQueryInterface();
-  await queryInterface.dropTable('Notes');
-  await queryInterface.dropTable('Titles');
-  await queryInterface.dropTable('Descriptions');
-  await queryInterface.dropTable('Tags');
-  await queryInterface.dropTable('Links');
-  await queryInterface.dropTable('Assets');
+  repositorySQLiteSetupLog.debug('RepositorySQLite 00_initial down - there is no way back');
 };
 
 module.exports = { up, down };

@@ -33,6 +33,7 @@ export default class RepositorySQLiteSetup {
     return SequelizeMetaTable !== undefined;
   }
 
+  // created in 01_initial.ts
   async existsNotesIndexTable(): Promise<boolean> {
     const [tablesInfo] = await this.sequelize!.query(`PRAGMA table_list`);
     const notesTable = tablesInfo.find((table: any) => {
@@ -41,14 +42,16 @@ export default class RepositorySQLiteSetup {
     return notesTable !== undefined;
   }
 
-  async up() {
+  async up(): Promise<boolean> {
     log.debug('RepositorySQLiteSetup.up() start');
+    let anyMigrationDone: boolean = false;
     const existsSchemaMetaTable = await this.existsSchemaMetaTable();
     log.debug(
       'RepositorySQLiteSetup.up() existsSchemaMetaTable=',
       existsSchemaMetaTable
     );
     if (!existsSchemaMetaTable) {
+      anyMigrationDone = true;
       const existsNotesIndexTable = await this.existsNotesIndexTable();
       log.debug(
         'RepositorySQLiteSetup.up() existsNotesIndexTable=',
@@ -57,21 +60,13 @@ export default class RepositorySQLiteSetup {
       if (existsNotesIndexTable) {
         this.sequelizeStorage?.logMigration({ name: '00_initial.ts' });
         this.sequelizeStorage?.logMigration({ name: '01_initial.ts' });
-      } else {
-        // was: this.sequelizeStorage?.logMigration({ name: '00_initial.ts' }); but why?
-        const migrations = await this.umzug!.up();
-        log.debug(
-          'RepositorySQLiteSetup.setup() new repository -> up migrations',
-          migrations
-        );
       }
-    } else {
-      const migrations = await this.umzug!.up();
-      log.debug(
-        'RepositorySQLiteSetup.setup() clean up migrations:',
-        migrations
-      );
     }
+
+    const migrations = await this.umzug!.up();
+    log.debug('RepositorySQLiteSetup.setup() clean up migrations:', migrations);
     log.debug('RepositorySQLiteSetup.up() done');
+
+    return anyMigrationDone || migrations.length > 0;
   }
 }

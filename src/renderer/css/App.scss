@@ -156,8 +156,7 @@ body {
 
 
 .nn-search-breadCrumb,
-.nn-breadCrumb-collapsed,
-.nn-list-breadCrumb {
+.nn-breadCrumb-collapsed {
 	color: $gray-6;
 }
 
@@ -165,12 +164,6 @@ body {
 	font-size: 12px;
 }
 
-.nn-list-breadCrumb {
-	font-weight: 400;
-	font-size: 12px;
-	overflow: hidden;
-	white-space: nowrap;
-}
 
 .nn-note-metadata {
 	color: #000;

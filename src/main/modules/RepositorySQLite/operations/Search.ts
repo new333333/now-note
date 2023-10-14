@@ -22,6 +22,13 @@ export default async function search(
       .join(' or ');
     whereNotes = `${whereNotes} ${parentNotesKeyJoined} and`;
   }
+  if (options.excludeParentNotesKey && options.excludeParentNotesKey.length) {
+    const excludeParentNotesKeyJoined = options.excludeParentNotesKey
+      .map((key: string) => ` parents not like '%,${key},%' `)
+      .join(' or ');
+    whereNotes = `${whereNotes} ${excludeParentNotesKeyJoined} and`;
+  }
+
   if (options.types && options.types.length > 0) {
     whereNotes = `${whereNotes} type in (${options.types.join(', ')}) and`;
   }

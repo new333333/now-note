@@ -260,9 +260,16 @@ export default class IpcHandler {
     );
 
     this.ipcMain.handle(
-      'reindexAll',
+      'reindex',
       async (_event, key: string | undefined): Promise<void> => {
-        return this.nowNote.reindexAll(key);
+        return this.nowNote.reindex(key);
+      }
+    );
+
+    this.ipcMain.handle(
+      'getReindexingProgress',
+      async (_event): Promise<number | undefined> => {
+        return this.nowNote.getReindexingProgress();
       }
     );
 

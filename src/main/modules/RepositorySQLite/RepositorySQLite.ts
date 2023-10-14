@@ -18,14 +18,14 @@ import AssetFilesService from '../AssetFilesService';
 import moveNote from './operations/MoveNote';
 import authenticate from './operations/Authenticate';
 import close from './operations/Close';
-import reindexAll from './operations/ReindexAll';
+import reindex from './operations/Reindex';
+import getReindexingProgress from './operations/GetReindexingProgress';
 import addNote from './operations/AddNote';
 import prepareDescriptionToSave from './operations/PrepareDescriptionToSave';
 import addNoteIndex from './operations/AddNoteIndex';
 import deleteNoteIndex from './operations/DeleteNoteIndex';
 import modifyNote from './operations/ModifyNote';
 import updateNoteTitlePath from './operations/UpdateNoteTitlePath';
-import isIndexed from './operations/IsIndexed';
 import updateNoteKeyPath from './operations/UpdateNoteKeyPath';
 import moveNoteToTrash from './operations/MoveNoteToTrash';
 import updateTrashFlag from './operations/UpdateTrashFlag';
@@ -68,19 +68,19 @@ export default class RepositorySQLite implements RepositoryIntern {
   }
 
   async authenticate(): Promise<void> {
-    return authenticate(this);
+    authenticate(this);
   }
 
   async close(): Promise<void> {
     return close(this);
   }
 
-  async isIndexed(): Promise<boolean> {
-    return isIndexed(this);
+  async reindex(key: string | undefined): Promise<void> {
+    return reindex(this, key);
   }
 
-  async reindexAll(key: string | undefined): Promise<void> {
-    return reindexAll(this, key);
+  async getReindexingProgress(): Promise<number> {
+    return getReindexingProgress(this);
   }
 
   async addNote(

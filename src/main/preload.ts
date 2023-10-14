@@ -113,8 +113,11 @@ const electronHandler: ElectronIPCRenderer = {
     deletePermanently: (key: string): Promise<boolean> =>
       ipcRenderer.invoke('deletePermanently', key),
 
-    reindexAll: (key: string | undefined): Promise<void> =>
-      ipcRenderer.invoke('reindexAll'),
+    reindex: (key: string | undefined): Promise<void> =>
+      ipcRenderer.invoke('reindex'),
+
+    getReindexingProgress: (): Promise<number> =>
+      ipcRenderer.invoke('getReindexingProgress'),
 
     getPriorityStatistics: () => ipcRenderer.invoke('getPriorityStatistics'),
 

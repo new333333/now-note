@@ -1,6 +1,6 @@
 import log from 'electron-log';
-import { useEffect, useRef, useCallback, useMemo } from 'react';
-import { ConfigProvider } from 'antd';
+import { useEffect, useRef, useCallback, useMemo, useState } from 'react';
+import { ConfigProvider, Modal, Popconfirm, Progress } from 'antd';
 import '../css/App.scss';
 import useNoteStore from 'renderer/GlobalStore';
 import { ReflexContainer, ReflexSplitter, ReflexElement } from 'react-reflex';
@@ -16,6 +16,7 @@ import TreeComponent from './TreeComponent';
 import AddNoteButtonComponent from './AddNoteButtonComponent';
 import TrashButton from './TrashButton';
 import DetailsNoteComponent from './DetailsNoteComponent';
+import MoveToModalComponent from './MoveToModalComponent';
 
 const appLog = log.scope('App');
 
@@ -33,9 +34,16 @@ interface DetailsNoteComponentAPI {
   setFocus(): Promise<void>;
 }
 
+interface MoveToModalComponentAPI {
+  open(): Promise<void>;
+}
+
 export default function App() {
+  const [reindexingProgress, setReindexingProgress] = useState(100);
+
   const treeComponentRef = useRef<TreeComponentAPI>(null);
   const detailsNoteComponentRef = useRef<DetailsNoteComponentAPI>(null);
+  const moveToModalComponentRef = useRef<MoveToModalComponentAPI>(null);
 
   const [currentRepository, setCurrentRepository, trash] = useNoteStore(
     (state) => [
@@ -146,6 +154,14 @@ export default function App() {
         }
         await treeComponentRef.current.focusNode(key);
       },
+      openMoveToDialog: async (key: string) => {
+        console.log(`focusNodeInTree key=`, key);
+        if (moveToModalComponentRef.current === null) {
+          return;
+        }
+        const note = await nowNoteAPI.getNoteWithDescription(key, true);
+        moveToModalComponentRef.current.open();
+      },
     };
   }, [
     detailsNoteUpdateBacklinks,
@@ -153,8 +169,43 @@ export default function App() {
     detailsNoteUpdateNoteProperties,
   ]);
 
+  const updateReindexingProgress = useCallback(async () => {
+    const reindexingProg: number = await nowNoteAPI.getReindexingProgress();
+    console.log("reindexingProg=", reindexingProg);
+    setReindexingProgress(reindexingProg);
+    if (reindexingProg < 100) {
+      setTimeout(() => {
+        console.log('This will run after 1 second!');
+        updateReindexingProgress();
+      }, 1000);
+    }
+  }, []);
+
+  // **********************************************************************************
+
+  const reindexingTimerRef = useRef<string | number | Timeout | undefined>(
+    undefined
+  );
+
+  const reindexRepository = useCallback(async () => {
+    setReindexingProgress(0);
+
+    // index asynchron
+    nowNoteAPI.reindex(undefined);
+
+    reindexingTimerRef.current = setTimeout(() => {
+      console.log('This will run after 1 second!');
+      updateReindexingProgress();
+    }, 1000);
+  }, [updateReindexingProgress]);
+
+  useEffect(() => {
+    return () => clearTimeout(reindexingTimerRef.current);
+  }, []);
+
   const fetchCurrentRepository = useCallback(async () => {
     setCurrentRepository(await nowNoteAPI.getCurrentRepository());
+
     const settings: SettingsDTO = await nowNoteAPI.getSettings();
     if (
       settings !== null &&
@@ -169,7 +220,15 @@ export default function App() {
         uiApi.openDetailNote(note);
       }
     }
-  }, [setCurrentRepository, uiApi]);
+
+    const reindexingProg: number = await nowNoteAPI.getReindexingProgress();
+    console.log("reindexingProg=", reindexingProg);
+    setReindexingProgress(reindexingProg);
+
+    if (reindexingProg < 100) {
+      reindexRepository();
+    }
+  }, [reindexRepository, setCurrentRepository, uiApi]);
 
   useEffect(() => {
     fetchCurrentRepository();
@@ -177,33 +236,78 @@ export default function App() {
 
   appLog.debug(`currentRepository=${currentRepository} trash=${trash}`);
 
+  const handleOnSelectSearch = async (key: string) => {
+    const note = await nowNoteAPI.getNoteWithDescription(key);
+    if (note === undefined) {
+      return;
+    }
+    uiApi.openDetailNote(note);
+  };
+
+  const handleOnselectMoveTo = async (key: string) => {
+    const note = await nowNoteAPI.getNoteWithDescription(key);
+    if (note === undefined) {
+      return;
+    }
+    uiApi.openDetailNote(note);
+  };
+
   const selectRepository = <SelectRepository />;
 
-  const reflexContainer = (
-    <ReflexContainer orientation="horizontal">
-      <ReflexElement minSize={35} maxSize={35}>
-        <SearchNotes />
-      </ReflexElement>
-      <ReflexElement>
-        <ReflexContainer orientation="vertical">
-          <ReflexElement className="left-bar" minSize={200} flex={0.25}>
-            <div className="n3-bar-vertical">
-              <AddNoteButtonComponent />
-              <TreeComponent ref={treeComponentRef} />
-              <TrashButton />
-            </div>
-          </ReflexElement>
-          <ReflexSplitter />
-          <ReflexElement className="right-bar" minSize={200} flex={0.75}>
-            <DetailsNoteComponent ref={detailsNoteComponentRef} />
-          </ReflexElement>
-        </ReflexContainer>
-      </ReflexElement>
-      <ReflexElement minSize={37} maxSize={37} style={{ overflow: 'hidden' }}>
-        <Footer />
-      </ReflexElement>
-    </ReflexContainer>
-  );
+  let reflexContainer = null;
+
+  if (currentRepository !== undefined && reindexingProgress === 100) {
+    reflexContainer = (
+      <ReflexContainer orientation="horizontal">
+        <ReflexElement minSize={35} maxSize={35} style={{ overflow: 'hidden' }}>
+          <div
+            style={{
+              padding: 8,
+              backgroundColor: '#eeeeee',
+              borderBottom: '1px solid #dddddd',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <SearchNotes
+              trash={trash}
+              onSelect={handleOnSelectSearch}
+              excludeParentNotesKeyProp={[]}
+            />
+          </div>
+        </ReflexElement>
+        <ReflexElement>
+          <ReflexContainer orientation="vertical">
+            <ReflexElement className="left-bar" minSize={200} flex={0.25}>
+              <div className="n3-bar-vertical">
+                <AddNoteButtonComponent />
+                <TreeComponent ref={treeComponentRef} />
+                <TrashButton />
+              </div>
+            </ReflexElement>
+            <ReflexSplitter />
+            <ReflexElement className="right-bar" minSize={200} flex={0.75}>
+              <DetailsNoteComponent ref={detailsNoteComponentRef} />
+            </ReflexElement>
+          </ReflexContainer>
+        </ReflexElement>
+        <ReflexElement minSize={37} maxSize={37} style={{ overflow: 'hidden' }}>
+          <Footer reindexRepository={reindexRepository} />
+        </ReflexElement>
+      </ReflexContainer>
+    );
+  }
+
+  const reindexIngProgressComponent =
+    reindexingProgress !== 100 ? (
+      <Progress
+        type="circle"
+        percent={reindexingProgress}
+        size={400}
+        format={(percent) => `Reindexing repository ${percent}%`}
+      />
+    ) : null;
 
   return (
     <ConfigProvider
@@ -214,8 +318,14 @@ export default function App() {
       }}
     >
       <UIApiDispatch.Provider value={uiApi}>
+        {reindexingProgress !== 100 && reindexIngProgressComponent}
         {currentRepository === undefined && selectRepository}
-        {currentRepository !== undefined && reflexContainer}
+        {reflexContainer}
+        <MoveToModalComponent
+          ref={moveToModalComponentRef}
+          trash={trash}
+          handleOn={handleOnselectMoveTo}
+        />
       </UIApiDispatch.Provider>
     </ConfigProvider>
   );

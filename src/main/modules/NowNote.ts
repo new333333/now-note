@@ -78,7 +78,10 @@ export default class NowNote {
         );
       }
 
-      log.debug('NowNote.connectRepository() repositoryPath:', repositoryPath);
+      nowNoteLog.debug(
+        'NowNote.connectRepository() repositoryPath:',
+        repositoryPath
+      );
       const sequelize: Sequelize = new Sequelize({
         logging: true,
         dialect: 'sqlite',
@@ -88,7 +91,7 @@ export default class NowNote {
 
       const repositorySQLiteSetup: RepositorySQLiteSetup =
         new RepositorySQLiteSetup(sequelize);
-      repositorySQLiteSetup.up();
+      const anyMigrationDone: boolean = await repositorySQLiteSetup.up();
 
       this.currentRepository = new RepositorySQLite(
         new AssetFilesService(path.dirname(repositoryPath)),
@@ -97,8 +100,23 @@ export default class NowNote {
       );
       try {
         await this.currentRepository?.authenticate();
+/*
+        let reindexed: boolean = false;
+        const isIndexed: boolean = await repository.isIndexed();
+        log.debug(`RepositorySQLite.authenticate() isIndexed=${isIndexed}`);
+
+        if (!isIndexed) {
+          await repository.reindexAll(undefined);
+          reindexed = true;
+        }
+        return reindexed;
+
+        if (!reindexed && anyMigrationDone) {
+          await this.currentRepository?.reindexAll(undefined);
+        }
+*/
       } catch (error) {
-        log.error('connectRepository error', error);
+        nowNoteLog.error('connectRepository error', error);
       }
       return this.currentUserSettingsRepository;
     }
@@ -285,10 +303,17 @@ export default class NowNote {
     return Promise.resolve(undefined);
   }
 
-  async reindexAll(key: string | undefined): Promise<void> {
+  async reindex(key: string | undefined): Promise<void> {
     if (this.currentRepository !== undefined) {
-      await this.currentRepository.reindexAll(key);
+      await this.currentRepository.reindex(key);
     }
+  }
+
+  async getReindexingProgress(): Promise<number | undefined> {
+    if (this.currentRepository !== undefined) {
+      return this.currentRepository.getReindexingProgress();
+    }
+    return undefined;
   }
 
   async restore(key: string): Promise<boolean | undefined> {

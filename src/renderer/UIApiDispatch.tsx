@@ -11,6 +11,7 @@ export type UIApi = {
   updateDetailNote(note: NoteDTO): Promise<void>;
   updateNodeInTree(note: NoteDTO): Promise<void>;
   focusNodeInTree(key: string): Promise<void>;
+  openMoveToDialog(key: string): Promise<void>;
 };
 
 const UIApiDispatch = createContext<UIApi>(null);

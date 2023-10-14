@@ -248,11 +248,4 @@ export default async function authenticate(
       timestamps: false,
     }
   );
-
-  const isIndexed: boolean = await repository.isIndexed();
-  log.debug(`RepositorySQLite.authenticate() isIndexed=${isIndexed}`);
-
-  if (!isIndexed) {
-    await repository.reindexAll(undefined);
-  }
 }

@@ -169,7 +169,6 @@ export interface RepositoryIntern extends Repository {
   ): Promise<void>;
   addNoteIndex(note: NoteModel): Promise<void>;
   deleteNoteIndex(key: string): Promise<void>;
-  isIndexed(): Promise<boolean>;
   updateNoteKeyPath(
     oldKeyPathParam: string,
     newKeyPathParam: string

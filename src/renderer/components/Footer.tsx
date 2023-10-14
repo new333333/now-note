@@ -6,8 +6,11 @@ import { nowNoteAPI } from 'renderer/NowNoteAPI';
 
 const { Text } = Typography;
 
+interface Props {
+  reindexRepository: Function;
+}
 
-export default function Footer() {
+export default function Footer({ reindexRepository }: Props) {
   const [currentRepository, setCurrentRepository] = useNoteStore((state) => [
     state.currentRepository,
     state.setCurrentRepository,
@@ -18,12 +21,10 @@ export default function Footer() {
     setCurrentRepository(undefined);
   }, [setCurrentRepository]);
 
-  const reindexAllHandler = useCallback(async () => {
-    log.debug('AddNoteButton.reindexAllHandler call');
-    setLoading(true);
-    await nowNoteAPI.reindexAll(undefined);
-    setLoading(false);
-  }, []);
+  const reindexHandler = useCallback(async () => {
+    log.debug('AddNoteButton.reindexHandler call');
+    reindexRepository();
+  }, [reindexRepository]);
 
   return (
     <div
@@ -45,7 +46,7 @@ export default function Footer() {
           {!currentRepository && <>No repository initialized</>}
         </Text>
       </Tooltip>&nbsp;
-      <Button size="small" onClick={reindexAllHandler} loading={loading}>
+      <Button size="small" onClick={reindexHandler} loading={loading}>
         Reindex Repository
       </Button>
     </div>

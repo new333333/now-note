@@ -1,6 +1,7 @@
+- move note in menu
+- styling tree nodes
 - query note!
 - reomve from nowNoteAPI references to nowNoteAPI and uiAPI?
-- move note in menu
 - context search
 - search in screenshots
--
+- https://www.tiktok.com/@momo_obrien/video/7288319460203662597

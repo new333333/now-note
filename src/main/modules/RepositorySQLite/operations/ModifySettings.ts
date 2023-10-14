@@ -11,15 +11,12 @@ export default async function modifySettings(
   modifySettingsLog.debug(`settingsDTO=${settingsDTO}`);
   const [settings, created] = await SettingsModel.findOrCreate({
     where: {},
-    defaults: {
-      detailsNoteKey: settingsDTO.detailsNoteKey,
-    },
+    defaults: settingsDTO,
   });
   if (!created) {
-    settings.detailsNoteKey =
-      settingsDTO.detailsNoteKey === undefined
-        ? null
-        : settingsDTO.detailsNoteKey;
+    if (settingsDTO.detailsNoteKey !== undefined) {
+      settings.detailsNoteKey = settingsDTO.detailsNoteKey;
+    }
   }
 
   settings.save();

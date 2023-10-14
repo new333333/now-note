@@ -33,7 +33,7 @@ import UIApiDispatch from 'renderer/UIApiDispatch';
 const treeLog = log.scope('Tree');
 
 const TreeComponent = React.memo(
-  forwardRef(function TreeComponent(props: Props, ref) {
+  forwardRef(function TreeComponent(props, ref) {
     const domRef = useRef(null);
     const fancyTreeRef = useRef(null);
 
@@ -581,6 +581,7 @@ const TreeComponent = React.memo(
             }
             if (!node.data.trash) {
               menu['add'] = { name: 'Add' };
+              menu['moveTo'] = { name: 'Move to...' };
             }
             menu['open'] = { name: 'Show Note' };
             menu['delete'] = {
@@ -619,6 +620,8 @@ const TreeComponent = React.memo(
               self.props
                 .openNoteInTreeAndDetails(node.data.linkToKey, false)
                 .then(function () {});
+            } else if (action === 'moveTo') {
+              await uiApi.openMoveToDialog(node.key);
             }
           },
         },
@@ -727,7 +730,7 @@ const TreeComponent = React.memo(
 
               // drop on itself
               if (key !== to) {
-                if (data.dropEffectSuggested == 'link') {
+                if (data.dropEffectSuggested === 'link') {
                   // create link when dragged with 'alt'
                   self.props.dataService
                     .addNote(

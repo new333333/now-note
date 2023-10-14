@@ -79,6 +79,7 @@ export interface SearchResult {
 
 export interface SearchResultOptions {
   parentNotesKey: string[];
+  excludeParentNotesKey: string[];
   types: string[];
   dones: number[];
   sortBy: string;
@@ -136,7 +137,8 @@ export interface Repository {
   getAssetFileName(assetKey: string): Promise<string | undefined>;
   getAssetFileReadStream(assetKey: string): Promise<fs.ReadStream | undefined>;
   getAssetFileLocalPath(assetKey: string): Promise<string | undefined>;
-  reindexAll(key: string | undefined): Promise<void>;
+  reindex(key: string | undefined): Promise<void>;
+  getReindexingProgress(): Promise<number | undefined>;
   addImageAsBase64(
     fileType: string | null,
     fileName: string,
@@ -196,7 +198,8 @@ export interface NowNoteAPI {
   connectRepository(path: string): Promise<UserSettingsRepository | undefined>;
   closeRepository(): Promise<void>;
 
-  reindexAll(key: string | undefined): Promise<void>;
+  reindex(key: string | undefined): Promise<void>;
+  getReindexingProgress(): Promise<number | undefined>;
 
   addImageAsBase64(
     fileType: string | null,
