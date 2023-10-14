@@ -27,7 +27,7 @@ import { blue } from '@ant-design/colors';
 import useNoteStore from 'renderer/GlobalStore';
 import useDetailsNoteStore from 'renderer/DetailsNoteStore';
 import { nowNoteAPI } from 'renderer/NowNoteAPI';
-import { NoteDTO } from 'types';
+import { HitMode, NoteDTO } from 'types';
 import UIApiDispatch from 'renderer/UIApiDispatch';
 
 const treeLog = log.scope('Tree');
@@ -256,6 +256,28 @@ const TreeComponent = React.memo(
       return true;
     }, []);
 
+    const move = useCallback(
+      async (key: string, to: string, hitMode: HitMode) => {
+        if (fancyTreeRef.current === null) {
+          return false;
+        }
+        const node = fancyTreeRef.current.getNodeByKey(key);
+        const moveToNode = fancyTreeRef.current.getNodeByKey(to);
+
+        if (node !== null && moveToNode !== null) {
+          node.moveTo(moveToNode, hitMode);
+          return true;
+        }
+        if (node !== null) {
+          await reloadNode(node.parent);
+        }
+        if (moveToNode !== null) {
+          await reloadNode(moveToNode);
+        }
+      },
+      [reloadNode]
+    );
+
     useImperativeHandle(
       ref,
       () => {
@@ -281,6 +303,13 @@ const TreeComponent = React.memo(
             }
             const node = fancyTreeRef.current.getNodeByKey(key);
             return reloadNode(node);
+          },
+          move: async (
+            key: string,
+            to: string,
+            hitMode: HitMode
+          ): Promise<void> => {
+            return move(key, to, hitMode);
           },
         };
       },
@@ -766,13 +795,7 @@ const TreeComponent = React.memo(
                 } else {
                   log.debug(
                     `Tree.dragDrop(), key=${key}, from=${from}, to=${to}, data.hitMode=${data.hitMode}, node.key=${node.key}`);
-                  await nowNoteAPI.moveNote(
-                    key,
-                    from,
-                    to,
-                    data.hitMode,
-                    node.key
-                  );
+                  await nowNoteAPI.moveNote(key, to, data.hitMode, node.key);
                   data.otherNode.moveTo(node, data.hitMode);
                 }
               }

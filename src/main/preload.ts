@@ -97,12 +97,11 @@ const electronHandler: ElectronIPCRenderer = {
 
     moveNote: (
       key: string,
-      from: string,
       to: string,
       hitMode: HitMode,
-      relativTo: string
+      relativTo: string | undefined
     ): Promise<void> =>
-      ipcRenderer.invoke('moveNote', key, from, to, hitMode, relativTo),
+      ipcRenderer.invoke('moveNote', key, to, hitMode, relativTo),
 
     moveNoteToTrash: (key: string): Promise<boolean> =>
       ipcRenderer.invoke('moveNoteToTrash', key),

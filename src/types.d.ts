@@ -80,6 +80,7 @@ export interface SearchResult {
 export interface SearchResultOptions {
   parentNotesKey: string[];
   excludeParentNotesKey: string[];
+  excludeNotesKey: string[];
   types: string[];
   dones: number[];
   sortBy: string;
@@ -119,10 +120,9 @@ export interface Repository {
   ): Promise<NoteDTO | undefined>;
   moveNote(
     key: string,
-    from: string,
     to: string,
     hitMode: HitMode,
-    relativTo: string
+    relativTo: string | undefined
   ): Promise<void>;
   moveNoteToTrash(key: string): Promise<boolean>;
   restore(key: string): Promise<boolean>;
@@ -176,10 +176,9 @@ export interface NowNoteAPI {
   ): Promise<NoteDTO | undefined>;
   moveNote(
     key: string,
-    from: string,
     to: string,
     hitMode: HitMode,
-    relativTo: string
+    relativTo: string | undefined
   ): Promise<void>;
   moveNoteToTrash(key: string): Promise<boolean | undefined>;
   restore(key: string): Promise<boolean | undefined>;

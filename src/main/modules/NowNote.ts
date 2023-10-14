@@ -280,15 +280,13 @@ export default class NowNote {
 
   async moveNote(
     key: string,
-    from: string,
     to: string,
     hitMode: HitMode,
-    relativeToKey: string
+    relativeToKey: string | undefined
   ): Promise<void> {
     if (this.currentRepository !== undefined) {
       await this.currentRepository.moveNote(
         key,
-        from,
         to,
         hitMode,
         relativeToKey

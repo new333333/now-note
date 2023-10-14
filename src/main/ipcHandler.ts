@@ -204,12 +204,11 @@ export default class IpcHandler {
       async (
         _event,
         key: string,
-        from: string,
         to: string,
         hitMode: HitMode,
-        relativTo: string
+        relativTo: string | undefined
       ): Promise<void> => {
-        return this.nowNote.moveNote(key, from, to, hitMode, relativTo);
+        return this.nowNote.moveNote(key, to, hitMode, relativTo);
       }
     );
 

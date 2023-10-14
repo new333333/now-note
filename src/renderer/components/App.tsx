@@ -6,7 +6,7 @@ import useNoteStore from 'renderer/GlobalStore';
 import { ReflexContainer, ReflexSplitter, ReflexElement } from 'react-reflex';
 import 'react-reflex/styles.css';
 import { nowNoteAPI } from 'renderer/NowNoteAPI';
-import { NoteDTO, SettingsDTO } from 'types';
+import { HitMode, NoteDTO, SettingsDTO } from 'types';
 import UIApiDispatch, { UIApi } from 'renderer/UIApiDispatch';
 import useDetailsNoteStore from 'renderer/DetailsNoteStore';
 import SelectRepository from './SelectRepository';
@@ -28,6 +28,7 @@ interface TreeComponentAPI {
   updateNode(note: NoteDTO): Promise<void>;
   focusNode(key: string): Promise<void>;
   reloadNode(key: string): Promise<boolean>;
+  move(key: string, to: string, hitMode: HitMode): Promise<boolean>;
 }
 
 interface DetailsNoteComponentAPI {
@@ -35,7 +36,7 @@ interface DetailsNoteComponentAPI {
 }
 
 interface MoveToModalComponentAPI {
-  open(): Promise<void>;
+  open(key: string): Promise<void>;
 }
 
 export default function App() {
@@ -159,8 +160,7 @@ export default function App() {
         if (moveToModalComponentRef.current === null) {
           return;
         }
-        const note = await nowNoteAPI.getNoteWithDescription(key, true);
-        moveToModalComponentRef.current.open();
+        moveToModalComponentRef.current.open(key);
       },
     };
   }, [
@@ -244,12 +244,12 @@ export default function App() {
     uiApi.openDetailNote(note);
   };
 
-  const handleOnselectMoveTo = async (key: string) => {
-    const note = await nowNoteAPI.getNoteWithDescription(key);
-    if (note === undefined) {
-      return;
+  const handleOnselectMoveTo = async (key: string, moveToKey: string) => {
+    appLog.debug(`handleOnselectMoveTo key=${key} moveToKey=${moveToKey}`);
+    nowNoteAPI.moveNote(key, moveToKey, 'over', undefined);
+    if (treeComponentRef.current !== null) {
+      treeComponentRef.current.move(key, moveToKey, 'over');
     }
-    uiApi.openDetailNote(note);
   };
 
   const selectRepository = <SelectRepository />;

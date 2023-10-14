@@ -12,10 +12,9 @@ import getChildrenCount from './GetChildrenCount';
 export default async function moveNote(
   repository: RepositoryIntern,
   key: string,
-  from: string,
   to: string | undefined,
   hitMode: HitMode,
-  relativTo: string
+  relativTo: string | undefined
 ): Promise<void> {
   log.debug(`RepositorySQLite.moveNote()...`);
 

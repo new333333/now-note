@@ -8,12 +8,14 @@ interface Props {
   trash: boolean;
   onSelect: Function;
   excludeParentNotesKeyProp: string[];
+  excludeNotesKeyProp: string[];
 }
 
 export default function SearchNotes({
   trash,
   onSelect,
   excludeParentNotesKeyProp,
+  excludeNotesKeyProp,
 }: Props) {
   const [loading, setLoading] = useState<boolean>(false);
   const [valueAutoComplete, setValueAutoComplete] = useState<string>('');
@@ -57,12 +59,12 @@ export default function SearchNotes({
       const searchResultOptions: SearchResultOptions = {
         parentNotesKey: [],
         excludeParentNotesKey: excludeParentNotesKeyProp,
+        excludeNotesKey: excludeNotesKeyProp,
         types: [],
         dones: [],
         sortBy: '',
         offset: 0,
       };
-
       const searchResult = await nowNoteAPI.search(
         searchText,
         20,

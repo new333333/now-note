@@ -1,6 +1,7 @@
 import log from 'electron-log';
 import React, { forwardRef, useState, useImperativeHandle } from 'react';
 import { Modal } from 'antd';
+import { nowNoteAPI } from 'renderer/NowNoteAPI';
 import SearchNotes from './SearchNotes';
 
 interface Props {
@@ -11,14 +12,21 @@ interface Props {
 const MoveToModalComponent = React.memo(
   forwardRef(function MoveToModalComponent({ trash, handleOn }: Props, ref) {
     const [isModalMoveToOpen, setIsModalMoveToOpen] = useState(false);
+    const [key, setKey] = useState<string | undefined>(undefined);
+    const [parent, setParent] = useState<string | undefined>(undefined);
 
-    const showModal = () => {
+    const showModal = async (noteKey: string) => {
+      const note = await nowNoteAPI.getNoteWithDescription(noteKey, true);
+      if (note !== undefined && note.parent !== null) {
+        setParent(note.parent);
+      }
+      setKey(noteKey);
       setIsModalMoveToOpen(true);
     };
 
-    const handleOk = () => {
+    const handleOk = (moveToKey: string) => {
       setIsModalMoveToOpen(false);
-      handleOn();
+      handleOn(key, moveToKey);
     };
 
     const handleCancel = () => {
@@ -29,8 +37,8 @@ const MoveToModalComponent = React.memo(
       ref,
       () => {
         return {
-          open: () => {
-            showModal();
+          open: (noteKey: string) => {
+            showModal(noteKey);
           },
         };
       },
@@ -44,10 +52,12 @@ const MoveToModalComponent = React.memo(
         onCancel={handleCancel}
         footer={null}
       >
+        key:{key}
         <SearchNotes
           trash={trash}
           onSelect={handleOk}
-          excludeParentNotesKeyProp={[]}
+          excludeParentNotesKeyProp={key !== undefined ? [key] : []}
+          excludeNotesKeyProp={parent !== undefined ? [parent] : []}
         />
       </Modal>
     );

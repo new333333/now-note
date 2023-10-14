@@ -88,12 +88,11 @@ export class NowNoteAPIImpl implements NowNoteAPI {
 
   async moveNote(
     key: string,
-    from: string,
     to: string,
     hitMode: HitMode,
-    relativTo: string
+    relativTo: string | undefined
   ): Promise<void> {
-    return this.îpcRenderer.moveNote(key, from, to, hitMode, relativTo);
+    return this.îpcRenderer.moveNote(key, to, hitMode, relativTo);
   }
 
   async moveNoteToTrash(key: string): Promise<boolean | undefined> {

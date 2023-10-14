@@ -18,13 +18,21 @@ export default async function search(
   let whereNotes = ` `;
   if (options.parentNotesKey && options.parentNotesKey.length) {
     const parentNotesKeyJoined = options.parentNotesKey
-      .map((key: string) => ` parents like '%,${key},%' `)
+      .map((key: string) => ` keyPath like '%/${key}/%' `)
       .join(' or ');
     whereNotes = `${whereNotes} ${parentNotesKeyJoined} and`;
   }
+
+  if (options.excludeNotesKey && options.excludeNotesKey.length) {
+    const excludeNotesKeyJoined = options.excludeNotesKey
+      .map((key: string) => `'${key}'`)
+      .join(',');
+    whereNotes = `${whereNotes} key not in (${excludeNotesKeyJoined}) and`;
+  }
+
   if (options.excludeParentNotesKey && options.excludeParentNotesKey.length) {
     const excludeParentNotesKeyJoined = options.excludeParentNotesKey
-      .map((key: string) => ` parents not like '%,${key},%' `)
+      .map((key: string) => ` keyPath not like '%/${key}/%' `)
       .join(' or ');
     whereNotes = `${whereNotes} ${excludeParentNotesKeyJoined} and`;
   }

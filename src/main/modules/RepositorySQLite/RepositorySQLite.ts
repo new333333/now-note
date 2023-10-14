@@ -126,12 +126,11 @@ export default class RepositorySQLite implements RepositoryIntern {
 
   async moveNote(
     key: string,
-    from: string,
     to: string | undefined,
     hitMode: HitMode,
-    relativTo: string
+    relativTo: string | undefined
   ): Promise<void> {
-    return moveNote(this, key, from, to, hitMode, relativTo);
+    return moveNote(this, key, to, hitMode, relativTo);
   }
 
   async moveNoteToTrash(key: string | undefined): Promise<boolean> {
