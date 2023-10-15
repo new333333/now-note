@@ -7,7 +7,7 @@ export type UIApi = {
   deleteNote(key: string): Promise<boolean>;
   restoreNote(key: string): Promise<boolean>;
 
-  openDetailNote(note: NoteDTO): Promise<void>;
+  openDetailNote(noteOrKey: NoteDTO | string): Promise<void>;
   updateDetailNote(note: NoteDTO): Promise<void>;
   updateNodeInTree(note: NoteDTO): Promise<void>;
   focusNodeInTree(key: string): Promise<void>;

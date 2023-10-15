@@ -85,7 +85,7 @@ type DetailsNoteAction = {
 
   updateTrash: (trash: DetailsNoteState['trash']) => void;
 
-  updateNote: (note: NoteDTO) => void;
+  updateNote: (note: NoteDTO | undefined) => void;
 
   updateNoteProperties: (note: NoteDTO) => void;
 
@@ -223,25 +223,25 @@ const useDetailsNoteStore = create<DetailsNoteState & DetailsNoteAction>(
     updateNote: (note) => {
       detailsNoteStateLog.debug(`updateNote`);
       set({
-        noteKey: note.key,
-        title: note.title,
-        description: note.description,
-        parent: note.parent,
-        position: note.position,
-        type: note.type,
-        createdBy: note.createdBy,
-        done: note.done,
-        priority: note.priority,
-        expanded: note.expanded,
-        trash: note.trash,
-        createdAt: note.createdAt,
-        updatedAt: note.updatedAt,
-        restoreParentKey: note.restoreParentKey,
-        linkToKey: note.linkToKey,
-        keyPath: note.keyPath,
-        titlePath: note.titlePath,
-        childrenCount: note.childrenCount,
-        tags: note.tags,
+        noteKey: note !== undefined ? note.key : null,
+        title: note !== undefined ? note.title : null,
+        description: note !== undefined ? note.description : null,
+        parent: note !== undefined ? note.parent : null,
+        position: note !== undefined ? note.position : null,
+        type: note !== undefined ? note.type : null,
+        createdBy: note !== undefined ? note.createdBy : null,
+        done: note !== undefined ? note.done : null,
+        priority: note !== undefined ? note.priority : null,
+        expanded: note !== undefined ? note.expanded : null,
+        trash: note !== undefined ? note.trash : null,
+        createdAt: note !== undefined ? note.createdAt : null,
+        updatedAt: note !== undefined ? note.updatedAt : null,
+        restoreParentKey: note !== undefined ? note.restoreParentKey : null,
+        linkToKey: note !== undefined ? note.linkToKey : null,
+        keyPath: note !== undefined ? note.keyPath : null,
+        titlePath: note !== undefined ? note.titlePath : null,
+        childrenCount: note !== undefined ? note.childrenCount : null,
+        tags: note !== undefined ? note.tags : null,
       });
     },
 

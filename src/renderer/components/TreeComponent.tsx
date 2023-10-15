@@ -140,13 +140,13 @@ const TreeComponent = React.memo(
       return node.key;
     }, []);
 
-    const addNote = useCallback(
+    const addNode = useCallback(
       async (newNote: NoteDTO): Promise<NoteDTO | undefined> => {
-        treeLog.debug('addNote() on update newNote=', newNote);
+        treeLog.debug('addNode() on update newNote=', newNote);
         if (newNote === undefined || newNote === null) {
           return undefined;
         }
-        treeLog.debug('addNote() on update fancyTreeRef=' + fancyTreeRef);
+        treeLog.debug('addNode() on update fancyTreeRef=' + fancyTreeRef);
         if (fancyTreeRef === null || fancyTreeRef.current === null) {
           return undefined;
         }
@@ -162,14 +162,14 @@ const TreeComponent = React.memo(
           'firstChild'
         );
 
-        console.log('addNote newNote=', newNote);
+        console.log('addNode newNote=', newNote);
 
         newNode.key = newNote.key;
 
         newNode.setActive();
         newNode.setFocus();
 
-        console.log('addNote after setRefKey newNode=', newNode);
+        console.log('addNode after setRefKey newNode=', newNode);
 
         return newNote;
       },
@@ -181,6 +181,9 @@ const TreeComponent = React.memo(
         return;
       }
       const node = fancyTreeRef.current.getNodeByKey(key);
+      if (node === null) {
+        return;
+      }
       await node.remove();
     }, []);
 
@@ -240,16 +243,15 @@ const TreeComponent = React.memo(
       node.setFocus();
     }, []);
 
-    const reloadNode = useCallback(async (node) => {
-      console.log(`reloadNode, node=`, node);
-      if (node === undefined || node === null) {
-        return false;
-      }
+    const reloadNode = useCallback(async (nodeParam) => {
       if (fancyTreeRef.current === null) {
         return false;
       }
+      let node = nodeParam;
+      if (node === undefined || node === null) {
+        node = fancyTreeRef.current.getRootNode();
+      }
       if (node.key.startsWith('root_')) {
-
         await node.resetLazy();
         await fancyTreeRef.current.reload();
       } else {
@@ -295,8 +297,8 @@ const TreeComponent = React.memo(
           getActiveNodeKey: (): string | undefined => {
             return getActiveNodeKey();
           },
-          addNote: async (newNote: NoteDTO): Promise<NoteDTO | undefined> => {
-            return addNote(newNote);
+          addNode: async (newNote: NoteDTO): Promise<NoteDTO | undefined> => {
+            return addNode(newNote);
           },
           removeNode: async (key: string): Promise<void> => {
             return removeNode(key);
@@ -323,7 +325,15 @@ const TreeComponent = React.memo(
           },
         };
       },
-      [addNote, focusNode, getActiveNodeKey, reloadNode, removeNode, updateNode]
+      [
+        addNode,
+        focusNode,
+        getActiveNodeKey,
+        move,
+        reloadNode,
+        removeNode,
+        updateNode,
+      ]
     );
 
     const handleChangeDone = useCallback(
@@ -631,25 +641,23 @@ const TreeComponent = React.memo(
             }
             return menu;
           },
-          actions: async (node, action, options) => {
-            console.log("FancyTree contextMenu node, action, options", node, action, options);
-            if (action === 'open' && uiApi !== null) {
-              const note: NoteDTO = await nowNoteAPI.getNoteWithDescription(node.key);
-              await uiApi.openDetailNote(note);
-            } else if (action === 'add' && uiApi !== null) {
-              const newNote = await uiApi.addNote(node.key);
-              await uiApi.openDetailNote(newNote);
+          actions: async (node, action: string, options) => {
+            const {
+              openDetailNote,
+              deleteNote,
+              addNote,
+              openMoveToDialog,
+              restoreNote,
+            } = uiApi;
+
+            if (action === 'open') {
+              await openDetailNote(node.key);
+            } else if (action === 'add') {
+              await addNote(node.key);
             } else if (action === 'delete') {
-              console.log("handleNoteMenu, delete note=", node);
-              if (node.data.trash) {
-                await nowNoteAPI.deletePermanently(node.key);
-              } else {
-                await nowNoteAPI.moveNoteToTrash(node.key);
-              }
-              reloadNode(node.parent);
+              await deleteNote(node.key);
             } else if (action === 'restore') {
-              await nowNoteAPI.restore(node.key);
-              reloadNode(node.parent);
+              restoreNote(node.key);
             } else if (action === 'gotoLinkedFrom') {
               // TODO: implement linked note
               console.log(
@@ -660,7 +668,7 @@ const TreeComponent = React.memo(
                 .openNoteInTreeAndDetails(node.data.linkToKey, false)
                 .then(function () {});
             } else if (action === 'moveTo') {
-              await uiApi.openMoveToDialog(node.key);
+              await openMoveToDialog(node.key);
             }
           },
         },

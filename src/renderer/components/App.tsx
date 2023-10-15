@@ -22,9 +22,8 @@ const appLog = log.scope('App');
 
 interface TreeComponentAPI {
   getActiveNodeKey(): string | undefined;
-  addNote(newNote: NoteDTO): Promise<NoteDTO | undefined>;
+  addNode(newNote: NoteDTO): Promise<NoteDTO | undefined>;
   removeNode(key: string): Promise<NoteDTO | undefined>;
-  restoreNote(key: string): Promise<NoteDTO | undefined>;
   updateNode(note: NoteDTO): Promise<void>;
   focusNode(key: string): Promise<void>;
   reloadNode(key: string): Promise<boolean>;
@@ -91,7 +90,7 @@ export default function App() {
           return undefined;
         }
 
-        await treeComponentRef.current.addNote(newNote);
+        await treeComponentRef.current.addNode(newNote);
         if (detailsNoteComponentRef.current === null) {
           return undefined;
         }
@@ -103,12 +102,18 @@ export default function App() {
         if (treeComponentRef.current === null) {
           return false;
         }
-        await nowNoteAPI.moveNoteToTrash(key);
-        await treeComponentRef.current.removeNode(key);
-        const note = await nowNoteAPI.getNoteWithDescription(key);
-        if (note !== undefined) {
-          await uiApi.openDetailNote(note);
+        let note = await nowNoteAPI.getNoteWithDescription(key);
+        if (note === undefined) {
+          return false;
         }
+        if (note.trash) {
+          await nowNoteAPI.deletePermanently(key);
+        } else {
+          await nowNoteAPI.moveNoteToTrash(key);
+        }
+        await treeComponentRef.current.removeNode(key);
+        note = await nowNoteAPI.getNoteWithDescription(key);
+        await uiApi.openDetailNote(note);
         return true;
       },
       restoreNote: async (key: string) => {
@@ -120,13 +125,25 @@ export default function App() {
         const note = await nowNoteAPI.getNoteWithDescription(key);
         if (note !== undefined) {
           await uiApi.openDetailNote(note);
+          if (note.key !== undefined && note.key !== null) {
+            await treeComponentRef.current.reloadNode(note.parent);
+          }
         }
         return true;
       },
-      openDetailNote: async (note: NoteDTO) => {
+      openDetailNote: async (noteOrKey: NoteDTO | string | undefined) => {
+        let note: NoteDTO | undefined;
+        if (typeof noteOrKey === 'string') {
+          note = await nowNoteAPI.getNoteWithDescription(noteOrKey, false);
+        } else {
+          note = noteOrKey;
+        }
         console.log(`openDetailNote note=`, note);
         detailsNoteUpdateNote(note);
-        if (note.key !== undefined && note.key !== null) {
+        if (note === undefined) {
+          detailsNoteUpdateBacklinks([]);
+        }
+        if (note !== undefined && note.key !== undefined && note.key !== null) {
           detailsNoteUpdateBacklinks(await nowNoteAPI.getBacklinks(note.key));
           await uiApi.focusNodeInTree(note.key);
           nowNoteAPI.modifySettings({
@@ -250,6 +267,7 @@ export default function App() {
     if (treeComponentRef.current !== null) {
       await treeComponentRef.current.move(key, moveToKey, 'over');
     }
+    await uiApi.openDetailNote(key);
   };
 
   const selectRepository = <SelectRepository />;

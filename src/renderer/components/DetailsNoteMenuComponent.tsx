@@ -49,6 +49,12 @@ export default function DetailsNoteMenuComponent() {
         label: 'Restore',
       });
     }
+    if (!trash) {
+      menuItems.push({
+        key: 'moveTo',
+        label: 'Move to...',
+      });
+    }
 
     /*
     menuItems.push({
@@ -77,22 +83,27 @@ export default function DetailsNoteMenuComponent() {
 
   const handleClickMenu = useCallback(
     (option): MenuProps['onClick'] => {
-      const { addNote, deleteNote, restoreNote, focusNodeInTree } = uiApi;
-      console.log('handleNoteMenu, noteKey=, option=', noteKey, option);
-      const { key } = option;
-      console.log('handleNoteMenu, key=', key);
+      const {
+        addNote,
+        deleteNote,
+        restoreNote,
+        focusNodeInTree,
+        openMoveToDialog,
+      } = uiApi;
       if (noteKey === null || noteKey === undefined) {
         return;
       }
-      if (key === 'add_note') {
+      if (option.key === 'add_note') {
         addNote(noteKey);
-      } else if (key === 'open_tree') {
+      } else if (option.key === 'open_tree') {
         focusNodeInTree(noteKey);
-      } else if (key === 'delete') {
+      } else if (option.key === 'delete') {
         deleteNote(noteKey);
-      } else if (key === 'restore') {
+      } else if (option.key === 'restore') {
         restoreNote(noteKey);
-      } else if (key === 'history') {
+      } else if (option.key === 'moveTo') {
+        openMoveToDialog(noteKey);
+      } else if (option.key === 'history') {
         // TODO
         nowNoteAPI.showHistory(noteKey);
       }
