@@ -6,7 +6,7 @@ import useNoteStore from 'renderer/GlobalStore';
 import { ReflexContainer, ReflexSplitter, ReflexElement } from 'react-reflex';
 import 'react-reflex/styles.css';
 import { nowNoteAPI } from 'renderer/NowNoteAPI';
-import { HitMode, NoteDTO, SettingsDTO } from 'types';
+import { HitMode, NoteDTO, SettingsDTO, UserSettingsRepository } from 'types';
 import UIApiDispatch, { UIApi } from 'renderer/UIApiDispatch';
 import useDetailsNoteStore from 'renderer/DetailsNoteStore';
 import useReindexingRepository from 'renderer/useReindexingRepository';
@@ -40,8 +40,12 @@ interface MoveToModalComponentAPI {
 }
 
 export default function App() {
-  const [reindexingProgress, reindexIfNeeded, reindexRepository] =
-    useReindexingRepository();
+  const [
+    reindexingProgress,
+    reindexIfNeeded,
+    reindexRepository,
+    reindexIngProgressComponent,
+  ] = useReindexingRepository();
 
   const treeComponentRef = useRef<TreeComponentAPI>(null);
   const detailsNoteComponentRef = useRef<DetailsNoteComponentAPI>(null);
@@ -67,6 +71,25 @@ export default function App() {
 
   const uiApi: UIApi = useMemo(() => {
     return {
+      setRepository: async (
+        repository: UserSettingsRepository
+      ): Promise<void> => {
+        setCurrentRepository(repository);
+        const settings: SettingsDTO = await nowNoteAPI.getSettings();
+        if (
+          settings !== null &&
+          settings !== undefined &&
+          settings.detailsNoteKey !== null &&
+          settings.detailsNoteKey !== undefined
+        ) {
+          const note: NoteDTO | undefined =
+            await nowNoteAPI.getNoteWithDescription(settings.detailsNoteKey);
+          if (note !== null && note !== undefined) {
+            uiApi.openDetailNote(note);
+          }
+        }
+        await reindexIfNeeded();
+      },
       addNote: async (key: string): Promise<NoteDTO | undefined> => {
         if (treeComponentRef.current === null) {
           return undefined;
@@ -194,30 +217,18 @@ export default function App() {
     detailsNoteUpdateBacklinks,
     detailsNoteUpdateNote,
     detailsNoteUpdateNoteProperties,
+    reindexIfNeeded,
+    setCurrentRepository,
   ]);
 
   // **********************************************************************************
 
   const fetchCurrentRepository = useCallback(async () => {
-    setCurrentRepository(await nowNoteAPI.getCurrentRepository());
-
-    const settings: SettingsDTO = await nowNoteAPI.getSettings();
-    if (
-      settings !== null &&
-      settings !== undefined &&
-      settings.detailsNoteKey !== null &&
-      settings.detailsNoteKey !== undefined
-    ) {
-      const note: NoteDTO | undefined = await nowNoteAPI.getNoteWithDescription(
-        settings.detailsNoteKey
-      );
-      if (note !== null && note !== undefined) {
-        uiApi.openDetailNote(note);
-      }
+    const userSettingsRepository = await nowNoteAPI.getCurrentRepository();
+    if (userSettingsRepository !== undefined) {
+      uiApi.setRepository(userSettingsRepository);
     }
-
-    await reindexIfNeeded();
-  }, [reindexIfNeeded, setCurrentRepository, uiApi]);
+  }, [uiApi]);
 
   useEffect(() => {
     fetchCurrentRepository();
@@ -226,7 +237,9 @@ export default function App() {
   appLog.debug(`currentRepository=${currentRepository} trash=${trash}`);
 
   const selectRepositoryComponent =
-    currentRepository === undefined ? <SelectRepository /> : null;
+    currentRepository === undefined ? (
+      <SelectRepository setRepository={uiApi.setRepository} />
+    ) : null;
 
   let mainComponent = null;
 
@@ -279,25 +292,6 @@ export default function App() {
       </ReflexContainer>
     );
   }
-
-  const reindexIngProgressComponent =
-    reindexingProgress !== 100 ? (
-      <div
-        style={{
-          justifyContent: 'center',
-          display: 'flex',
-          height: '100%',
-          alignItems: 'center',
-        }}
-      >
-        <Progress
-          type="circle"
-          percent={reindexingProgress}
-          size={400}
-          format={(percent) => `Reindexing repository ${percent}%`}
-        />
-      </div>
-    ) : null;
 
   return (
     <ConfigProvider

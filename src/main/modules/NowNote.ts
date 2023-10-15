@@ -61,7 +61,7 @@ export default class NowNote {
     repository: UserSettingsRepository
   ): Promise<UserSettingsRepository> {
     if (this.currentRepository !== undefined) {
-      this.currentRepository!.close();
+      await this.currentRepository!.close();
     }
     if (repository.type === SQLITE3_TYPE) {
       this.currentUserSettingsRepository = repository;
@@ -92,7 +92,7 @@ export default class NowNote {
 
       const repositorySQLiteSetup: RepositorySQLiteSetup =
         new RepositorySQLiteSetup(sequelize);
-      const anyMigrationDone: boolean = await repositorySQLiteSetup.up();
+      await repositorySQLiteSetup.up();
 
       this.currentRepository = new RepositorySQLite(
         new AssetFilesService(path.dirname(repositoryPath)),
@@ -101,21 +101,6 @@ export default class NowNote {
       );
       try {
         await this.currentRepository?.authenticate();
-/*
-        let reindexed: boolean = false;
-        const isIndexed: boolean = await repository.isIndexed();
-        log.debug(`RepositorySQLite.authenticate() isIndexed=${isIndexed}`);
-
-        if (!isIndexed) {
-          await repository.reindexAll(undefined);
-          reindexed = true;
-        }
-        return reindexed;
-
-        if (!reindexed && anyMigrationDone) {
-          await this.currentRepository?.reindexAll(undefined);
-        }
-*/
       } catch (error) {
         nowNoteLog.error('connectRepository error', error);
       }

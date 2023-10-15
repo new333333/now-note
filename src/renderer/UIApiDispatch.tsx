@@ -1,8 +1,10 @@
 /* eslint-disable no-unused-vars */
 import { createContext } from 'react';
-import { NoteDTO } from 'types';
+import { NoteDTO, UserSettingsRepository } from 'types';
 
 export type UIApi = {
+  setRepository(repository: UserSettingsRepository): Promise<void>;
+
   addNote(key: string): Promise<NoteDTO | undefined>;
   deleteNote(key: string): Promise<boolean>;
   restoreNote(key: string): Promise<boolean>;
@@ -12,7 +14,8 @@ export type UIApi = {
   updateNodeInTree(note: NoteDTO): Promise<void>;
   focusNodeInTree(key: string): Promise<void>;
   openMoveToDialog(key: string): Promise<void>;
+  moveNote(key: string, moveToKey: string): Promise<void>;
 };
 
-const UIApiDispatch = createContext<UIApi>(null);
+const UIApiDispatch = createContext<UIApi | null>(null);
 export default UIApiDispatch;

@@ -1,10 +1,13 @@
+import { Progress } from 'antd';
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { jsx } from 'react/jsx-runtime';
 import { nowNoteAPI } from 'renderer/NowNoteAPI';
 
 const useReindexingRepository = (): [
   number,
   () => Promise<void>,
-  () => void
+  () => void,
+  jsx.Element | null
 ] => {
   const [reindexingProgress, setReindexingProgress] = useState(100);
   const reindexingTimerRef = useRef<string | number | Timeout | undefined>(
@@ -48,12 +51,36 @@ const useReindexingRepository = (): [
     }
   }, [getReindexingProgress, reindexRepository]);
 
+  const reindexIngProgressComponent =
+    reindexingProgress !== 100 ? (
+      <div
+        style={{
+          justifyContent: 'center',
+          display: 'flex',
+          height: '100%',
+          alignItems: 'center',
+        }}
+      >
+        <Progress
+          type="circle"
+          percent={reindexingProgress}
+          size={400}
+          format={(percent) => `Reindexing repository ${percent}%`}
+        />
+      </div>
+    ) : null;
+
   useEffect(() => {
     setReindexingProgress(100);
     return () => clearTimeout(reindexingTimerRef.current);
   }, []);
 
-  return [reindexingProgress, reindexIfNeeded, reindexRepository];
+  return [
+    reindexingProgress,
+    reindexIfNeeded,
+    reindexRepository,
+    reindexIngProgressComponent,
+  ];
 };
 
 export default useReindexingRepository;

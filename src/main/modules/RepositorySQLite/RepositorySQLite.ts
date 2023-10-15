@@ -72,7 +72,7 @@ export default class RepositorySQLite implements RepositoryIntern {
   }
 
   async authenticate(): Promise<void> {
-    authenticate(this);
+    await authenticate(this);
   }
 
   async close(): Promise<void> {

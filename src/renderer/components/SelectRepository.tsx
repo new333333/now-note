@@ -5,14 +5,14 @@ import { Error, UserSettingsRepository } from 'types';
 import useNoteStore from 'renderer/GlobalStore';
 import { nowNoteAPI } from 'renderer/NowNoteAPI';
 
-export default function SelectRepository() {
+interface Props {
+  setRepository: Function;
+}
+
+export default function SelectRepository({ setRepository }: Props) {
   const [repositories, setRepositories] = useState<UserSettingsRepository[]>(
     []
   );
-  const [setCurrentRepository] = useNoteStore((state) => [
-    state.setCurrentRepository,
-  ]);
-
   const [messageApi, contextHolder] = message.useMessage();
 
   const fetchRepositories = useCallback(async () => {
@@ -29,9 +29,10 @@ export default function SelectRepository() {
 
       const repository: UserSettingsRepository | undefined =
         await nowNoteAPI.connectRepository(path);
-      setCurrentRepository(repository);
+      log.debug('SelectRepository.handleClickRepository connected');
+      setRepository(repository);
     },
-    [setCurrentRepository]
+    [setRepository]
   );
 
   const selectRepositoryFolder = useCallback(async () => {
@@ -44,13 +45,9 @@ export default function SelectRepository() {
         content: repositoryOrError.message,
       });
     } else {
-      log.debug(
-        'SelectRepository.selectRepositoryFolder() setCurrentRepository:',
-        repositoryOrError
-      );
-      setCurrentRepository(repositoryOrError);
+      setRepository(repositoryOrError);
     }
-  }, [messageApi, setCurrentRepository]);
+  }, [messageApi, setRepository]);
 
   return (
     <div className="nn-center-screen">
