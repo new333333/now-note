@@ -17,7 +17,7 @@ import 'jquery-contextmenu/dist/jquery.contextMenu.min.css';
 import 'jquery-contextmenu/dist/jquery.contextMenu.min.js';
 import '../js/jquery.fancytree.contextMenu';
 import $ from 'jquery';
-import Fancytree, { FancytreeClickFolderMode } from 'jquery.fancytree';
+import { Fancytree, FancytreeNode } from 'jquery.fancytree';
 //import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 //import { solid, regular, brands, icon } from '@fortawesome/fontawesome-svg-core/import.macro' // <-- import styles to be used
 import ReactDOMServer from 'react-dom/server';
@@ -25,106 +25,106 @@ import ReactDOMServer from 'react-dom/server';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import { blue } from '@ant-design/colors';
 import useNoteStore from 'renderer/GlobalStore';
-import useDetailsNoteStore from 'renderer/DetailsNoteStore';
 import { nowNoteAPI } from 'renderer/NowNoteAPI';
 import { HitMode, NoteDTO } from 'types';
 import UIApiDispatch from 'renderer/UIApiDispatch';
+import { NoteModel } from 'main/modules/DataModels';
 
 const treeLog = log.scope('Tree');
 
 const TreeComponent = React.memo(
   forwardRef(function TreeComponent(props, ref) {
     const domRef = useRef(null);
-    const fancyTreeRef = useRef(null);
-
+    const fancyTreeRef = useRef<Fancytree>(null);
 
     const uiApi = useContext(UIApiDispatch);
 
     // is trash view? reload tree -> in useEffect(() => initTree, trash
     const trash = useNoteStore((state) => state.trash);
 
-    const noteToNode = useCallback((note: NoteDataModel, treeNode?) => {
-      // console.log('noteToNode note=, treeNode=', note, treeNode);
-
-      let node = treeNode;
-      if (node === undefined || node === null) {
-        node = {};
-      }
-
-      ['title'].forEach((attr) => {
-        if (attr in note) {
-          node[attr] = note[attr];
+    const noteToNode = useCallback((note: NoteModel, treeNode?: FancytreeNode) => {
+        // console.log('noteToNode note=, treeNode=', note, treeNode);
+        let node = treeNode;
+        if (node === undefined || node === null) {
+          node = {};
         }
-      });
 
-      node.data = node.data || {};
+        ['title'].forEach((attr) => {
+          if (attr in note) {
+            node[attr] = note[attr];
+          }
+        });
 
-      [
-        'description',
-        'modifiedBy',
-        'modifiedOn',
-        'createdBy',
-        'createdOn',
-        'done',
-        'priority',
-        'type',
-        'trash',
-        'linkToKey',
-      ].forEach((attr) => {
-        if (attr in note) {
-          node.data[attr] = note[attr];
+        node.data = node.data || {};
+
+        [
+          'description',
+          'modifiedBy',
+          'modifiedOn',
+          'createdBy',
+          'createdOn',
+          'done',
+          'priority',
+          'type',
+          'trash',
+          'linkToKey',
+        ].forEach((attr) => {
+          if (attr in note) {
+            node.data[attr] = note[attr];
+          }
+        });
+
+
+        // if ('title' in note) {
+        //   node.title = note.title;
+        // }
+        // node.data = note.data || {};
+        // if ('description' in note) {
+        //   node.data.description = note.description;
+        // }
+        // if ('modifiedBy' in note) {
+        //   node.data.modifiedBy = note.modifiedBy;
+        // }
+        // node.data.modifiedOn = note.modifiedOn;
+        // node.data.createdBy = note.createdBy;
+        // node.data.createdOn = note.createdOn;
+        // node.data.done = note.done;
+        // node.data.priority = note.priority;
+        // node.data.type = note.type;
+        // node.data.trash = note.trash;
+
+        // node.data.tags = note.tags;
+        // node.data.linkToKey = note.linkToKey;
+        // node.data.linkedNote = note.linkedNote;
+        // node.lazy = true;
+        // if (node.data.linkedNote) {
+        //   node.title = node.data.linkedNote.title;
+        // }
+        // if (node.data.linkedNote || !note.hasChildren) {
+        //  node.children = [];
+        // }
+
+        if (
+          note.childrenCount === 0 ||
+          note.childrenCount === null ||
+          node.childrenCount === '0'
+        ) {
+          node.children = [];
         }
-      });
 
+        node.unselectable = note.trash;
 
-      // if ('title' in note) {
-      //   node.title = note.title;
-      // }
-      // node.data = note.data || {};
-      // if ('description' in note) {
-      //   node.data.description = note.description;
-      // }
-      // if ('modifiedBy' in note) {
-      //   node.data.modifiedBy = note.modifiedBy;
-      // }
-      // node.data.modifiedOn = note.modifiedOn;
-      // node.data.createdBy = note.createdBy;
-      // node.data.createdOn = note.createdOn;
-      // node.data.done = note.done;
-      // node.data.priority = note.priority;
-      // node.data.type = note.type;
-      // node.data.trash = note.trash;
-
-      // node.data.tags = note.tags;
-      // node.data.linkToKey = note.linkToKey;
-      // node.data.linkedNote = note.linkedNote;
-      // node.lazy = true;
-      // if (node.data.linkedNote) {
-      //   node.title = node.data.linkedNote.title;
-      // }
-      // if (node.data.linkedNote || !note.hasChildren) {
-      //  node.children = [];
-      // }
-
-      if (
-        note.childrenCount === 0 ||
-        note.childrenCount === null ||
-        node.childrenCount === '0'
-      ) {
-        node.children = [];
-      }
-
-      node.unselectable = note.trash;
-
-      if (node.data.linkToKey) {
-        // node.checkbox = node.data.linkedNote.type !== undefined && node.data.linkedNote.type === "task";
-        // node.selected = node.data.linkedNote.done !== undefined && node.data.linkedNote.done;
-      } else {
-        node.checkbox = node.data.type !== undefined && node.data.type === 'task';
-        node.selected = node.data.done !== undefined && node.data.done;
-      }
-      return node;
-    }, []);
+        if (node.data.linkToKey) {
+          // node.checkbox = node.data.linkedNote.type !== undefined && node.data.linkedNote.type === "task";
+          // node.selected = node.data.linkedNote.done !== undefined && node.data.linkedNote.done;
+        } else {
+          node.checkbox = node.data.type !== undefined && node.data.type === 'task';
+          node.selected = node.data.done !== undefined && node.data.done;
+        }
+        return node;
+      },
+      []
+    );
 
     const getActiveNodeKey = useCallback((): string | undefined => {
       if (fancyTreeRef === null || fancyTreeRef.current === null) {
@@ -243,7 +243,7 @@ const TreeComponent = React.memo(
       node.setFocus();
     }, []);
 
-    const reloadNode = useCallback(async (nodeParam) => {
+    const reloadNode = useCallback(async (nodeParam: FancytreeNode) => {
       if (fancyTreeRef.current === null) {
         return false;
       }
@@ -621,7 +621,7 @@ const TreeComponent = React.memo(
 
         contextMenu: {
           zIndex: 100,
-          menu: (node) => {
+          menu: (node: FancytreeNode) => {
             console.log('Tree contextMenu node=', node);
             const menu = {};
             // TODO: link note
@@ -641,7 +641,7 @@ const TreeComponent = React.memo(
             }
             return menu;
           },
-          actions: async (node, action: string, options) => {
+          actions: async (node: FancytreeNode, action: string, options) => {
             const {
               openDetailNote,
               deleteNote,
