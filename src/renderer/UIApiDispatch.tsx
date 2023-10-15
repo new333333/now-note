@@ -17,5 +17,5 @@ export type UIApi = {
   moveNote(key: string, moveToKey: string): Promise<void>;
 };
 
-const UIApiDispatch = createContext<UIApi | null>(null);
+const UIApiDispatch = createContext<UIApi>(null);
 export default UIApiDispatch;
