@@ -181,6 +181,14 @@ export default function App() {
         }
         moveToModalComponentRef.current.open(key);
       },
+      moveNote: async (key: string, moveToKey: string) => {
+        appLog.debug(`moveNote key=${key} moveToKey=${moveToKey}`);
+        await nowNoteAPI.moveNote(key, moveToKey, 'over', undefined);
+        if (treeComponentRef.current !== null) {
+          await treeComponentRef.current.move(key, moveToKey, 'over');
+        }
+        await uiApi.openDetailNote(key);
+      },
     };
   }, [
     detailsNoteUpdateBacklinks,
@@ -217,23 +225,6 @@ export default function App() {
 
   appLog.debug(`currentRepository=${currentRepository} trash=${trash}`);
 
-  const handleOnSelectSearch = async (key: string) => {
-    const note = await nowNoteAPI.getNoteWithDescription(key);
-    if (note === undefined) {
-      return;
-    }
-    uiApi.openDetailNote(note);
-  };
-
-  const handleOnselectMoveTo = async (key: string, moveToKey: string) => {
-    appLog.debug(`handleOnselectMoveTo key=${key} moveToKey=${moveToKey}`);
-    await nowNoteAPI.moveNote(key, moveToKey, 'over', undefined);
-    if (treeComponentRef.current !== null) {
-      await treeComponentRef.current.move(key, moveToKey, 'over');
-    }
-    await uiApi.openDetailNote(key);
-  };
-
   const selectRepositoryComponent =
     currentRepository === undefined ? <SelectRepository /> : null;
 
@@ -255,7 +246,13 @@ export default function App() {
           >
             <SearchNotes
               trash={trash}
-              onSelect={handleOnSelectSearch}
+              onSelect={async (key: string) => {
+                const note = await nowNoteAPI.getNoteWithDescription(key);
+                if (note === undefined) {
+                  return;
+                }
+                uiApi.openDetailNote(note);
+              }}
               excludeParentNotesKeyProp={[]}
               excludeNotesKeyProp={[]}
             />
@@ -317,7 +314,7 @@ export default function App() {
         <MoveToModalComponent
           ref={moveToModalComponentRef}
           trash={trash}
-          handleOn={handleOnselectMoveTo}
+          handleOn={uiApi.moveNote}
         />
       </UIApiDispatch.Provider>
     </ConfigProvider>
