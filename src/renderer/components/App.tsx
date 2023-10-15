@@ -9,6 +9,7 @@ import { nowNoteAPI } from 'renderer/NowNoteAPI';
 import { HitMode, NoteDTO, SettingsDTO } from 'types';
 import UIApiDispatch, { UIApi } from 'renderer/UIApiDispatch';
 import useDetailsNoteStore from 'renderer/DetailsNoteStore';
+import useReindexingRepository from 'renderer/useReindexingRepository';
 import SelectRepository from './SelectRepository';
 import Footer from './Footer';
 import SearchNotes from './SearchNotes';
@@ -39,7 +40,8 @@ interface MoveToModalComponentAPI {
 }
 
 export default function App() {
-  const [reindexingProgress, setReindexingProgress] = useState(100);
+  const [reindexingProgress, reindexIfNeeded, reindexRepository] =
+    useReindexingRepository();
 
   const treeComponentRef = useRef<TreeComponentAPI>(null);
   const detailsNoteComponentRef = useRef<DetailsNoteComponentAPI>(null);
@@ -186,39 +188,7 @@ export default function App() {
     detailsNoteUpdateNoteProperties,
   ]);
 
-  const updateReindexingProgress = useCallback(async () => {
-    const reindexingProg: number = await nowNoteAPI.getReindexingProgress();
-    console.log("reindexingProg=", reindexingProg);
-    setReindexingProgress(reindexingProg);
-    if (reindexingProg < 100) {
-      setTimeout(() => {
-        console.log('This will run after 1 second!');
-        updateReindexingProgress();
-      }, 1000);
-    }
-  }, []);
-
   // **********************************************************************************
-
-  const reindexingTimerRef = useRef<string | number | Timeout | undefined>(
-    undefined
-  );
-
-  const reindexRepository = useCallback(async () => {
-    setReindexingProgress(0);
-
-    // index asynchron
-    nowNoteAPI.reindex(undefined);
-
-    reindexingTimerRef.current = setTimeout(() => {
-      console.log('This will run after 1 second!');
-      updateReindexingProgress();
-    }, 1000);
-  }, [updateReindexingProgress]);
-
-  useEffect(() => {
-    return () => clearTimeout(reindexingTimerRef.current);
-  }, []);
 
   const fetchCurrentRepository = useCallback(async () => {
     setCurrentRepository(await nowNoteAPI.getCurrentRepository());
@@ -238,14 +208,8 @@ export default function App() {
       }
     }
 
-    const reindexingProg: number = await nowNoteAPI.getReindexingProgress();
-    console.log("reindexingProg=", reindexingProg);
-    setReindexingProgress(reindexingProg);
-
-    if (reindexingProg < 100) {
-      reindexRepository();
-    }
-  }, [reindexRepository, setCurrentRepository, uiApi]);
+    await reindexIfNeeded();
+  }, [reindexIfNeeded, setCurrentRepository, uiApi]);
 
   useEffect(() => {
     fetchCurrentRepository();
@@ -292,6 +256,7 @@ export default function App() {
               trash={trash}
               onSelect={handleOnSelectSearch}
               excludeParentNotesKeyProp={[]}
+              excludeNotesKeyProp={[]}
             />
           </div>
         </ReflexElement>
@@ -319,12 +284,21 @@ export default function App() {
 
   const reindexIngProgressComponent =
     reindexingProgress !== 100 ? (
-      <Progress
-        type="circle"
-        percent={reindexingProgress}
-        size={400}
-        format={(percent) => `Reindexing repository ${percent}%`}
-      />
+      <div
+        style={{
+          justifyContent: 'center',
+          display: 'flex',
+          height: '100%',
+          alignItems: 'center',
+        }}
+      >
+        <Progress
+          type="circle"
+          percent={reindexingProgress}
+          size={400}
+          format={(percent) => `Reindexing repository ${percent}%`}
+        />
+      </div>
     ) : null;
 
   return (
