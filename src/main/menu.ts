@@ -194,7 +194,7 @@ export default class MenuBuilder {
 
   buildDefaultTemplate() {
     const templateDefault = [
-      {
+      /*{
         label: '&File',
         submenu: [
           {
@@ -209,7 +209,7 @@ export default class MenuBuilder {
             },
           },
         ],
-      },
+      },*/
       {
         label: '&View',
         submenu:
@@ -252,6 +252,7 @@ export default class MenuBuilder {
                 },
               ],
       },
+      /*
       {
         label: 'Help',
         submenu: [
@@ -283,6 +284,7 @@ export default class MenuBuilder {
           },
         ],
       },
+      */
     ];
 
     return templateDefault;
