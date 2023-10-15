@@ -246,9 +246,9 @@ export default function App() {
 
   const handleOnselectMoveTo = async (key: string, moveToKey: string) => {
     appLog.debug(`handleOnselectMoveTo key=${key} moveToKey=${moveToKey}`);
-    nowNoteAPI.moveNote(key, moveToKey, 'over', undefined);
+    await nowNoteAPI.moveNote(key, moveToKey, 'over', undefined);
     if (treeComponentRef.current !== null) {
-      treeComponentRef.current.move(key, moveToKey, 'over');
+      await treeComponentRef.current.move(key, moveToKey, 'over');
     }
   };
 

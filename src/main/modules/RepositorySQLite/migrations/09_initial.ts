@@ -8,7 +8,16 @@ export const up: MigrationFn = async ({ context: sequelize }) => {
   repositorySQLiteSetupLog.debug('RepositorySQLite 09_initial up');
   const queryInterface: QueryInterface = sequelize.getQueryInterface();
 
-  await queryInterface.removeColumn('Settings', 'reindexingProgress');
+  await queryInterface.createTable('MoveTo', {
+    id: {
+      type: DataTypes.INTEGER,
+      autoIncrement: true,
+      primaryKey: true,
+    },
+    key: {
+      type: DataTypes.UUID,
+    },
+  });
 
 };
 

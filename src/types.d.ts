@@ -67,6 +67,11 @@ export interface SettingsDTO {
   detailsNoteKey?: string | null;
 }
 
+export interface MoveToDTO {
+  id?: number;
+  key?: string | null;
+}
+
 // ***************************************************************************
 // ***************************************************************************
 
@@ -146,6 +151,10 @@ export interface Repository {
   ): Promise<AssetDTO>;
   modifySettings(settingsDTO: SettingsDTO): Promise<SettingsDTO | undefined>;
   getSettings(): Promise<SettingsDTO | undefined>;
+
+  addMoveTo(key: string | null): Promise<void | undefined>;
+  removeMoveTo(id: number): Promise<void | undefined>;
+  getMoveToList(): Promise<MoveToDTO[] | undefined>;
 }
 
 // ***************************************************************************
@@ -215,4 +224,8 @@ export interface NowNoteAPI {
 
   modifySettings(settingsDTO: SettingsDTO): Promise<SettingsDTO | undefined>;
   getSettings(): Promise<SettingsDTO | undefined>;
+
+  addMoveTo(key: string | null): Promise<void | undefined>;
+  removeMoveTo(id: number): Promise<void | undefined>;
+  getMoveToList(): Promise<MoveToDTO[] | undefined>;
 }

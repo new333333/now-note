@@ -1,34 +1,20 @@
 import log from 'electron-log';
-import { useCallback, useContext } from 'react';
 import { Breadcrumb } from 'antd';
-import { nowNoteAPI } from 'renderer/NowNoteAPI';
-import { NoteDTO } from 'types';
-import UIApiDispatch from 'renderer/UIApiDispatch';
+import { ItemType } from 'antd/es/breadcrumb/Breadcrumb';
 
 const noteBreadCrumbLog = log.scope('NoteBreadCrumbComponent');
 
 interface Props {
   keyPath: string;
   titlePath: string;
+  handleOnClick: Function;
 }
 
-export default function NoteBreadCrumbComponent({ keyPath, titlePath }: Props) {
-  const uiApi = useContext(UIApiDispatch);
-
-  const openNote = useCallback(
-    async (key: string) => {
-      // log.debug(`NoteBreadCrumb click on key=${key}`);
-      const note: NoteDTO | undefined = await nowNoteAPI.getNoteWithDescription(
-        key
-      );
-      if (note === undefined && uiApi === null) {
-        return;
-      }
-      await uiApi.openDetailNote(note);
-    },
-    [uiApi]
-  );
-
+export default function NoteBreadCrumbComponent({
+  keyPath,
+  titlePath,
+  handleOnClick,
+}: Props) {
   if (
     keyPath === null ||
     keyPath === undefined ||
@@ -40,7 +26,7 @@ export default function NoteBreadCrumbComponent({ keyPath, titlePath }: Props) {
     return null;
   }
 
-  const items = [];
+  const items: ItemType[] = [];
   const keys = keyPath.substring(2, keyPath.length - 2).split('/');
   const titles = titlePath.substring(2, titlePath.length - 2).split('/');
   keys.forEach((key, index) => {
@@ -48,7 +34,8 @@ export default function NoteBreadCrumbComponent({ keyPath, titlePath }: Props) {
       title: titles[index],
       href: '#',
       onClick: () => {
-        openNote(key);
+        handleOnClick(key);
+        // openNote(key);
       },
     });
   });

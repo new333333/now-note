@@ -7,6 +7,7 @@ import fs from 'fs';
 import {
   AssetDTO,
   HitMode,
+  MoveToDTO,
   NoteDTO,
   PriorityStatistics,
   SearchResult,
@@ -41,6 +42,9 @@ import addTag from './operations/AddTag';
 import findTag from './operations/FindTag';
 import modifySettings from './operations/ModifySettings';
 import getSettings from './operations/GetSettings';
+import addMoveTo from './operations/AddMoveTo';
+import removeMoveTo from './operations/RemoveMoveTo';
+import getMoveToList from './operations/GetMoveToList';
 
 export default class RepositorySQLite implements RepositoryIntern {
   private sequelize: Sequelize;
@@ -268,6 +272,18 @@ export default class RepositorySQLite implements RepositoryIntern {
 
   async getSettings(): Promise<SettingsDTO | undefined> {
     return getSettings(this);
+  }
+
+  async addMoveTo(key: string | null): Promise<void | undefined> {
+    return addMoveTo(this, key);
+  }
+
+  async removeMoveTo(id: number): Promise<void | undefined> {
+    return removeMoveTo(this, id);
+  }
+
+  async getMoveToList(): Promise<MoveToDTO[] | undefined> {
+    return getMoveToList(this);
   }
 
   async addFileAsNote(

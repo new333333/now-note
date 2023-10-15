@@ -138,6 +138,12 @@ const electronHandler: ElectronIPCRenderer = {
       ipcRenderer.invoke('modifySettings', settingsDTO),
 
     getSettings: () => ipcRenderer.invoke('getSettings'),
+
+    addMoveTo: (key: string | null) => ipcRenderer.invoke('addMoveTo', key),
+
+    removeMoveTo: (id: number) => ipcRenderer.invoke('removeMoveTo', id),
+
+    getMoveToList: () => ipcRenderer.invoke('getMoveToList'),
   },
 };
 

@@ -241,6 +241,7 @@ const TreeComponent = React.memo(
     }, []);
 
     const reloadNode = useCallback(async (node) => {
+      console.log(`reloadNode, node=`, node);
       if (node === undefined || node === null) {
         return false;
       }
@@ -248,6 +249,8 @@ const TreeComponent = React.memo(
         return false;
       }
       if (node.key.startsWith('root_')) {
+
+        await node.resetLazy();
         await fancyTreeRef.current.reload();
       } else {
         await node.resetLazy();
@@ -262,13 +265,20 @@ const TreeComponent = React.memo(
           return false;
         }
         const node = fancyTreeRef.current.getNodeByKey(key);
-        const moveToNode = fancyTreeRef.current.getNodeByKey(to);
+        let moveToNode = null;
+        if (to !== null && to !== undefined) {
+          moveToNode = fancyTreeRef.current.getNodeByKey(to);
+        } else {
+          moveToNode = fancyTreeRef.current.getRootNode();
+        }
+        console.log(`move, to=, node=, moveToNode=`, to, node, moveToNode);
 
         if (node !== null && moveToNode !== null) {
-          node.moveTo(moveToNode, hitMode);
+          await node.moveTo(moveToNode, hitMode);
           return true;
         }
         if (node !== null) {
+          console.log(`move, node.parent=`, node.parent);
           await reloadNode(node.parent);
         }
         if (moveToNode !== null) {

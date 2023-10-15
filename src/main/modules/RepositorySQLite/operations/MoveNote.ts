@@ -221,7 +221,7 @@ export default async function moveNote(
   log.debug(
     `RepositorySQLite.moveNote() modifyNote.keyPath=${modifyNote.keyPath} modifyNote.parent=${modifyNote.parent} modifyNote.titlePath=${modifyNote.titlePath}`
   );
-  modifyNote.save();
+  await modifyNote.save();
 
   if (prevParent !== modifyNote.parent) {
     // 1. move e-f to root
@@ -260,7 +260,7 @@ export default async function moveNote(
           newNote.key,
           newNote.trash
         );
-        newNote.save();
+        await newNote.save();
       }
     }
 
@@ -271,8 +271,10 @@ export default async function moveNote(
           prevParentNote.key,
           prevParentNote.trash
         );
-        prevParentNote.save();
+        await prevParentNote.save();
       }
     }
+
+    await repository.addMoveTo(modifyNote.parent);
   }
 }

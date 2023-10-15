@@ -11,6 +11,7 @@ import {
   SearchResultOptions,
   AssetDTO,
   SettingsDTO,
+  MoveToDTO,
 } from '../types';
 import { AssetModel } from './modules/DataModels';
 
@@ -286,6 +287,27 @@ export default class IpcHandler {
       'getSettings',
       async (_event): Promise<SettingsDTO | undefined> => {
         return this.nowNote.getSettings();
+      }
+    );
+
+    this.ipcMain.handle(
+      'addMoveTo',
+      async (_event, key: string | null): Promise<void | undefined> => {
+        return this.nowNote.addMoveTo(key);
+      }
+    );
+
+    this.ipcMain.handle(
+      'removeMoveTo',
+      async (_event, id: number): Promise<void | undefined> => {
+        return this.nowNote.removeMoveTo(id);
+      }
+    );
+
+    this.ipcMain.handle(
+      'getMoveToList',
+      async (_event): Promise<MoveToDTO[] | undefined> => {
+        return this.nowNote.getMoveToList();
       }
     );
   }

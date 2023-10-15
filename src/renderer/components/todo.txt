@@ -1,7 +1,10 @@
-- move note in menu
+- add note button
+   add root note
+
 - styling tree nodes
 - query note!
-- reomve from nowNoteAPI references to nowNoteAPI and uiAPI?
 - context search
+************************************************************************
+- reomve from nowNoteAPI references to nowNoteAPI and uiAPI?
 - search in screenshots
 - https://www.tiktok.com/@momo_obrien/video/7288319460203662597

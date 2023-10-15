@@ -15,6 +15,7 @@ import {
   SearchResultOptions,
   SettingsDTO,
   AssetDTO,
+  MoveToDTO,
 } from '../../types';
 import RepositorySQLiteSetup from './RepositorySQLite/RepositorySQLiteSetup';
 import { SQLITE3_TYPE } from './DataModels';
@@ -388,6 +389,27 @@ export default class NowNote {
   async getSettings(): Promise<SettingsDTO | undefined> {
     if (this.currentRepository !== undefined) {
       return this.currentRepository.getSettings();
+    }
+    return Promise.resolve(undefined);
+  }
+
+  async addMoveTo(key: string | null): Promise<void | undefined> {
+    if (this.currentRepository !== undefined) {
+      return this.currentRepository.addMoveTo(key);
+    }
+    return Promise.resolve(undefined);
+  }
+
+  async removeMoveTo(id: number): Promise<void | undefined> {
+    if (this.currentRepository !== undefined) {
+      return this.currentRepository.removeMoveTo(id);
+    }
+    return Promise.resolve(undefined);
+  }
+
+  async getMoveToList(): Promise<MoveToDTO[] | undefined> {
+    if (this.currentRepository !== undefined) {
+      return this.currentRepository.getMoveToList();
     }
     return Promise.resolve(undefined);
   }

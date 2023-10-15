@@ -4,6 +4,7 @@ import {
   AssetModel,
   DescriptionModel,
   LinkModel,
+  MoveToModel,
   NoteModel,
   NotesIndexModel,
   RepositoryIntern,
@@ -245,6 +246,24 @@ export default async function authenticate(
     {
       sequelize: repository.getSequelize(),
       tableName: 'Settings',
+      timestamps: false,
+    }
+  );
+
+  MoveToModel.init(
+    {
+      id: {
+        type: DataTypes.BIGINT,
+        primaryKey: true,
+        autoIncrement: true,
+      },
+      key: {
+        type: DataTypes.UUID,
+      },
+    },
+    {
+      sequelize: repository.getSequelize(),
+      tableName: 'MoveTo',
       timestamps: false,
     }
   );

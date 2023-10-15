@@ -8,7 +8,7 @@ import {
   CreationOptional,
   Sequelize,
 } from 'sequelize';
-import { AssetDTO, NoteDTO, Repository, SettingsDTO } from 'types';
+import { AssetDTO, MoveToDTO, NoteDTO, Repository, SettingsDTO } from 'types';
 
 export const SQLITE3_TYPE: string = 'sqlite3';
 
@@ -145,6 +145,19 @@ export class SettingsModel extends Model<
   declare detailsNoteKey: string | null;
 
   toDTO(): SettingsDTO {
+    return this.dataValues;
+  }
+}
+
+export class MoveToModel extends Model<
+  InferAttributes<MoveToModel>,
+  InferCreationAttributes<MoveToModel>
+> {
+  declare id: CreationOptional<number>;
+
+  declare key: string | null;
+
+  toDTO(): MoveToDTO {
     return this.dataValues;
   }
 }

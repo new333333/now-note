@@ -10,6 +10,7 @@ import {
   NowNoteAPI,
   AssetDTO,
   SettingsDTO,
+  MoveToDTO,
 } from 'types';
 
 const nowNoteAPILog = log.scope('NowNoteAPI');
@@ -165,6 +166,18 @@ export class NowNoteAPIImpl implements NowNoteAPI {
 
   async getSettings(): Promise<SettingsDTO> {
     return this.îpcRenderer.getSettings();
+  }
+
+  async addMoveTo(key: string | null): Promise<void> {
+    return this.îpcRenderer.addMoveTo(key);
+  }
+
+  async removeMoveTo(id: number): Promise<void> {
+    return this.îpcRenderer.removeMoveTo(id);
+  }
+
+  async getMoveToList(): Promise<MoveToDTO[]> {
+    return this.îpcRenderer.getMoveToList();
   }
 
   async closeRepository(): Promise<void> {

@@ -77,7 +77,7 @@ export default function SearchNotes({
       setOptionsAutoComplete(options);
       setStartSearchPosition(20);
     },
-    [trash]
+    [excludeNotesKeyProp, excludeParentNotesKeyProp, trash]
   );
 
   const onPopupScroll = useCallback(
