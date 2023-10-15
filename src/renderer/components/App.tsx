@@ -234,12 +234,13 @@ export default function App() {
     await uiApi.openDetailNote(key);
   };
 
-  const selectRepository = <SelectRepository />;
+  const selectRepositoryComponent =
+    currentRepository === undefined ? <SelectRepository /> : null;
 
-  let reflexContainer = null;
+  let mainComponent = null;
 
   if (currentRepository !== undefined && reindexingProgress === 100) {
-    reflexContainer = (
+    mainComponent = (
       <ReflexContainer orientation="horizontal">
         <ReflexElement minSize={35} maxSize={35} style={{ overflow: 'hidden' }}>
           <div
@@ -310,9 +311,9 @@ export default function App() {
       }}
     >
       <UIApiDispatch.Provider value={uiApi}>
-        {reindexingProgress !== 100 && reindexIngProgressComponent}
-        {currentRepository === undefined && selectRepository}
-        {reflexContainer}
+        {reindexIngProgressComponent}
+        {selectRepositoryComponent}
+        {mainComponent}
         <MoveToModalComponent
           ref={moveToModalComponentRef}
           trash={trash}
