@@ -8,12 +8,12 @@ import fs from 'fs';
 export interface UserSettingsRepository {
   name: string;
   path: string;
-  type: string;
+  repositoryType: string;
   default: boolean;
 }
 
 export interface UserSettings {
-  repositories: Array<UserSettingsRepository>;
+  repositories: UserSettingsRepository[];
 }
 
 // ***************************************************************************

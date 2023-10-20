@@ -1,13 +1,7 @@
 import { UserSettingsRepository } from '../../types';
-import UserSettingsPersister from '../../main/modules/UserSettings/UserSettingsPersister';
 import UserSettingsService from '../../main/modules/UserSettings/UserSettingsService';
 
 jest.mock('../../main/modules/UserSettings/UserSettingsPersister');
-
-beforeEach(() => {
-  // Clear all instances and calls to constructor and all methods:
-  (UserSettingsPersister as jest.Mock<UserSettingsPersister>).mockClear();
-});
 
 test('UserSettingsManger get existing repositories', async () => {
   jest.spyOn(UserSettingsPersister.prototype, 'load').mockImplementation(() => {
@@ -16,7 +10,7 @@ test('UserSettingsManger get existing repositories', async () => {
         {
           name: 'NOW NOte Repository',
           path: 'this_will_be_ignored',
-          type: 'sqlite3',
+          repositoryType: 'sqlite3',
           default: false,
         },
       ],
@@ -81,7 +75,7 @@ test('UserSettingsManger getDefaultRepository() the only one', async () => {
         {
           name: 'NOW NOte Repository',
           path: 'this_will_be_ignored',
-          type: 'sqlite3',
+          repositoryType: 'sqlite3',
           default: false,
         },
       ],
@@ -103,13 +97,13 @@ test('UserSettingsManger getDefaultRepository() select 2. from 2 of them', async
         {
           name: 'NOW NOte Repository',
           path: 'this_will_be_ignored',
-          type: 'sqlite3',
+          repositoryType: 'sqlite3',
           default: false,
         },
         {
           name: 'DefaultRepository',
           path: 'this_will_be_ignored_2',
-          type: 'sqlite3',
+          repositoryType: 'sqlite3',
           default: true,
         },
       ],
@@ -132,13 +126,13 @@ test('UserSettingsManger getDefaultRepository() select 1. from 2 of them', async
         {
           name: 'DefaultRepository',
           path: 'this_will_be_ignored_2',
-          type: 'sqlite3',
+          repositoryType: 'sqlite3',
           default: true,
         },
         {
           name: 'NOW NOte Repository',
           path: 'this_will_be_ignored',
-          type: 'sqlite3',
+          repositoryType: 'sqlite3',
           default: false,
         },
       ],
@@ -175,13 +169,13 @@ test('UserSettingsManger geRepositoryByPath() found', async () => {
         {
           name: 'DefaultRepository',
           path: 'should_find_this',
-          type: 'sqlite3',
+          repositoryType: 'sqlite3',
           default: true,
         },
         {
           name: 'NOW NOte Repository',
           path: 'this_will_be_ignored',
-          type: 'sqlite3',
+          repositoryType: 'sqlite3',
           default: false,
         },
       ],
@@ -204,13 +198,13 @@ test('UserSettingsManger geRepositoryByPath() found by relative path', async () 
         {
           name: 'DefaultRepository',
           path: 'should_find_this',
-          type: 'sqlite3',
+          repositoryType: 'sqlite3',
           default: true,
         },
         {
           name: 'NOW NOte Repository',
           path: 'this_will_be_ignored',
-          type: 'sqlite3',
+          repositoryType: 'sqlite3',
           default: false,
         },
       ],
@@ -268,7 +262,7 @@ test('UserSettingsManger addRepository() first one on existing folder', async ()
       {
         name: 'DefaultRepository',
         path: 'should_find_this',
-        type: 'sqlite3',
+        repositoryType: 'sqlite3',
         default: true,
       },
     ],
@@ -282,7 +276,7 @@ test('UserSettingsManger addRepository() second one on existing folder', async (
         {
           name: 'NOW NOte Repository',
           path: 'this_will_be_ignored',
-          type: 'sqlite3',
+          repositoryType: 'sqlite3',
           default: false,
         },
       ],
@@ -306,13 +300,13 @@ test('UserSettingsManger addRepository() second one on existing folder', async (
       {
         name: 'NOW NOte Repository',
         path: 'this_will_be_ignored',
-        type: 'sqlite3',
+        repositoryType: 'sqlite3',
         default: false,
       },
       {
         name: 'DefaultRepository',
         path: 'should_find_this',
-        type: 'sqlite3',
+        repositoryType: 'sqlite3',
         default: false,
       },
     ],
@@ -326,13 +320,13 @@ test('UserSettingsManger setDefaultRepository() was 1. set 2.', async () => {
         {
           name: 'DefaultRepository',
           path: 'this_is_default_repository',
-          type: 'sqlite3',
+          repositoryType: 'sqlite3',
           default: true,
         },
         {
           name: 'NOW NOte Repository',
           path: 'this_will_be_default_repository',
-          type: 'sqlite3',
+          repositoryType: 'sqlite3',
           default: false,
         },
       ],
@@ -357,13 +351,13 @@ test('UserSettingsManger setDefaultRepository() was 1. set 2.', async () => {
       {
         name: 'DefaultRepository',
         path: 'this_is_default_repository',
-        type: 'sqlite3',
+        repositoryType: 'sqlite3',
         default: false,
       },
       {
         name: 'NOW NOte Repository',
         path: 'this_will_be_default_repository',
-        type: 'sqlite3',
+        repositoryType: 'sqlite3',
         default: true,
       },
     ],
@@ -378,13 +372,13 @@ test('UserSettingsManger setDefaultRepository() repository does not exists', asy
         {
           name: 'DefaultRepository',
           path: 'this_is_default_repository',
-          type: 'sqlite3',
+          repositoryType: 'sqlite3',
           default: true,
         },
         {
           name: 'NOW NOte Repository',
           path: 'this_will_be_default_repository',
-          type: 'sqlite3',
+          repositoryType: 'sqlite3',
           default: false,
         },
       ],
@@ -412,13 +406,13 @@ test('UserSettingsManger setDefaultRepository() set the same', async () => {
         {
           name: 'DefaultRepository',
           path: 'this_is_default_repository',
-          type: 'sqlite3',
+          repositoryType: 'sqlite3',
           default: true,
         },
         {
           name: 'NOW NOte Repository',
           path: 'this_will_be_default_repository',
-          type: 'sqlite3',
+          repositoryType: 'sqlite3',
           default: false,
         },
       ],

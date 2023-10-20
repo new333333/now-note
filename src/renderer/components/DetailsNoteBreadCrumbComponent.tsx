@@ -29,7 +29,6 @@ export default function DetailsNoteBreadCrumbComponent() {
     [uiApi]
   );
 
-
   if (keyPath === null || titlePath === null) {
     return null;
   }

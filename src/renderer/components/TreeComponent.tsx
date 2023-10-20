@@ -131,8 +131,10 @@ const TreeComponent = React.memo(
         return undefined;
       }
       let node = fancyTreeRef.current.getActiveNode();
+      console.log("getActiveNodeKey node=", node);
       if (node === null) {
         node = fancyTreeRef.current.getRootNode();
+        console.log("getActiveNodeKey root node=", node);
       }
       if (node === null) {
         return undefined;
@@ -146,12 +148,17 @@ const TreeComponent = React.memo(
         if (newNote === undefined || newNote === null) {
           return undefined;
         }
-        treeLog.debug('addNode() on update fancyTreeRef=' + fancyTreeRef);
         if (fancyTreeRef === null || fancyTreeRef.current === null) {
           return undefined;
         }
 
-        const parentNode = fancyTreeRef.current.getNodeByKey(newNote.parent);
+        let parentNode = null;
+        if (newNote.parent !== null && newNote.parent !== undefined) {
+          parentNode = fancyTreeRef.current.getNodeByKey(newNote.parent);
+        } else {
+          parentNode = fancyTreeRef.current.getRootNode();
+        }
+        treeLog.debug('addNode() parentNode=' + parentNode);
         if (parentNode === null) {
           return undefined;
         }
@@ -602,8 +609,8 @@ const TreeComponent = React.memo(
           // fix for click on context menu
           if (data.targetType === 'title') {
             treeLog.debug('Click title');
-            const note: NoteDTO = await nowNoteAPI.getNoteWithDescription(data.node.key);
-            await uiApi.openDetailNote(note);
+            const { openDetailNote } = uiApi;
+            await openDetailNote(data.node.key);
           }
 
           /*

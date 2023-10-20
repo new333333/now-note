@@ -17,7 +17,8 @@ export default function Footer({ reindexRepository }: Props) {
   ]);
   const [loading, setLoading] = useState(false);
 
-  const changeRepository = useCallback(() => {
+  const changeRepository = useCallback(async () => {
+    await nowNoteAPI.closeRepository();
     setCurrentRepository(undefined);
   }, [setCurrentRepository]);
 

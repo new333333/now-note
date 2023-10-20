@@ -1,8 +1,11 @@
 import log from 'electron-log';
-import { useCallback, useContext, useEffect, useState } from 'react';
+import { useCallback, useContext } from 'react';
 import { Collapse, Badge } from 'antd';
 import { blue } from '@ant-design/colors';
 import useDetailsNoteStore from 'renderer/DetailsNoteStore';
+import { NoteDTO } from 'types';
+import UIApiDispatch from 'renderer/UIApiDispatch';
+import { nowNoteAPI } from 'renderer/NowNoteAPI';
 import NoteBreadCrumbComponent from './NoteBreadCrumbComponent';
 
 const { Panel } = Collapse;
@@ -16,6 +19,23 @@ export default function DetailsNoteBacklinksComponent() {
   const noteKey = useDetailsNoteStore((state) => state.noteKey);
 
   DetailsNoteBacklinksComponentLog.debug(`render backlinks=${backlinks}`);
+
+  const uiApi = useContext(UIApiDispatch);
+
+  const openNote = useCallback(
+    async (key: string) => {
+      // log.debug(`NoteBreadCrumb click on key=${key}`);
+      const note: NoteDTO | undefined = await nowNoteAPI.getNoteWithDescription(
+        key
+      );
+      if (note === undefined || uiApi === null) {
+        return;
+      }
+      const { openDetailNote } = uiApi;
+      await openDetailNote(note);
+    },
+    [uiApi]
+  );
 
   if (noteKey === null) {
     return null;
@@ -45,6 +65,7 @@ export default function DetailsNoteBacklinksComponent() {
                   <NoteBreadCrumbComponent
                     keyPath={backlinkNote.keyPath}
                     titlePath={backlinkNote.titlePath}
+                    handleOnClick={openNote}
                   />
                 </li>
               )})}

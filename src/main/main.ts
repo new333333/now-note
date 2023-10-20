@@ -18,7 +18,6 @@ import IpcHandler from './IpcHandler';
 import ProtocolHandler from './ProtocolHandler';
 import NowNote from './modules/NowNote';
 import UserSettingsService from './modules/UserSettings/UserSettingsService';
-import UserSettingsPersister from './modules/UserSettings/UserSettingsPersister';
 
 const unhandled = require('electron-unhandled');
 
@@ -118,11 +117,7 @@ const createWindow = async () => {
     );
   }
 
-  const userSettingsPersister: UserSettingsPersister =
-    new UserSettingsPersister(usetSettingsPaths);
-  const userSettingsService: UserSettingsService = new UserSettingsService(
-    userSettingsPersister
-  );
+  const userSettingsService: UserSettingsService = new UserSettingsService();
   const nowNote: NowNote = new NowNote(
     userSettingsService,
     os.userInfo().username,

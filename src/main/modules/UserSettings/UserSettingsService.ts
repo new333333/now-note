@@ -1,45 +1,53 @@
 import log from 'electron-log';
 import path from 'path';
-import UserSettingsPersister from './UserSettingsPersister';
+import Store, { Schema } from 'electron-store';
 import { UserSettings, UserSettingsRepository } from '../../../types';
 
 export default class UserSettingsService {
-  private userSettingsPersister: UserSettingsPersister;
+  private store: Store<UserSettings> | undefined;
 
-  private settings: UserSettings | undefined;
+  constructor() {
+    const schema: Schema<UserSettings> = {
+      repositories: {
+        type: 'array',
+        items: {
+          type: 'object',
+          properties: {
+            name: { type: 'string' },
+            path: { type: 'string' },
+            repositoryType: { type: 'string' },
+            default: { type: 'boolean' },
+          },
+          required: ['path', 'default', 'repositoryType', 'name'],
+        },
+      },
+    };
 
-  constructor(userSettingsPersister: UserSettingsPersister) {
-    this.userSettingsPersister = userSettingsPersister;
+    this.store = new Store<UserSettings>({ schema });
   }
 
   async getRepositories(): Promise<Array<UserSettingsRepository> | undefined> {
-    if (this.settings === undefined) {
-      this.settings = await this.userSettingsPersister.load();
-    }
-    if (this.settings === undefined) {
-      return undefined;
-    }
-    return this.settings!.repositories;
+    const repositories: UserSettingsRepository[] | undefined =
+      this.store?.get('repositories');
+
+    return repositories;
   }
 
   async getDefaultRepository(): Promise<UserSettingsRepository | undefined> {
-    if (this.settings === undefined) {
-      this.settings = await this.userSettingsPersister.load();
-    }
-    if (this.settings === undefined) {
-      return undefined;
+    let repositories: UserSettingsRepository[] | undefined =
+      this.store?.get('repositories');
+
+    if (repositories === undefined) {
+      repositories = [];
     }
 
-    let defaultRepository = this.settings!.repositories.find((repository) => {
+    let defaultRepository = repositories.find((repository) => {
       return repository.default;
     });
 
-    if (
-      defaultRepository === undefined &&
-      this.settings!.repositories.length > 0
-    ) {
+    if (defaultRepository === undefined && repositories.length > 0) {
       // eslint-disable-next-line prefer-destructuring
-      defaultRepository = this.settings!.repositories[0];
+      defaultRepository = repositories[0];
     }
 
     return defaultRepository;
@@ -59,7 +67,14 @@ export default class UserSettingsService {
       return newDefaultRepository;
     }
 
-    this.settings!.repositories.forEach((repository) => {
+    let repositories: UserSettingsRepository[] | undefined =
+      this.store?.get('repositories');
+
+    if (repositories === undefined) {
+      repositories = [];
+    }
+
+    repositories.forEach((repository) => {
       if (
         path.normalize(repository.path) === path.normalize(repositoryFolder)
       ) {
@@ -68,21 +83,21 @@ export default class UserSettingsService {
         repository.default = false;
       }
     });
-    await this.userSettingsPersister.save(this.settings!);
 
+    this.store?.set('repositories', repositories);
     return newDefaultRepository;
   }
 
   async geRepositoryByPath(
     repositoryFolder: string
   ): Promise<UserSettingsRepository | undefined> {
-    if (this.settings === undefined) {
-      this.settings = await this.userSettingsPersister.load();
+    let repositories: UserSettingsRepository[] | undefined =
+      this.store?.get('repositories');
+
+    if (repositories === undefined) {
+      repositories = [];
     }
-    if (this.settings === undefined) {
-      return undefined;
-    }
-    const foundRepository = this.settings!.repositories.find((repository) => {
+    const foundRepository = repositories.find((repository) => {
       return (
         path.normalize(repository.path) === path.normalize(repositoryFolder)
       );
@@ -98,19 +113,22 @@ export default class UserSettingsService {
     const repositoryByPath: UserSettingsRepository | undefined =
       await this.geRepositoryByPath(repositoryFolder);
 
-    if (this.settings === undefined) {
-      return undefined;
+    let repositories: UserSettingsRepository[] | undefined =
+      this.store?.get('repositories');
+
+    if (repositories === undefined) {
+      repositories = [];
     }
 
     if (repositoryByPath === undefined) {
       const newRepository: UserSettingsRepository = {
         name,
         path: repositoryFolder,
-        type,
-        default: this.settings!.repositories.length === 0,
+        repositoryType: type,
+        default: repositories.length === 0,
       };
-      this.settings!.repositories.push(newRepository);
-      await this.userSettingsPersister.save(this.settings!);
+      repositories.push(newRepository);
+      this.store?.set('repositories', repositories);
       return newRepository;
     }
 

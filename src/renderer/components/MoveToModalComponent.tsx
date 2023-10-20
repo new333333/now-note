@@ -66,6 +66,9 @@ const MoveToModalComponent = React.memo(
 
     const fetchMoveToList = useCallback(async () => {
       const moveToDTOs: MoveToDTO[] = await nowNoteAPI.getMoveToList();
+      if (moveToDTOs === undefined) {
+        return;
+      }
       const moveToNotes: MoveToListElement[] = [];
 
       for (let i = 0; i < moveToDTOs.length; i += 1) {

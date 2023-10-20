@@ -100,15 +100,12 @@ export default function DetailsNoteDescriptionComponent() {
       async (event: PointerEvent) => {
         const key = await clickedNoteLinkKey(event.target);
         if (key !== undefined) {
-          const note: NoteDTO | undefined =
-            await nowNoteAPI.getNoteWithDescription(key);
-          if (note !== undefined) {
-            await uiApi.openDetailNote(note);
-          }
+          const { openDetailNote } = uiApi;
+          await openDetailNote(key);
         }
       }
     );
-  }, [clickedNoteLinkKey]);
+  }, [clickedNoteLinkKey, uiApi]);
 
   const formats = [
     'header',
@@ -193,56 +190,7 @@ export default function DetailsNoteDescriptionComponent() {
     DetailsNoteDescriptionQuillLog.debug(`imageHandler() index=`, index);
     const imageSrc = `nn-asset://${asset.key}`;
     DetailsNoteDescriptionQuillLog.debug(`imageHandler() imageSrc=`, imageSrc);
-
-    // quill.insertEmbed(
-    //  index,
-    //  'image',
-    //  'aaa://s3-eu-west-1.amazonaws.com/fs.dev-lds.ru/avatars/16dd6beb-c3fd-94e8-cbe5-0699bcea9454.jpg',
-    //  'user'
-    //  );
-
     quill.insertEmbed(index, 'imageAsset', imageSrc, 'user');
-
-    // imageDataUrl=data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA0AAAACCAIAAAAM38H+AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAAEnQAABJ0Ad5mH3gAAAASdEVYdFNvZnR3YXJlAEdyZWVuc2hvdF5VCAUAAAArSURBVBhXY/gPBpMmTVFQVIGwkUFISHhZWQWQAVUHBBClEASRgwCQiKIKAGmFNmklmg1IAAAAAElFTkSuQmCC
-    // type = image/png
-    /*
-      imageData= {
-        dataUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA0AAAACCAIAAAAM38H+AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAAEnQAABJ0Ad5mH3gAAAASdEVYdFNvZnR3YXJlAEdyZWVuc2hvdF5VCAUAAAArSURBVBhXY/gPBpMmTVFQVIGwkUFISHhZWQWQAVUHBBClEASRgwCQiKIKAGmFNmklmg1IAAAAAElFTkSuQmCC',
-        type: 'image/png',
-        name: 'MzYxNTEzLjk0NDY1MTUzMDUzMTY5NDYwNTM0OTg5OA=.png'
-      }
-    */
-
-/*
-    const blob = imageData.toBlob();
-    const file = imageData.toFile();
-
-    DetailsNoteDescriptionQuillLog.debug(`NoteDescriptionQuill imageHandler() blob=`, blob);
-    DetailsNoteDescriptionQuillLog.debug(`NoteDescriptionQuill imageHandler() blob.text=`, await blob.text());
-    DetailsNoteDescriptionQuillLog.debug(`NoteDescriptionQuill imageHandler() file=`, file);
-*/
-/*
-    const blob = imageData.toBlob()
-    const file = imageData.toFile()
-
-    // generate a form data
-    const formData = new FormData()
-
-    // append blob data
-    formData.append('file', blob)
-
-    // or just append the file
-    formData.append('file', file)
-
-    // upload image to your server
-    callUploadAPI(your_upload_url, formData, (err, res) => {
-      if (err) return
-      // success? you should return the uploaded image's url
-      // then insert into the quill editor
-      let index = (quill.getSelection() || {}).index
-      if (index === undefined || index < 0) index = quill.getLength()
-      quill.insertEmbed(index, 'image', res.data.image_url, 'user')
-    })*/
   }, []);
 
   const modules = {

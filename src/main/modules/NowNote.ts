@@ -63,7 +63,7 @@ export default class NowNote {
     if (this.currentRepository !== undefined) {
       await this.currentRepository!.close();
     }
-    if (repository.type === SQLITE3_TYPE) {
+    if (repository.repositoryType === SQLITE3_TYPE) {
       this.currentUserSettingsRepository = repository;
       let repositoryPath = this.currentUserSettingsRepository.path;
       if (!path.isAbsolute(repositoryPath)) {
@@ -106,7 +106,7 @@ export default class NowNote {
       }
       return this.currentUserSettingsRepository;
     }
-    throw Error(`"${repository.type}" is unknown repository type.`);
+    throw Error(`"${repository.repositoryType}" is unknown repository type.`);
   }
 
   async connectDefaultRepository(): Promise<

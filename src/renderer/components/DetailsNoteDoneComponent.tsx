@@ -51,9 +51,7 @@ export default function DetailsNoteDoneComponent() {
 
   return (
     <div style={{ margin: '0 5px' }}>
-      <Tooltip placement="bottom" title={`Mark as{done ? ' NOT' : ''} Done`}>
-        <Checkbox disabled={trash} checked={done} onChange={handleChangeDone} />
-      </Tooltip>
+      <Checkbox disabled={trash} checked={done} onChange={handleChangeDone} />
     </div>
   );
 }

@@ -99,6 +99,7 @@ export default function App() {
 
         if (key === 'ON_ACTIVE_TREE_NODE') {
           parentKey = treeComponentRef.current.getActiveNodeKey();
+          console.log("addNote parentKey=", parentKey);
         }
 
         if (parentKey === undefined) {
