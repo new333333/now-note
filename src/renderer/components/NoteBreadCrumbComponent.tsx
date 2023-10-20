@@ -5,8 +5,8 @@ import { ItemType } from 'antd/es/breadcrumb/Breadcrumb';
 const noteBreadCrumbLog = log.scope('NoteBreadCrumbComponent');
 
 interface Props {
-  keyPath: string;
-  titlePath: string;
+  keyPath: string | undefined;
+  titlePath: string | undefined;
   handleOnClick: Function;
 }
 
