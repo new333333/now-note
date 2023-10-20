@@ -120,8 +120,8 @@ export default function App() {
         if (detailsNoteComponentRef.current === null) {
           return undefined;
         }
-        await detailsNoteComponentRef.current.setFocus();
         await uiApi.openDetailNote(newNote);
+        await detailsNoteComponentRef.current.setFocus();
         return newNote;
       },
       deleteNote: async (key: string) => {
@@ -247,7 +247,7 @@ export default function App() {
   if (currentRepository !== undefined && reindexingProgress === 100) {
     mainComponent = (
       <ReflexContainer orientation="horizontal">
-        <ReflexElement minSize={35} maxSize={35} style={{ overflow: 'hidden' }}>
+        <ReflexElement size={35} minSize={35} maxSize={35} style={{ overflow: 'hidden' }}>
           <div
             style={{
               padding: 8,
@@ -287,7 +287,7 @@ export default function App() {
             </ReflexElement>
           </ReflexContainer>
         </ReflexElement>
-        <ReflexElement minSize={37} maxSize={37} style={{ overflow: 'hidden' }}>
+        <ReflexElement size={37} minSize={37} maxSize={37} style={{ overflow: 'hidden' }}>
           <Footer reindexRepository={reindexRepository} />
         </ReflexElement>
       </ReflexContainer>
