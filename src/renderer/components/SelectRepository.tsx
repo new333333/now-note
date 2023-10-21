@@ -58,7 +58,7 @@ export default function SelectRepository({ setRepository }: Props) {
 
   return (
     <div className="nn-center-screen">
-      <Spin spinning={loading} size="large" tip="Open repository">
+      <Spin spinning={loading} size="large" tip="Open the repository. Creating a new repository can take a bit of time.">
         {contextHolder}
         <div style={{ margin: '10px 100px' }}>
           {repositories && (
