@@ -246,11 +246,11 @@ export default function App() {
 
   if (currentRepository !== undefined && reindexingProgress === 100) {
     mainComponent = (
-      <ReflexContainer orientation="horizontal">
-        <ReflexElement size={35} minSize={35} maxSize={35} style={{ overflow: 'hidden' }}>
+      <ReflexContainer orientation="horizontal" windowResizeAware>
+        <ReflexElement size={35}>
           <div
             style={{
-              padding: 8,
+              padding: 5,
               backgroundColor: '#eeeeee',
               borderBottom: '1px solid #dddddd',
               display: 'flex',
@@ -287,7 +287,7 @@ export default function App() {
             </ReflexElement>
           </ReflexContainer>
         </ReflexElement>
-        <ReflexElement size={37} minSize={37} maxSize={37} style={{ overflow: 'hidden' }}>
+        <ReflexElement size={35}>
           <Footer reindexRepository={reindexRepository} />
         </ReflexElement>
       </ReflexContainer>
