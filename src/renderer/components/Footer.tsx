@@ -31,13 +31,9 @@ export default function Footer({ reindexRepository }: Props) {
     <div
       style={{
         paddingLeft: 5,
-        paddingTop: 5,
+        padding: 5,
         backgroundColor: '#eeeeee',
         borderTop: '1px solid #dddddd',
-        display: 'flex',
-        alignItems: 'left',
-        justifyContent: 'left',
-        height: '100%',
       }}
     >
       <Tooltip title="Choose other Repository">
