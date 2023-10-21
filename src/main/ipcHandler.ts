@@ -106,8 +106,35 @@ export default class IpcHandler {
 
     this.ipcMain.handle(
       'getChildren',
-      async (_event, key, trash): Promise<Array<NoteDTO> | undefined> => {
-        return this.nowNote.getChildren(key, trash);
+      async (
+        _event,
+        key,
+        trash,
+        limit
+      ): Promise<Array<NoteDTO> | undefined> => {
+        console.log(
+          `IpcHandler.getChildren() key=, trash=, limit=`,
+          key,
+          trash,
+          limit
+        );
+        return this.nowNote.getChildren(key, trash, limit);
+      }
+    );
+
+    this.ipcMain.handle(
+      'getNext',
+      async (_event, key): Promise<NoteDTO | undefined> => {
+        console.log(`IpcHandler.getNext() key=`, key);
+        return this.nowNote.getNext(key);
+      }
+    );
+
+    this.ipcMain.handle(
+      'getPrevious',
+      async (_event, key): Promise<NoteDTO | undefined> => {
+        console.log(`IpcHandler.getPrevious() key=`, key);
+        return this.nowNote.getPrevious(key);
       }
     );
 
@@ -205,11 +232,10 @@ export default class IpcHandler {
       async (
         _event,
         key: string,
-        to: string,
-        hitMode: HitMode,
-        relativTo: string | undefined
+        to: string | undefined,
+        hitMode: HitMode
       ): Promise<void> => {
-        return this.nowNote.moveNote(key, to, hitMode, relativTo);
+        return this.nowNote.moveNote(key, to, hitMode);
       }
     );
 

@@ -34,9 +34,16 @@ const electronHandler: ElectronIPCRenderer = {
 
     getChildren: (
       key: string,
-      trash: boolean
+      trash?: boolean,
+      limit?: number
     ): Promise<Array<NoteDTO> | undefined> =>
-      ipcRenderer.invoke('getChildren', key, trash),
+      ipcRenderer.invoke('getChildren', key, trash, limit),
+
+    getNext: (key: string): Promise<NoteDTO | undefined> =>
+      ipcRenderer.invoke('getNext', key),
+
+    getPrevious: (key: string): Promise<NoteDTO | undefined> =>
+      ipcRenderer.invoke('getPrevious', key),
 
     getNoteWithDescription: (
       key: string,
@@ -95,13 +102,8 @@ const electronHandler: ElectronIPCRenderer = {
         relativeToKey
       ),
 
-    moveNote: (
-      key: string,
-      to: string,
-      hitMode: HitMode,
-      relativTo: string | undefined
-    ): Promise<void> =>
-      ipcRenderer.invoke('moveNote', key, to, hitMode, relativTo),
+    moveNote: (key: string, to: string, hitMode: HitMode): Promise<void> =>
+      ipcRenderer.invoke('moveNote', key, to, hitMode),
 
     moveNoteToTrash: (key: string): Promise<boolean> =>
       ipcRenderer.invoke('moveNoteToTrash', key),

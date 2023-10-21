@@ -39,13 +39,35 @@ export class NowNoteAPIImpl implements NowNoteAPI {
 
   async getChildren(
     key: string,
-    trash: boolean
+    trash?: boolean,
+    limit?: number
   ): Promise<NoteDTO[] | undefined> {
+    console.log(
+      `NowNoteAPI.getChildren() key=, trash=, limit=`,
+      key,
+      trash,
+      limit
+    );
     const children: NoteDTO[] | undefined = await this.îpcRenderer.getChildren(
       key,
-      trash
+      trash,
+      limit
     );
     return children;
+  }
+
+  async getNext(key: string): Promise<NoteDTO | undefined> {
+    console.log(`NowNoteAPI.getNext() key=`, key);
+    const next: NoteDTO | undefined = await this.îpcRenderer.getNext(key);
+    return next;
+  }
+
+  async getPrevious(key: string): Promise<NoteDTO | undefined> {
+    console.log(`NowNoteAPI.getPrevious() key=, trash=, limit=`, key);
+    const previous: NoteDTO | undefined = await this.îpcRenderer.getPrevious(
+      key
+    );
+    return previous;
   }
 
   async getBacklinks(key: string): Promise<NoteDTO[] | undefined> {
@@ -89,11 +111,10 @@ export class NowNoteAPIImpl implements NowNoteAPI {
 
   async moveNote(
     key: string,
-    to: string,
-    hitMode: HitMode,
-    relativTo: string | undefined
+    to: string | undefined,
+    hitMode: HitMode
   ): Promise<void> {
-    return this.îpcRenderer.moveNote(key, to, hitMode, relativTo);
+    return this.îpcRenderer.moveNote(key, to, hitMode);
   }
 
   async moveNoteToTrash(key: string): Promise<boolean | undefined> {

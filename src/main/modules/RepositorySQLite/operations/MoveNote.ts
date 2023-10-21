@@ -9,14 +9,21 @@ import {
 import { setKeyAndTitlePath } from '../RepositorySQLiteUtils';
 import getChildrenCount from './GetChildrenCount';
 
+
+const moveNoteLog = log.scope('RepositorySQLite.moveNote');
+
 export default async function moveNote(
   repository: RepositoryIntern,
   key: string,
   to: string | undefined,
-  hitMode: HitMode,
-  relativTo: string | undefined
+  hitMode: HitMode
 ): Promise<void> {
-  log.debug(`RepositorySQLite.moveNote()...`);
+  moveNoteLog.debug(
+    `RepositorySQLite.moveNote() key=, to=, hitMode=`,
+    key,
+    to,
+    hitMode
+  );
 
   let toLocal: string | null = null;
   if (to !== undefined) {
@@ -26,6 +33,11 @@ export default async function moveNote(
   const modifyNote = await NoteModel.findByPk(key);
   if (modifyNote === null) {
     throw new NoteNotFoundByKeyError(key);
+  }
+
+  if (modifyNote.trash) {
+    moveNoteLog.debug(`RepositorySQLite.moveNote() note in trash, ignore move`);
+    return;
   }
 
   const prevParent = modifyNote.parent;
@@ -59,9 +71,9 @@ export default async function moveNote(
 
     modifyNote.position = max == null ? 0 : max + 1;
   } else if (hitMode === 'before') {
-    const relativNote = await NoteModel.findByPk(relativTo);
+    const relativNote = await NoteModel.findByPk(to);
     if (relativNote === null) {
-      throw new NoteNotFoundByKeyError(relativTo);
+      throw new NoteNotFoundByKeyError(to);
     }
 
     if (modifyNote.parent === relativNote.parent) {
@@ -138,9 +150,9 @@ export default async function moveNote(
       modifyNote.position = relativNote.position;
     }
   } else if (hitMode === 'after') {
-    const relativNote = await NoteModel.findByPk(relativTo);
+    const relativNote = await NoteModel.findByPk(to);
     if (relativNote === null) {
-      throw new NoteNotFoundByKeyError(relativTo);
+      throw new NoteNotFoundByKeyError(to);
     }
 
     if (modifyNote.parent === relativNote.parent) {

@@ -258,7 +258,11 @@ const TreeComponent = React.memo(
     }, []);
 
     const move = useCallback(
-      async (key: string, to: string, hitMode: HitMode) => {
+      async (
+        key: string,
+        to: string | undefined | null,
+        hitMode: HitMode,
+      ): Promise<boolean> => {
         if (fancyTreeRef.current === null) {
           return false;
         }
@@ -272,7 +276,7 @@ const TreeComponent = React.memo(
         console.log(`move, to=, node=, moveToNode=`, to, node, moveToNode);
 
         if (node !== null && moveToNode !== null) {
-          await node.moveTo(moveToNode, hitMode);
+          node.moveTo(moveToNode, hitMode);
           return true;
         }
         if (node !== null) {
@@ -282,6 +286,7 @@ const TreeComponent = React.memo(
         if (moveToNode !== null) {
           await reloadNode(moveToNode);
         }
+        return true;
       },
       [reloadNode]
     );
@@ -312,11 +317,11 @@ const TreeComponent = React.memo(
             const node = fancyTreeRef.current.getNodeByKey(key);
             return reloadNode(node);
           },
-          move: async (
+          move: (
             key: string,
-            to: string,
+            to: string | undefined | null,
             hitMode: HitMode
-          ): Promise<void> => {
+          ): Promise<boolean> => {
             return move(key, to, hitMode);
           },
         };
@@ -456,7 +461,7 @@ const TreeComponent = React.memo(
         }
         if (data !== undefined && data.node) {
           data.result = async () => {
-            const children = await nowNoteAPI.getChildren(data.node.key, trash);
+            const children = await nowNoteAPI.getChildren(data.node.key);
             log.debug(
               `Tree.loadTree() key=${data.node.key} trash=${trash} -> children.length=${children.length}`
             );
@@ -610,6 +615,10 @@ const TreeComponent = React.memo(
                   moveToParent: {
                     name: "to Parent"
                   },
+                  sep3: "---------",
+                  moveToRoot: {
+                    name: "to Root"
+                  },
                 },
               };
             }
@@ -630,6 +639,7 @@ const TreeComponent = React.memo(
               addNote,
               openMoveToDialog,
               restoreNote,
+              moveNote,
             } = uiApi;
 
             if (action === 'open') {
@@ -642,6 +652,35 @@ const TreeComponent = React.memo(
               restoreNote(node.key);
             } else if (action === 'moveTo') {
               await openMoveToDialog(node.key);
+            } else if (action === 'moveToRoot') {
+              await moveNote(node.key, undefined);
+            } else if (action === 'moveToParent') {
+              if (node.parent === null || node.parent.parent === null) {
+                return;
+              }
+              let parentNodeKey: string | undefined = node.parent.parent.key;
+              console.log(`TreeComponent parentNodeKey=`, parentNodeKey);
+              if (parentNodeKey.startsWith('root_')) {
+                parentNodeKey = undefined;
+              }
+              console.log(`TreeComponent node.key=, parentNodeKey=`, node.key, parentNodeKey);
+              await moveNote(node.key, parentNodeKey);
+            } else if (action === 'moveToTop') {
+              let to: string | undefined = node.parent.key;
+              if (to.startsWith('root_')) {
+                to = undefined;
+              }
+              await moveNote(node.key, to, 'firstChild');
+            } else if (action === 'moveToBottom') {
+              let to: string | undefined = node.parent.key;
+              if (to.startsWith('root_')) {
+                to = undefined;
+              }
+              await moveNote(node.key, to, 'over');
+            } else if (action === 'moveOneUp') {
+              await moveNote(node.key, undefined, 'up');
+            } else if (action === 'moveOneDown') {
+              await moveNote(node.key, undefined, 'down');
             }
           },
         },
@@ -737,14 +776,15 @@ const TreeComponent = React.memo(
 
             if (data.otherNode) {
               // ignore mode, always move
-              var oldParentNote = data.otherNode.parent;
+              const oldParentNote: FancytreeNode = data.otherNode.parent;
 
               // hitMode === "after" || hitMode === "before" || hitMode === "over"
               console.log('data.hitMode', data.hitMode);
 
-              var key = data.otherNode.key;
-              var from = oldParentNote.key;
-              var to = data.hitMode === 'over' ? node.key : node.parent.key;
+              const { key } = data.otherNode;
+              const from = oldParentNote.key;
+              // let to = data.hitMode === 'over' ? node.key : node.parent.key;
+              let to = node.key;
 
               console.log('key, from, to', key, from, to);
 
@@ -752,7 +792,10 @@ const TreeComponent = React.memo(
               if (key !== to) {
                 log.debug(
                   `Tree.dragDrop(), key=${key}, from=${from}, to=${to}, data.hitMode=${data.hitMode}, node.key=${node.key}`);
-                await nowNoteAPI.moveNote(key, to, data.hitMode, node.key);
+                if (to.startsWith('root_')) {
+                  to = undefined;
+                }
+                await nowNoteAPI.moveNote(key, to, data.hitMode);
                 data.otherNode.moveTo(node, data.hitMode);
               }
 
@@ -833,7 +876,6 @@ const TreeComponent = React.memo(
       handleChangeExpanded,
       uiApi,
       handleChangeDone,
-      reloadNode,
     ]);
 
     useEffect(() => {

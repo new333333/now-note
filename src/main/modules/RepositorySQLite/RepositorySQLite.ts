@@ -37,6 +37,8 @@ import getBacklinks from './operations/GetBacklinks';
 import getPriorityStatistics from './operations/GetPriorityStatistics';
 import search from './operations/Search';
 import getChildren from './operations/GetChildren';
+import getNext from './operations/GetNext';
+import getPrevious from './operations/GetPrevious';
 import removeTag from './operations/RemoveTag';
 import addTag from './operations/AddTag';
 import findTag from './operations/FindTag';
@@ -131,10 +133,9 @@ export default class RepositorySQLite implements RepositoryIntern {
   async moveNote(
     key: string,
     to: string | undefined,
-    hitMode: HitMode,
-    relativTo: string | undefined
+    hitMode: HitMode
   ): Promise<void> {
-    return moveNote(this, key, to, hitMode, relativTo);
+    return moveNote(this, key, to, hitMode);
   }
 
   async moveNoteToTrash(key: string | undefined): Promise<boolean> {
@@ -186,9 +187,18 @@ export default class RepositorySQLite implements RepositoryIntern {
 
   async getChildren(
     key: string | null | undefined,
-    trash: boolean = false
+    trash?: boolean,
+    limit?: number
   ): Promise<Array<NoteDTO>> {
-    return getChildren(this, key, trash);
+    return getChildren(this, key, trash, limit);
+  }
+
+  async getNext(key: string | null | undefined): Promise<NoteDTO> {
+    return getNext(this, key);
+  }
+
+  async getPrevious(key: string | null | undefined): Promise<NoteDTO> {
+    return getPrevious(this, key);
   }
 
   async addTag(key: string, tag: string): Promise<string> {

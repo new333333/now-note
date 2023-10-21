@@ -51,8 +51,47 @@ export default function DetailsNoteMenuComponent() {
     }
     if (!trash) {
       menuItems.push({
-        key: 'moveTo',
-        label: 'Move to...',
+        key: 'move',
+        label: 'Move...',
+        children: [
+          {
+            key: 'moveTo',
+            label: 'Find...',
+          },
+          {
+            type: 'divider',
+          },
+          {
+            key: 'moveToTop',
+            label: 'to Top',
+          },
+          {
+            key: 'moveOneUp',
+            label: 'One Up',
+          },
+          {
+            key: 'moveOneDown',
+            label: 'One Down',
+          },
+          {
+            key: 'moveToBottom',
+            label: 'to Bottom',
+          },
+          {
+            type: 'divider',
+          },
+          {
+            key: 'moveToParent',
+            label: 'to Parent',
+          },
+          {
+            type: 'divider',
+          },
+          {
+            key: 'moveToRoot',
+            label: 'to Root',
+          },
+        ],
       });
     }
 
@@ -82,13 +121,14 @@ export default function DetailsNoteMenuComponent() {
   };
 
   const handleClickMenu = useCallback(
-    (option): MenuProps['onClick'] => {
+    async (option): MenuProps['onClick'] => {
       const {
         addNote,
         deleteNote,
         restoreNote,
         focusNodeInTree,
         openMoveToDialog,
+        moveNote,
       } = uiApi;
       if (noteKey === null || noteKey === undefined) {
         return;
@@ -103,12 +143,24 @@ export default function DetailsNoteMenuComponent() {
         restoreNote(noteKey);
       } else if (option.key === 'moveTo') {
         openMoveToDialog(noteKey);
+      } else if (option.key === 'moveToTop') {
+        moveNote(noteKey, parent !== null ? parent : undefined, 'firstChild');
+      } else if (option.key === 'moveOneUp') {
+        moveNote(noteKey, undefined, 'up');
+      } else if (option.key === 'moveOneDown') {
+        moveNote(noteKey, undefined, 'down');
+      } else if (option.key === 'moveToBottom') {
+        moveNote(noteKey, parent !== null ? parent : undefined, 'over');
+      } else if (option.key === 'moveToParent') {
+        await moveNote(noteKey, parent !== null ? parent : undefined);
+      } else if (option.key === 'moveToRoot') {
+        await moveNote(noteKey, undefined);
       } else if (option.key === 'history') {
         // TODO
         nowNoteAPI.showHistory(noteKey);
       }
     },
-    [noteKey, uiApi]
+    [noteKey, parent, uiApi]
   );
 
   if (noteKey === null) {
@@ -119,15 +171,14 @@ export default function DetailsNoteMenuComponent() {
     <Dropdown
       menu={{ items: menuItems, onClick: handleClickMenu }}
       dropdownRender={(menu) => (
-
         <div style={contentStyle}>
           {React.cloneElement(menu as React.ReactElement, { style: menuStyle })}
           <div style={{padding: 10}}>
-                <div className="nn-note-metadata">Last modified: {updatedAt.toLocaleString()}</div>
-                <div className="nn-note-metadata">Created on: {createdAt.toLocaleString()}</div>
-                <div className="nn-note-metadata">Created by: {createdBy}</div>
-                <div className="nn-note-metadata">Id: {noteKey}</div>
-              </div>
+            <div className="nn-note-metadata">Last modified: {updatedAt.toLocaleString()}</div>
+            <div className="nn-note-metadata">Created on: {createdAt.toLocaleString()}</div>
+            <div className="nn-note-metadata">Created by: {createdBy}</div>
+            <div className="nn-note-metadata">Id: {noteKey}</div>
+          </div>
         </div>
       )}>
       <Button shape="circle" icon={<EllipsisOutlined />} size="small" />

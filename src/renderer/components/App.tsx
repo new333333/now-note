@@ -28,7 +28,7 @@ interface TreeComponentAPI {
   updateNode(note: NoteDTO): Promise<void>;
   focusNode(key: string): Promise<void>;
   reloadNode(key: string): Promise<boolean>;
-  move(key: string, to: string, hitMode: HitMode): Promise<boolean>;
+  move(key: string, to: string | undefined, hitMode: HitMode): Promise<boolean>;
 }
 
 interface DetailsNoteComponentAPI {
@@ -205,11 +205,56 @@ export default function App() {
         }
         moveToModalComponentRef.current.open(key);
       },
-      moveNote: async (key: string, moveToKey: string) => {
-        appLog.debug(`moveNote key=${key} moveToKey=${moveToKey}`);
-        await nowNoteAPI.moveNote(key, moveToKey, 'over', undefined);
+      moveNote: async (
+        key: string,
+        moveToKeyParam: string,
+        hitModeParam?: HitMode
+      ) => {
+        appLog.debug(
+          `moveNote key=${key} moveToKeyParam=${moveToKeyParam} hitModeParam=${hitModeParam}`
+        );
+        let to: string | undefined = moveToKeyParam;
+        let hitMode = hitModeParam;
+        if (hitMode === undefined) {
+          hitMode = 'over';
+        }
+        if (hitMode === 'firstChild') {
+          const children: NoteDTO[] | undefined = await nowNoteAPI.getChildren(
+            to,
+            false,
+            1
+          );
+          console.log(`moveNote children=`, children);
+          if (children !== undefined && children.length === 0) {
+            hitMode = 'over';
+          } else if (children !== undefined && children.length > 0) {
+            to = children[0].key !== null ? children[0].key : undefined;
+            hitMode = 'before';
+          }
+        }
+        if (hitMode === 'down') {
+          const nextNote: NoteDTO | undefined | null = await nowNoteAPI.getNext(
+            key
+          );
+          if (nextNote === undefined || nextNote === null) {
+            return;
+          }
+          to = nextNote.key !== null ? nextNote.key : undefined;
+          hitMode = 'after';
+        }
+        if (hitMode === 'up') {
+          const previousNote: NoteDTO | undefined | null =
+            await nowNoteAPI.getPrevious(key);
+          if (previousNote === undefined || previousNote === null) {
+            return;
+          }
+          to = previousNote.key !== null ? previousNote.key : undefined;
+          hitMode = 'before';
+        }
+
+        await nowNoteAPI.moveNote(key, to, hitMode);
         if (treeComponentRef.current !== null) {
-          await treeComponentRef.current.move(key, moveToKey, 'over');
+          await treeComponentRef.current.move(key, to, hitMode);
         }
         await uiApi.openDetailNote(key);
       },

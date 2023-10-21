@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars */
 import { createContext } from 'react';
-import { NoteDTO, UserSettingsRepository } from 'types';
+import { HitMode, NoteDTO, UserSettingsRepository } from 'types';
 
 export type UIApi = {
   setRepository(repository: UserSettingsRepository): Promise<void>;
@@ -14,7 +14,7 @@ export type UIApi = {
   updateNodeInTree(note: NoteDTO): Promise<void>;
   focusNodeInTree(key: string): Promise<void>;
   openMoveToDialog(key: string): Promise<void>;
-  moveNote(key: string, moveToKey: string): Promise<void>;
+  moveNote(key: string, moveToKey?: string, hitMode?: HitMode): Promise<void>;
 };
 
 const UIApiDispatch = createContext<UIApi>(null);

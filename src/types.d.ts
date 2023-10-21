@@ -97,7 +97,13 @@ export interface SearchResultOptions {
 export interface Repository {
   authenticate(): Promise<void>;
   close(): Promise<void>;
-  getChildren(key: string, trash: boolean): Promise<Array<NoteDTO> | undefined>;
+  getChildren(
+    key: string,
+    trash?: boolean,
+    limit?: number
+  ): Promise<Array<NoteDTO> | undefined>;
+  getNext(key: string): Promise<NoteDTO | undefined>;
+  getPrevious(key: string): Promise<NoteDTO | undefined>;
   getNoteWithDescription(
     key: string,
     withoutDescription?: boolean
@@ -124,9 +130,8 @@ export interface Repository {
   ): Promise<NoteDTO | undefined>;
   moveNote(
     key: string,
-    to: string,
-    hitMode: HitMode,
-    relativTo: string | undefined
+    to: string | undefined,
+    hitMode: HitMode
   ): Promise<void>;
   moveNoteToTrash(key: string): Promise<boolean>;
   restore(key: string): Promise<boolean>;
@@ -166,8 +171,11 @@ export interface NowNoteAPI {
   ): Promise<NoteDTO | undefined>;
   getChildren(
     key: string | null | undefined,
-    trash?: boolean
+    trash?: boolean,
+    limit?: number
   ): Promise<Array<NoteDTO> | undefined>;
+  getNext(key: string): Promise<NoteDTO | undefined>;
+  getPrevious(key: string): Promise<NoteDTO | undefined>;
   getBacklinks(key: string): Promise<Array<NoteDTO> | undefined>;
   search(
     searchText: string,
@@ -179,12 +187,11 @@ export interface NowNoteAPI {
   addNote(
     parentNoteKey: string,
     note: NoteDTO,
-    hitMode: HitMode,
-    relativeToKey?: string
+    hitMode: HitMode
   ): Promise<NoteDTO | undefined>;
   moveNote(
     key: string,
-    to: string,
+    to: string | undefined,
     hitMode: HitMode,
     relativTo: string | undefined
   ): Promise<void>;

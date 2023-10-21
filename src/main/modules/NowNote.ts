@@ -157,10 +157,25 @@ export default class NowNote {
 
   async getChildren(
     key: string,
-    trash: boolean
+    trash?: boolean,
+    limit?: number
   ): Promise<Array<NoteDTO> | undefined> {
     if (this.currentRepository !== undefined) {
-      return this.currentRepository.getChildren(key, trash);
+      return this.currentRepository.getChildren(key, trash, limit);
+    }
+    return Promise.resolve(undefined);
+  }
+
+  async getNext(key: string): Promise<NoteDTO | undefined> {
+    if (this.currentRepository !== undefined) {
+      return this.currentRepository.getNext(key);
+    }
+    return Promise.resolve(undefined);
+  }
+
+  async getPrevious(key: string): Promise<NoteDTO | undefined> {
+    if (this.currentRepository !== undefined) {
+      return this.currentRepository.getPrevious(key);
     }
     return Promise.resolve(undefined);
   }
@@ -266,17 +281,11 @@ export default class NowNote {
 
   async moveNote(
     key: string,
-    to: string,
-    hitMode: HitMode,
-    relativeToKey: string | undefined
+    to: string | undefined,
+    hitMode: HitMode
   ): Promise<void> {
     if (this.currentRepository !== undefined) {
-      await this.currentRepository.moveNote(
-        key,
-        to,
-        hitMode,
-        relativeToKey
-      );
+      await this.currentRepository.moveNote(key, to, hitMode);
     }
   }
 
