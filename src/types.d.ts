@@ -47,7 +47,6 @@ export interface NoteDTO {
   createdAt?: Date | null;
   updatedAt?: Date | null;
   restoreParentKey?: string | null;
-  linkToKey?: string | null;
   keyPath?: string;
   titlePath?: string;
   childrenCount?: number;

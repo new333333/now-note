@@ -27,10 +27,6 @@ export default function DetailsNoteTypeComponent() {
       key: 'task',
       label: `Task`,
     },
-    {
-      key: 'link',
-      label: `Link`,
-    },
   ];
 
   function getNoteTypeLabel(t: string | null | undefined) {

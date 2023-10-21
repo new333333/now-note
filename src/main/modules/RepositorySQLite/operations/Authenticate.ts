@@ -91,11 +91,6 @@ export default async function authenticate(
         allowNull: true,
         unique: false,
       },
-      linkToKey: {
-        type: DataTypes.UUID,
-        allowNull: true,
-        unique: false,
-      },
       createdAt: DataTypes.DATE,
       updatedAt: DataTypes.DATE,
       keyPath: {

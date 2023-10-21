@@ -117,7 +117,6 @@ export default async function addNote(
     priority: note.priority || 0,
     expanded,
     trash: false,
-    linkToKey: note.linkToKey,
     keyPath: '',
     titlePath: '',
     tags: '',
@@ -138,14 +137,6 @@ export default async function addNote(
   newNote.childrenCount = 0;
 
   await newNote.save();
-
-  if (newNote.linkToKey) {
-    await LinkModel.create({
-      from: newNote.key,
-      to: newNote.linkToKey,
-      type: 'note',
-    });
-  }
 
   await repository.addNoteIndex(newNote);
 

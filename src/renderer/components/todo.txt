@@ -1,6 +1,6 @@
 - Move top/bottom/up/down/parent
 - Statt link or query: copy note with link to orginal
-- use https://github.com/sindresorhus/electron-store
+- next / back button
 - editor: color/backgorund color doesn't work
 - query note!
   - query / synchronize extrernal sources?

@@ -34,8 +34,6 @@ type DetailsNoteState = {
 
   restoreParentKey: string | null;
 
-  linkToKey: string | null;
-
   keyPath: string | null;
 
   titlePath: string | null;
@@ -121,8 +119,6 @@ const useDetailsNoteStore = create<DetailsNoteState & DetailsNoteAction>(
     updatedAt: null,
 
     restoreParentKey: null,
-
-    linkToKey: null,
 
     keyPath: null,
 
@@ -237,7 +233,6 @@ const useDetailsNoteStore = create<DetailsNoteState & DetailsNoteAction>(
         createdAt: note !== undefined ? note.createdAt : null,
         updatedAt: note !== undefined ? note.updatedAt : null,
         restoreParentKey: note !== undefined ? note.restoreParentKey : null,
-        linkToKey: note !== undefined ? note.linkToKey : null,
         keyPath: note !== undefined ? note.keyPath : null,
         titlePath: note !== undefined ? note.titlePath : null,
         childrenCount: note !== undefined ? note.childrenCount : null,
@@ -262,7 +257,6 @@ const useDetailsNoteStore = create<DetailsNoteState & DetailsNoteAction>(
           createdAt: note.createdAt,
           updatedAt: note.updatedAt,
           restoreParentKey: note.restoreParentKey,
-          linkToKey: note.linkToKey,
           keyPath: note.keyPath,
           titlePath: note.titlePath,
           childrenCount: note.childrenCount,

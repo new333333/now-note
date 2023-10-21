@@ -67,7 +67,6 @@ const TreeComponent = React.memo(
           'priority',
           'type',
           'trash',
-          'linkToKey',
         ].forEach((attr) => {
           if (attr in note) {
             node.data[attr] = note[attr];
@@ -94,13 +93,8 @@ const TreeComponent = React.memo(
         // node.data.trash = note.trash;
 
         // node.data.tags = note.tags;
-        // node.data.linkToKey = note.linkToKey;
-        // node.data.linkedNote = note.linkedNote;
         // node.lazy = true;
-        // if (node.data.linkedNote) {
-        //   node.title = node.data.linkedNote.title;
-        // }
-        // if (node.data.linkedNote || !note.hasChildren) {
+        // if (!note.hasChildren) {
         //  node.children = [];
         // }
 
@@ -114,13 +108,8 @@ const TreeComponent = React.memo(
 
         node.unselectable = note.trash;
 
-        if (node.data.linkToKey) {
-          // node.checkbox = node.data.linkedNote.type !== undefined && node.data.linkedNote.type === "task";
-          // node.selected = node.data.linkedNote.done !== undefined && node.data.linkedNote.done;
-        } else {
-          node.checkbox = node.data.type !== undefined && node.data.type === 'task';
-          node.selected = node.data.done !== undefined && node.data.done;
-        }
+        node.checkbox = node.data.type !== undefined && node.data.type === 'task';
+        node.selected = node.data.done !== undefined && node.data.done;
         return node;
       },
       []
@@ -406,12 +395,7 @@ const TreeComponent = React.memo(
           node.data.priority = node.priority;
           node.data.type = node.type;
           node.data.tags = node.tags;
-          node.data.linkToKey = node.linkToKey;
-          node.data.linkedNote = node.linkedNote;
           node.data.trash = node.trash;
-          if (node.data.linkedNote) {
-            node.title = node.data.linkedNote.title;
-          }
 
           delete node.parent;
           delete node.modifiedOn;
@@ -423,13 +407,10 @@ const TreeComponent = React.memo(
           delete node.priority;
           delete node.type;
           delete node.tags;
-          delete node.linkToKey;
-          delete node.linkedNote;
 
           node.lazy = true;
 
           if (
-            node.data.linkedNote ||
             node.childrenCount === 0 ||
             node.childrenCount === '0' ||
             node.childrenCount === null
@@ -450,13 +431,8 @@ const TreeComponent = React.memo(
         node.data = node.data || {};
         node.unselectable = node.trash;
 
-        if (node.data.linkedNote) {
-          node.checkbox = node.data.linkedNote.type !== undefined && node.data.linkedNote.type === "task";
-          node.selected = node.data.linkedNote.done !== undefined && node.data.linkedNote.done;
-        } else {
-          node.checkbox = node.data.type !== undefined && node.data.type === "task";
-          node.selected = node.data.done !== undefined && node.data.done;
-        }
+        node.checkbox = node.data.type !== undefined && node.data.type === "task";
+        node.selected = node.data.done !== undefined && node.data.done;
 
         return node;
       }
@@ -555,22 +531,6 @@ const TreeComponent = React.memo(
           if (data.node.statusNodeType === 'loading') {
             return false;
           }
-          if (data.node.data.linkedNote) {
-            // return {html: ReactDOMServer.renderToString(<FontAwesomeIcon icon={solid("note-sticky")} />)}
-            console.log('Tree icon data.linkedNote', data.node.data.linkedNote);
-            console.log('Tree icon data.linkToKey', data.node.data.linkToKey);
-            return {
-              html: ReactDOMServer.renderToString(
-                <i
-                  data-nnlinktonote={data.node.data.linkToKey}
-                  className="fa-solid fa-square-up-right"
-                  style={{
-                    color: blue[5],
-                    cursor: 'pointer',
-                  }}
-                />
-              )};
-          }
           // return {html: ReactDOMServer.renderToString(<FontAwesomeIcon icon={solid("check")} />)}
           return false;
         },
@@ -613,13 +573,6 @@ const TreeComponent = React.memo(
             await openDetailNote(data.node.key);
           }
 
-          /*
-          TODO: link
-          if (data.targetType == "title") {
-            self.props.openNoteDetails(data.node.key);
-          } else if (data.originalEvent.target.dataset.nnlinktonote) {
-            self.props.openNoteInTreeAndDetails(data.originalEvent.target.dataset.nnlinktonote, false);
-          } */
         },
 
         select: (event, data) => {
@@ -631,13 +584,34 @@ const TreeComponent = React.memo(
           menu: (node: FancytreeNode) => {
             console.log('Tree contextMenu node=', node);
             const menu = {};
-            // TODO: link note
-            if (node.data.linkToKey) {
-              menu['gotoLinkedFrom'] = { name: 'Go to linked Note' };
-            }
             if (!node.data.trash) {
               menu['add'] = { name: 'Add' };
-              menu['moveTo'] = { name: 'Move to...' };
+              menu['createLink'] = { name: 'Create link to this in...' };
+              menu['moveToMenus'] = {
+                name: 'Move...',
+                items: {
+                  moveTo: {
+                    name: "Find..."
+                  },
+                  sep1: "---------",
+                  moveToTop: {
+                    name: "to Top"
+                  },
+                  moveOneUp: {
+                    name: "One Up"
+                  },
+                  moveOneDown: {
+                    name: "One Down"
+                  },
+                  moveToBottom: {
+                    name: "to Bottom"
+                  },
+                  sep2: "---------",
+                  moveToParent: {
+                    name: "to Parent"
+                  },
+                },
+              };
             }
             menu['open'] = { name: 'Show Note' };
             menu['delete'] = {
@@ -649,6 +623,7 @@ const TreeComponent = React.memo(
             return menu;
           },
           actions: async (node: FancytreeNode, action: string, options) => {
+            console.log(`actions action=`, action);
             const {
               openDetailNote,
               deleteNote,
@@ -665,15 +640,6 @@ const TreeComponent = React.memo(
               await deleteNote(node.key);
             } else if (action === 'restore') {
               restoreNote(node.key);
-            } else if (action === 'gotoLinkedFrom') {
-              // TODO: implement linked note
-              console.log(
-                'FancyTree contextMenu gotoLinkedFrom',
-                node.data.linkToKey
-              );
-              self.props
-                .openNoteInTreeAndDetails(node.data.linkToKey, false)
-                .then(function () {});
             } else if (action === 'moveTo') {
               await openMoveToDialog(node.key);
             }
@@ -784,45 +750,10 @@ const TreeComponent = React.memo(
 
               // drop on itself
               if (key !== to) {
-                if (data.dropEffectSuggested === 'link') {
-                  // create link when dragged with 'alt'
-                  self.props.dataService
-                    .addNote(
-                      node.key,
-                      {
-                        // title: "Link to " + key,
-                        type: 'link',
-                        linkToKey: key,
-                        // priority: newNoteData.priority,
-                        // done: newNoteData.done,
-                        //expanded: false,
-                      },
-                      'firstChild',
-                      to
-                    )
-                    .then(function (newNoteData) {
-                      if (node.key.startsWith('root_')) {
-                        self.fancytree.reload().then(function () {
-                          self.props.openNoteInTreeAndDetails(
-                            newNoteData.key,
-                            false
-                          );
-                        resolve(newNoteData);
-                      });
-                      } else {
-                        node.resetLazy();
-                        self.props.openNoteInTreeAndDetails(
-                          newNoteData.key,
-                          false
-                        );
-                      }
-                    });
-                } else {
-                  log.debug(
-                    `Tree.dragDrop(), key=${key}, from=${from}, to=${to}, data.hitMode=${data.hitMode}, node.key=${node.key}`);
-                  await nowNoteAPI.moveNote(key, to, data.hitMode, node.key);
-                  data.otherNode.moveTo(node, data.hitMode);
-                }
+                log.debug(
+                  `Tree.dragDrop(), key=${key}, from=${from}, to=${to}, data.hitMode=${data.hitMode}, node.key=${node.key}`);
+                await nowNoteAPI.moveNote(key, to, data.hitMode, node.key);
+                data.otherNode.moveTo(node, data.hitMode);
               }
 
               // data.tree.render(true, false);

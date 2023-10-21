@@ -44,8 +44,6 @@ export class NoteModel extends Model<
 
   declare restoreParentKey: CreationOptional<string | null>;
 
-  declare linkToKey: string | null;
-
   declare keyPath: string;
 
   declare titlePath: string;
