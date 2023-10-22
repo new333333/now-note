@@ -1,6 +1,6 @@
 import log from 'electron-log';
 import { useEffect, useRef, useCallback, useMemo } from 'react';
-import { ConfigProvider } from 'antd';
+import { ConfigProvider, Space } from 'antd';
 import '../css/App.scss';
 import useNoteStore from 'renderer/GlobalStore';
 import { ReflexContainer, ReflexSplitter, ReflexElement } from 'react-reflex';
@@ -12,6 +12,7 @@ import {
   HitMode,
   MoveToModalComponentAPI,
   NoteDTO,
+  OpenHistoryDTO,
   SettingsDTO,
   TreeComponentAPI,
   UserSettingsRepository,
@@ -28,6 +29,7 @@ import TrashButton from './TrashButton';
 import DetailsNoteComponent from './DetailsNoteComponent';
 import MoveToModalComponent from './MoveToModalComponent';
 import CreateLinkModalComponent from './CreateLinkModalComponent';
+import NextPrevButtonsComponent from './NextPrevButtonsComponent';
 
 const appLog = log.scope('App');
 
@@ -52,6 +54,7 @@ export default function App() {
     ]
   );
 
+  // const detailsNoteKey = useDetailsNoteStore((state) => state.noteKey);
   const detailsNoteUpdateNote = useDetailsNoteStore(
     (state) => state.updateNote
   );
@@ -134,17 +137,20 @@ export default function App() {
               note.titlePath !== undefined
                 ? note.titlePath
                     .substring(2, note.titlePath.length - 2)
-                    .replaceAll('/', ' / ')
+                    .replaceAll('/', ' > ')
                 : '',
             type: 'note',
             description: `<p><span class="mention" data-index="0" data-denotation-char="/" data-id="${note.key}"></span></p>`,
           },
           'firstChild'
         );
+        await nowNoteAPI.addCreatedLinkIn(parentKey);
         if (treeComponentRef.current === null || newNote === undefined) {
           return;
         }
         await treeComponentRef.current.addNode(newNote);
+        await uiApi.focusNodeInTree(newNote.key);
+        await uiApi.openDetailNote(newNote.key);
       },
       deleteNote: async (key: string) => {
         if (treeComponentRef.current === null) {
@@ -179,8 +185,18 @@ export default function App() {
         }
         return true;
       },
-      openDetailNote: async (noteOrKey: NoteDTO | string | undefined) => {
+      openDetailNote: async (
+        noteOrKey: NoteDTO | string | undefined,
+        ignoreHistory?: boolean
+      ) => {
         let note: NoteDTO | undefined;
+        /*if (
+          noteOrKey === null ||
+          noteOrKey === undefined
+          // && noteOrKey === detailsNoteKey
+        ) {
+          return;
+        }*/
         if (typeof noteOrKey === 'string') {
           note = await nowNoteAPI.getNoteWithDescription(noteOrKey, false);
         } else {
@@ -197,6 +213,10 @@ export default function App() {
           nowNoteAPI.modifySettings({
             detailsNoteKey: note.key,
           });
+          if (ignoreHistory === undefined || !ignoreHistory) {
+            nowNoteAPI.addOpenHistory(note.key);
+            // setOpenHistoryId(undefined);
+          }
         }
       },
       updateDetailNote: async (note: NoteDTO) => {
@@ -285,6 +305,46 @@ export default function App() {
         }
         await uiApi.openDetailNote(key);
       },
+      openDetailsPrevious: async (
+        openHistoryId: number | undefined
+      ): Promise<number | undefined> => {
+        console.log(`App.openDetailsPrevious() openHistoryId=`, openHistoryId);
+        const previousNote: OpenHistoryDTO | undefined =
+          await nowNoteAPI.getOpenHistoryPrevious(openHistoryId);
+        console.log(`App.openDetailsPrevious() previousNote=`, previousNote);
+        if (
+          previousNote === undefined ||
+          previousNote.key === null ||
+          previousNote.key === undefined ||
+          previousNote.id === null ||
+          previousNote.id === undefined
+        ) {
+          return undefined;
+        }
+        // setOpenHistoryId(previousNote.id);
+        await uiApi.openDetailNote(previousNote.key, true);
+        return previousNote.id;
+      },
+      openDetailsNext: async (
+        openHistoryId: number | undefined
+      ): Promise<number | undefined> => {
+        console.log(`App.openDetailsNext() openHistoryId=`, openHistoryId);
+        const nextNote: OpenHistoryDTO | undefined =
+          await nowNoteAPI.getOpenHistoryNext(openHistoryId);
+        console.log(`App.openDetailsNext() nextNote=`, nextNote);
+        if (
+          nextNote === undefined ||
+          nextNote.key === null ||
+          nextNote.key === undefined ||
+          nextNote.id === null ||
+          nextNote.id === undefined
+        ) {
+          return undefined;
+        }
+        // setOpenHistoryId(nextNote.id);
+        await uiApi.openDetailNote(nextNote.key, true);
+        return nextNote.id;
+      },
     };
   }, [
     detailsNoteUpdateBacklinks,
@@ -330,18 +390,24 @@ export default function App() {
               justifyContent: 'center',
             }}
           >
-            <SearchNotes
-              trash={trash}
-              onSelect={async (key: string) => {
-                const note = await nowNoteAPI.getNoteWithDescription(key);
-                if (note === undefined) {
-                  return;
-                }
-                uiApi.openDetailNote(note);
-              }}
-              excludeParentNotesKeyProp={[]}
-              excludeNotesKeyProp={[]}
-            />
+            <Space>
+              <NextPrevButtonsComponent
+                handlePrev={uiApi.openDetailsPrevious}
+                handleNext={uiApi.openDetailsNext}
+              />
+              <SearchNotes
+                trash={trash}
+                onSelect={async (key: string) => {
+                  const note = await nowNoteAPI.getNoteWithDescription(key);
+                  if (note === undefined) {
+                    return;
+                  }
+                  uiApi.openDetailNote(note);
+                }}
+                excludeParentNotesKeyProp={[]}
+                excludeNotesKeyProp={[]}
+              />
+            </Space>
           </div>
         </ReflexElement>
         <ReflexElement>

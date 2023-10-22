@@ -7,6 +7,7 @@ import fs from 'fs';
 import {
   AssetDTO,
   CreatedLinkInDTO,
+  OpenHistoryDTO,
   HitMode,
   MoveToDTO,
   NoteDTO,
@@ -51,6 +52,10 @@ import getMoveToList from './operations/GetMoveToList';
 import addCreatedLinkIn from './operations/AddCreatedLinkIn';
 import removeCreatedLinkIn from './operations/RemoveCreatedLinkIn';
 import getCreatedLinkInList from './operations/GetCreatedLinkInList';
+import addOpenHistory from './operations/AddOpenHistory';
+import removeOpenHistory from './operations/RemoveOpenHistory';
+import getOpenHistoryPrevious from './operations/GetOpenHistoryPrevious';
+import getOpenHistoryNext from './operations/GetOpenHistoryNext';
 
 export default class RepositorySQLite implements RepositoryIntern {
   private sequelize: Sequelize;
@@ -310,6 +315,26 @@ export default class RepositorySQLite implements RepositoryIntern {
 
   async getCreatedLinkInList(): Promise<CreatedLinkInDTO[] | undefined> {
     return getCreatedLinkInList(this);
+  }
+
+  async addOpenHistory(key: string | null): Promise<void | undefined> {
+    return addOpenHistory(this, key);
+  }
+
+  async removeOpenHistory(id: number): Promise<void | undefined> {
+    return removeOpenHistory(this, id);
+  }
+
+  async getOpenHistoryPrevious(
+    id: number | undefined
+  ): Promise<OpenHistoryDTO | undefined> {
+    return getOpenHistoryPrevious(this, id);
+  }
+
+  async getOpenHistoryNext(
+    id: number | undefined
+  ): Promise<OpenHistoryDTO | undefined> {
+    return getOpenHistoryNext(this, id);
   }
 
   async addFileAsNote(

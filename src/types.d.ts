@@ -82,6 +82,11 @@ export interface CreatedLinkInDTO {
   key?: string | null;
 }
 
+export interface OpenHistoryDTO {
+  id?: number;
+  key?: string | null;
+}
+
 // ***************************************************************************
 // ***************************************************************************
 
@@ -173,7 +178,16 @@ export interface Repository {
 
   addCreatedLinkIn(key: string | null): Promise<void | undefined>;
   removeCreatedLinkIn(id: number): Promise<void | undefined>;
-  getCreatedLinkInList(): Promise<CreatedLinkInDTO[] | undefined>;
+  getCreatedLinkInList(): Promise<OpenHistoryDTO[] | undefined>;
+
+  addOpenHistory(key: string | null): Promise<void | undefined>;
+  removeOpenHistory(id: number): Promise<void | undefined>;
+  getOpenHistoryPrevious(
+    id: number | undefined
+  ): Promise<OpenHistoryDTO | undefined>;
+  getOpenHistoryNext(
+    id: number | undefined
+  ): Promise<OpenHistoryDTO | undefined>;
 }
 
 // ***************************************************************************
@@ -253,6 +267,15 @@ export interface NowNoteAPI {
   addCreatedLinkIn(key: string | null): Promise<void | undefined>;
   removeCreatedLinkIn(id: number): Promise<void | undefined>;
   getCreatedLinkInList(): Promise<CreatedLinkInDTO[] | undefined>;
+
+  addOpenHistory(key: string | null): Promise<void | undefined>;
+  removeOpenHistory(id: number): Promise<void | undefined>;
+  getOpenHistoryPrevious(
+    id: number | undefined
+  ): Promise<OpenHistoryDTO | undefined>;
+  getOpenHistoryNext(
+    id: number | undefined
+  ): Promise<OpenHistoryDTO | undefined>;
 }
 
 export interface TreeComponentAPI {

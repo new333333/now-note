@@ -13,8 +13,8 @@ import {
   SettingsDTO,
   MoveToDTO,
   CreatedLinkInDTO,
+  OpenHistoryDTO,
 } from '../types';
-import { AssetModel } from './modules/DataModels';
 
 export default class IpcHandler {
   private browserWindow: BrowserWindow;
@@ -356,6 +356,40 @@ export default class IpcHandler {
       'getCreatedLinkInList',
       async (_event): Promise<CreatedLinkInDTO[] | undefined> => {
         return this.nowNote.getCreatedLinkInList();
+      }
+    );
+
+    this.ipcMain.handle(
+      'addOpenHistory',
+      async (_event, key: string | null): Promise<void | undefined> => {
+        return this.nowNote.addOpenHistory(key);
+      }
+    );
+
+    this.ipcMain.handle(
+      'removeOpenHistory',
+      async (_event, id: number): Promise<void | undefined> => {
+        return this.nowNote.removeOpenHistory(id);
+      }
+    );
+
+    this.ipcMain.handle(
+      'getOpenHistoryPrevious',
+      async (
+        _event,
+        id: number | undefined
+      ): Promise<OpenHistoryDTO | undefined> => {
+        return this.nowNote.getOpenHistoryPrevious(id);
+      }
+    );
+
+    this.ipcMain.handle(
+      'getOpenHistoryNext',
+      async (
+        _event,
+        id: number | undefined
+      ): Promise<OpenHistoryDTO | undefined> => {
+        return this.nowNote.getOpenHistoryNext(id);
       }
     );
   }

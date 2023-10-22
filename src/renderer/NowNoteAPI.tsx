@@ -11,6 +11,7 @@ import {
   AssetDTO,
   SettingsDTO,
   MoveToDTO,
+  OpenHistoryDTO,
 } from 'types';
 
 const nowNoteAPILog = log.scope('NowNoteAPI');
@@ -211,6 +212,24 @@ export class NowNoteAPIImpl implements NowNoteAPI {
 
   async getCreatedLinkInList(): Promise<MoveToDTO[]> {
     return this.îpcRenderer.getCreatedLinkInList();
+  }
+
+  async addOpenHistory(key: string | null): Promise<void> {
+    return this.îpcRenderer.addOpenHistory(key);
+  }
+
+  async removeOpenHistory(id: number): Promise<void> {
+    return this.îpcRenderer.removeOpenHistory(id);
+  }
+
+  async getOpenHistoryPrevious(
+    id: number | undefined
+  ): Promise<OpenHistoryDTO> {
+    return this.îpcRenderer.getOpenHistoryPrevious(id);
+  }
+
+  async getOpenHistoryNext(id: number | undefined): Promise<OpenHistoryDTO> {
+    return this.îpcRenderer.getOpenHistoryNext(id);
   }
 
   async closeRepository(): Promise<void> {

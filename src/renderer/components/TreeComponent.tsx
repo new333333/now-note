@@ -30,6 +30,10 @@ import { HitMode, NoteDTO } from 'types';
 import UIApiDispatch from 'renderer/UIApiDispatch';
 import { NoteModel } from 'main/modules/DataModels';
 
+function Sleep(milliseconds: number) {
+  return new Promise((resolve) => setTimeout(resolve, milliseconds));
+}
+
 const treeLog = log.scope('Tree');
 
 const TreeComponent = React.memo(
@@ -226,8 +230,14 @@ const TreeComponent = React.memo(
           for (let i = 0; i < keys.length; i += 1) {
             node = fancyTreeRef.current.getNodeByKey(keys[i]);
             if (node !== undefined && node !== null) {
-              // eslint-disable-next-line no-await-in-loop
-              await node.load();
+              while (node.isLoading()) {
+                // eslint-disable-next-line no-await-in-loop
+                await Sleep(500);
+              }
+              if (!node.isLoaded()) {
+                // eslint-disable-next-line no-await-in-loop
+                await node.load();
+              }
             }
           }
         }
@@ -453,18 +463,14 @@ const TreeComponent = React.memo(
           // console.trace();
         }
         if (event !== undefined && event.type === 'source') {
+          log.debug(`Tree.loadTree() root trash=${trash}`);
           const rootNodes = await nowNoteAPI.getChildren(null, trash);
-          log.debug(
-            `Tree.loadTree() trash=${trash} -> rootNodes.length=${rootNodes.length}`
-          );
           return mapToTreeData(rootNodes);
         }
         if (data !== undefined && data.node) {
           data.result = async () => {
+            log.debug(`Tree.loadTree() key=${data.node.key} trash=${trash}`);
             const children = await nowNoteAPI.getChildren(data.node.key);
-            log.debug(
-              `Tree.loadTree() key=${data.node.key} trash=${trash} -> children.length=${children.length}`
-            );
             return mapToTreeData(children);
           };
         }

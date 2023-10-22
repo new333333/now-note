@@ -17,6 +17,7 @@ import {
   AssetDTO,
   MoveToDTO,
   CreatedLinkInDTO,
+  OpenHistoryDTO,
 } from '../../types';
 import RepositorySQLiteSetup from './RepositorySQLite/RepositorySQLiteSetup';
 import { SQLITE3_TYPE } from './DataModels';
@@ -426,6 +427,38 @@ export default class NowNote {
   async getCreatedLinkInList(): Promise<CreatedLinkInDTO[] | undefined> {
     if (this.currentRepository !== undefined) {
       return this.currentRepository.getCreatedLinkInList();
+    }
+    return Promise.resolve(undefined);
+  }
+
+  async addOpenHistory(key: string | null): Promise<void | undefined> {
+    if (this.currentRepository !== undefined) {
+      return this.currentRepository.addOpenHistory(key);
+    }
+    return Promise.resolve(undefined);
+  }
+
+  async removeOpenHistory(id: number): Promise<void | undefined> {
+    if (this.currentRepository !== undefined) {
+      return this.currentRepository.removeOpenHistory(id);
+    }
+    return Promise.resolve(undefined);
+  }
+
+  async getOpenHistoryPrevious(
+    id: number | undefined
+  ): Promise<OpenHistoryDTO | undefined> {
+    if (this.currentRepository !== undefined) {
+      return this.currentRepository.getOpenHistoryPrevious(id);
+    }
+    return Promise.resolve(undefined);
+  }
+
+  async getOpenHistoryNext(
+    id: number | undefined
+  ): Promise<OpenHistoryDTO | undefined> {
+    if (this.currentRepository !== undefined) {
+      return this.currentRepository.getOpenHistoryNext(id);
     }
     return Promise.resolve(undefined);
   }

@@ -8,7 +8,15 @@ import {
   CreationOptional,
   Sequelize,
 } from 'sequelize';
-import { AssetDTO, CreatedLinkInDTO, MoveToDTO, NoteDTO, Repository, SettingsDTO } from 'types';
+import {
+  AssetDTO,
+  CreatedLinkInDTO,
+  OpenHistoryDTO,
+  MoveToDTO,
+  NoteDTO,
+  Repository,
+  SettingsDTO,
+} from 'types';
 
 export const SQLITE3_TYPE: string = 'sqlite3';
 
@@ -169,6 +177,19 @@ export class CreatedLinkInModel extends Model<
   declare key: string | null;
 
   toDTO(): CreatedLinkInDTO {
+    return this.dataValues;
+  }
+}
+
+export class OpenHistoryModel extends Model<
+  InferAttributes<OpenHistoryModel>,
+  InferCreationAttributes<OpenHistoryModel>
+> {
+  declare id: CreationOptional<number>;
+
+  declare key: string | null;
+
+  toDTO(): OpenHistoryDTO {
     return this.dataValues;
   }
 }

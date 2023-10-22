@@ -3,6 +3,7 @@ import { DataTypes } from 'sequelize';
 import {
   AssetModel,
   CreatedLinkInModel,
+  OpenHistoryModel,
   DescriptionModel,
   LinkModel,
   MoveToModel,
@@ -278,6 +279,24 @@ export default async function authenticate(
     {
       sequelize: repository.getSequelize(),
       tableName: 'CreatedLinkIn',
+      timestamps: false,
+    }
+  );
+
+  OpenHistoryModel.init(
+    {
+      id: {
+        type: DataTypes.BIGINT,
+        primaryKey: true,
+        autoIncrement: true,
+      },
+      key: {
+        type: DataTypes.UUID,
+      },
+    },
+    {
+      sequelize: repository.getSequelize(),
+      tableName: 'OpenHistory',
       timestamps: false,
     }
   );

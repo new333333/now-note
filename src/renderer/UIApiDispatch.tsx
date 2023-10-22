@@ -9,7 +9,12 @@ export type UIApi = {
   deleteNote(key: string): Promise<boolean>;
   restoreNote(key: string): Promise<boolean>;
 
-  openDetailNote(noteOrKey: NoteDTO | string): Promise<void>;
+  openDetailNote(
+    noteOrKey: NoteDTO | string,
+    ignoreHistory?: boolean
+  ): Promise<void>;
+  openDetailsPrevious(id: number | undefined): Promise<number | undefined>;
+  openDetailsNext(id: number | undefined): Promise<number | undefined>;
   updateDetailNote(note: NoteDTO): Promise<void>;
   updateNodeInTree(note: NoteDTO): Promise<void>;
   focusNodeInTree(key: string): Promise<void>;

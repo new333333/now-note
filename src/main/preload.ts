@@ -154,6 +154,18 @@ const electronHandler: ElectronIPCRenderer = {
       ipcRenderer.invoke('removeCreatedLinkIn', id),
 
     getCreatedLinkInList: () => ipcRenderer.invoke('getCreatedLinkInList'),
+
+    addOpenHistory: (key: string | null) =>
+      ipcRenderer.invoke('addOpenHistory', key),
+
+    removeOpenHistory: (id: number) =>
+      ipcRenderer.invoke('removeOpenHistory', id),
+
+    getOpenHistoryPrevious: (id: number | undefined) =>
+      ipcRenderer.invoke('getOpenHistoryPrevious', id),
+
+    getOpenHistoryNext: (id: number | undefined) =>
+      ipcRenderer.invoke('getOpenHistoryNext', id),
   },
 };
 
