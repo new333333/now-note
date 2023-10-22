@@ -11,7 +11,7 @@ import React, {
 import PropTypes from 'prop-types';
 import { Button, Divider, List, Modal } from 'antd';
 import { nowNoteAPI } from 'renderer/NowNoteAPI';
-import { MoveToDTO, MoveToModalComponentAPI, NoteDTO } from 'types';
+import { CreateLinkModalComponentAPI, CreatedLinkInDTO, NoteDTO } from 'types';
 import { DeleteOutlined } from '@ant-design/icons';
 import SearchNotes from './SearchNotes';
 import NoteBreadCrumbComponent from './NoteBreadCrumbComponent';
@@ -22,17 +22,17 @@ interface Props {
   // eslint-disable-next-line react/no-unused-prop-types
   handleOn: Function;
   // eslint-disable-next-line react/no-unused-prop-types
-  ref: RefObject<MoveToModalComponentAPI>;
+  ref: RefObject<CreateLinkModalComponentAPI>;
 }
 
 interface MoveToListElement {
-  moveTo: MoveToDTO;
+  moveTo: CreatedLinkInDTO;
   note: NoteDTO;
 }
 
-const MoveToModalComponent: React.FC<Props> = memo(
+const CreateLinkModalComponent: React.FC<Props> = memo(
   forwardRef(({ trash, handleOn }: Props, ref) => {
-    const [isModalMoveToOpen, setIsModalMoveToOpen] = useState(false);
+    const [isModalOpen, setIsModalOpen] = useState(false);
     const [key, setKey] = useState<string | undefined>(undefined);
     const [titlePath, setTitlePath] = useState<string | undefined>(undefined);
     const [parent, setParent] = useState<string | undefined>(undefined);
@@ -45,18 +45,18 @@ const MoveToModalComponent: React.FC<Props> = memo(
         setTitlePath(note.titlePath);
       }
       setKey(noteKey);
-      setIsModalMoveToOpen(true);
+      setIsModalOpen(true);
     };
 
     const handleOk = (moveToKey: string) => {
-      setIsModalMoveToOpen(false);
+      setIsModalOpen(false);
       handleOn(key, moveToKey === 'ROOT' ? undefined : moveToKey);
       setKey(undefined);
       setParent(undefined);
     };
 
     const handleCancel = () => {
-      setIsModalMoveToOpen(false);
+      setIsModalOpen(false);
     };
 
     useImperativeHandle(
@@ -71,26 +71,26 @@ const MoveToModalComponent: React.FC<Props> = memo(
       []
     );
 
-    const fetchMoveToList = useCallback(async () => {
-      const moveToDTOs: MoveToDTO[] = await nowNoteAPI.getMoveToList();
-      if (moveToDTOs === undefined) {
+    const fetchCreatedLinkInList = useCallback(async () => {
+      const createdLinkInDTOs: CreatedLinkInDTO[] = await nowNoteAPI.getCreatedLinkInList();
+      if (createdLinkInDTOs === undefined) {
         return;
       }
       const moveToNotes: MoveToListElement[] = [];
 
-      for (let i = 0; i < moveToDTOs.length; i += 1) {
+      for (let i = 0; i < createdLinkInDTOs.length; i += 1) {
         // eliminate moving note
-        if (moveToDTOs[i].key === key) {
+        if (createdLinkInDTOs[i].key === key) {
           // eslint-disable-next-line no-continue
           continue;
         }
-        if (moveToDTOs[i].key === null || moveToDTOs[i].key === undefined) {
+        if (createdLinkInDTOs[i].key === null || createdLinkInDTOs[i].key === undefined) {
           // eslint-disable-next-line no-continue
           continue;
         }
         // eslint-disable-next-line no-await-in-loop
         const note = await nowNoteAPI.getNoteWithDescription(
-          moveToDTOs[i].key,
+          createdLinkInDTOs[i].key,
           true
         );
         if (note === undefined) {
@@ -117,7 +117,7 @@ const MoveToModalComponent: React.FC<Props> = memo(
         }
         moveToNotes.push({
           note,
-          moveTo: moveToDTOs[i],
+          moveTo: createdLinkInDTOs[i],
         });
       }
 
@@ -139,32 +139,32 @@ const MoveToModalComponent: React.FC<Props> = memo(
     }, [key, parent]);
 
     useEffect(() => {
-      fetchMoveToList();
-    }, [fetchMoveToList]);
+      fetchCreatedLinkInList();
+    }, [fetchCreatedLinkInList]);
 
     const removeMoveTo = useCallback(
       async (id: number) => {
         await nowNoteAPI.removeMoveTo(id);
-        await fetchMoveToList();
+        await fetchCreatedLinkInList();
       },
-      [fetchMoveToList]
+      [fetchCreatedLinkInList]
     );
 
     return (
       <Modal
         title={
           <>
-            Move&nbsp;
+            Create note with link to the note&nbsp;
             <i>
               {titlePath !== undefined &&
                 titlePath
                   .substring(2, titlePath.length - 2)
                   .replaceAll('/', ' / ')}
             </i>
-            &nbsp;to:
+            &nbsp;from:
           </>
         }
-        open={isModalMoveToOpen}
+        open={isModalOpen}
         onCancel={handleCancel}
         footer={null}
       >
@@ -181,7 +181,7 @@ const MoveToModalComponent: React.FC<Props> = memo(
             <List
               size="small"
               bordered
-              header="Recent used:"
+              header="Recent used"
               dataSource={moveToList}
               renderItem={(item) => (
                 <List.Item>
@@ -216,9 +216,9 @@ const MoveToModalComponent: React.FC<Props> = memo(
   })
 );
 
-MoveToModalComponent.propTypes = {
+CreateLinkModalComponent.propTypes = {
   trash: PropTypes.bool.isRequired,
   handleOn: PropTypes.func.isRequired,
 };
 
-export default MoveToModalComponent;
+export default CreateLinkModalComponent;

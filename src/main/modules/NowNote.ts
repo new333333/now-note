@@ -16,6 +16,7 @@ import {
   SettingsDTO,
   AssetDTO,
   MoveToDTO,
+  CreatedLinkInDTO,
 } from '../../types';
 import RepositorySQLiteSetup from './RepositorySQLite/RepositorySQLiteSetup';
 import { SQLITE3_TYPE } from './DataModels';
@@ -404,6 +405,27 @@ export default class NowNote {
   async getMoveToList(): Promise<MoveToDTO[] | undefined> {
     if (this.currentRepository !== undefined) {
       return this.currentRepository.getMoveToList();
+    }
+    return Promise.resolve(undefined);
+  }
+
+  async addCreatedLinkIn(key: string | null): Promise<void | undefined> {
+    if (this.currentRepository !== undefined) {
+      return this.currentRepository.addCreatedLinkIn(key);
+    }
+    return Promise.resolve(undefined);
+  }
+
+  async removeCreatedLinkIn(id: number): Promise<void | undefined> {
+    if (this.currentRepository !== undefined) {
+      return this.currentRepository.removeCreatedLinkIn(id);
+    }
+    return Promise.resolve(undefined);
+  }
+
+  async getCreatedLinkInList(): Promise<CreatedLinkInDTO[] | undefined> {
+    if (this.currentRepository !== undefined) {
+      return this.currentRepository.getCreatedLinkInList();
     }
     return Promise.resolve(undefined);
   }

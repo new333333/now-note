@@ -6,6 +6,7 @@ import path = require('path');
 import fs from 'fs';
 import {
   AssetDTO,
+  CreatedLinkInDTO,
   HitMode,
   MoveToDTO,
   NoteDTO,
@@ -47,6 +48,9 @@ import getSettings from './operations/GetSettings';
 import addMoveTo from './operations/AddMoveTo';
 import removeMoveTo from './operations/RemoveMoveTo';
 import getMoveToList from './operations/GetMoveToList';
+import addCreatedLinkIn from './operations/AddCreatedLinkIn';
+import removeCreatedLinkIn from './operations/RemoveCreatedLinkIn';
+import getCreatedLinkInList from './operations/GetCreatedLinkInList';
 
 export default class RepositorySQLite implements RepositoryIntern {
   private sequelize: Sequelize;
@@ -294,6 +298,18 @@ export default class RepositorySQLite implements RepositoryIntern {
 
   async getMoveToList(): Promise<MoveToDTO[] | undefined> {
     return getMoveToList(this);
+  }
+
+  async addCreatedLinkIn(key: string | null): Promise<void | undefined> {
+    return addCreatedLinkIn(this, key);
+  }
+
+  async removeCreatedLinkIn(id: number): Promise<void | undefined> {
+    return removeCreatedLinkIn(this, id);
+  }
+
+  async getCreatedLinkInList(): Promise<CreatedLinkInDTO[] | undefined> {
+    return getCreatedLinkInList(this);
   }
 
   async addFileAsNote(

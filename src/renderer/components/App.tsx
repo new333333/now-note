@@ -1,12 +1,21 @@
 import log from 'electron-log';
-import { useEffect, useRef, useCallback, useMemo, useState } from 'react';
-import { ConfigProvider, Modal, Popconfirm, Progress } from 'antd';
+import { useEffect, useRef, useCallback, useMemo } from 'react';
+import { ConfigProvider } from 'antd';
 import '../css/App.scss';
 import useNoteStore from 'renderer/GlobalStore';
 import { ReflexContainer, ReflexSplitter, ReflexElement } from 'react-reflex';
 import 'react-reflex/styles.css';
 import { nowNoteAPI } from 'renderer/NowNoteAPI';
-import { HitMode, NoteDTO, SettingsDTO, UserSettingsRepository } from 'types';
+import {
+  CreateLinkModalComponentAPI,
+  DetailsNoteComponentAPI,
+  HitMode,
+  MoveToModalComponentAPI,
+  NoteDTO,
+  SettingsDTO,
+  TreeComponentAPI,
+  UserSettingsRepository,
+} from 'types';
 import UIApiDispatch, { UIApi } from 'renderer/UIApiDispatch';
 import useDetailsNoteStore from 'renderer/DetailsNoteStore';
 import useReindexingRepository from 'renderer/useReindexingRepository';
@@ -18,38 +27,22 @@ import AddNoteButtonComponent from './AddNoteButtonComponent';
 import TrashButton from './TrashButton';
 import DetailsNoteComponent from './DetailsNoteComponent';
 import MoveToModalComponent from './MoveToModalComponent';
+import CreateLinkModalComponent from './CreateLinkModalComponent';
 
 const appLog = log.scope('App');
-
-interface TreeComponentAPI {
-  getActiveNodeKey(): string | undefined;
-  addNode(newNote: NoteDTO): Promise<NoteDTO | undefined>;
-  removeNode(key: string): Promise<NoteDTO | undefined>;
-  updateNode(note: NoteDTO): Promise<void>;
-  focusNode(key: string): Promise<void>;
-  reloadNode(key: string): Promise<boolean>;
-  move(key: string, to: string | undefined, hitMode: HitMode): Promise<boolean>;
-}
-
-interface DetailsNoteComponentAPI {
-  setFocus(): Promise<void>;
-}
-
-interface MoveToModalComponentAPI {
-  open(key: string): Promise<void>;
-}
 
 export default function App() {
   const [
     reindexingProgress,
     reindexIfNeeded,
     reindexRepository,
-    reindexIngProgressComponent,
+    reindexingProgressComponent,
   ] = useReindexingRepository();
 
   const treeComponentRef = useRef<TreeComponentAPI>(null);
   const detailsNoteComponentRef = useRef<DetailsNoteComponentAPI>(null);
   const moveToModalComponentRef = useRef<MoveToModalComponentAPI>(null);
+  const createLinkModalComponentRef = useRef<CreateLinkModalComponentAPI>(null);
 
   const [currentRepository, setCurrentRepository, trash] = useNoteStore(
     (state) => [
@@ -123,6 +116,35 @@ export default function App() {
         await uiApi.openDetailNote(newNote);
         await detailsNoteComponentRef.current.setFocus();
         return newNote;
+      },
+      createLinkNote: async (key: string, parentKey: string) => {
+        appLog.debug(`createLinkNote key=${key} parentKey=${parentKey}`);
+
+        const note: NoteDTO | undefined =
+          await nowNoteAPI.getNoteWithDescription(key, true);
+
+        if (note === undefined) {
+          return;
+        }
+
+        const newNote: NoteDTO | undefined = await nowNoteAPI.addNote(
+          parentKey,
+          {
+            title:
+              note.titlePath !== undefined
+                ? note.titlePath
+                    .substring(2, note.titlePath.length - 2)
+                    .replaceAll('/', ' / ')
+                : '',
+            type: 'note',
+            description: `<p><span class="mention" data-index="0" data-denotation-char="/" data-id="${note.key}"></span></p>`,
+          },
+          'firstChild'
+        );
+        if (treeComponentRef.current === null || newNote === undefined) {
+          return;
+        }
+        await treeComponentRef.current.addNode(newNote);
       },
       deleteNote: async (key: string) => {
         if (treeComponentRef.current === null) {
@@ -199,11 +221,16 @@ export default function App() {
         await treeComponentRef.current.focusNode(key);
       },
       openMoveToDialog: async (key: string) => {
-        console.log(`focusNodeInTree key=`, key);
         if (moveToModalComponentRef.current === null) {
           return;
         }
         moveToModalComponentRef.current.open(key);
+      },
+      openCreateLinkDialog: async (key: string) => {
+        if (createLinkModalComponentRef.current === null) {
+          return;
+        }
+        createLinkModalComponentRef.current.open(key);
       },
       moveNote: async (
         key: string,
@@ -348,13 +375,18 @@ export default function App() {
       }}
     >
       <UIApiDispatch.Provider value={uiApi}>
-        {reindexIngProgressComponent}
+        {reindexingProgressComponent}
         {selectRepositoryComponent}
         {mainComponent}
         <MoveToModalComponent
           ref={moveToModalComponentRef}
           trash={trash}
           handleOn={uiApi.moveNote}
+        />
+        <CreateLinkModalComponent
+          ref={createLinkModalComponentRef}
+          trash={trash}
+          handleOn={uiApi.createLinkNote}
         />
       </UIApiDispatch.Provider>
     </ConfigProvider>

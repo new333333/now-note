@@ -146,6 +146,14 @@ const electronHandler: ElectronIPCRenderer = {
     removeMoveTo: (id: number) => ipcRenderer.invoke('removeMoveTo', id),
 
     getMoveToList: () => ipcRenderer.invoke('getMoveToList'),
+
+    addCreatedLinkIn: (key: string | null) =>
+      ipcRenderer.invoke('addCreatedLinkIn', key),
+
+    removeCreatedLinkIn: (id: number) =>
+      ipcRenderer.invoke('removeCreatedLinkIn', id),
+
+    getCreatedLinkInList: () => ipcRenderer.invoke('getCreatedLinkInList'),
   },
 };
 

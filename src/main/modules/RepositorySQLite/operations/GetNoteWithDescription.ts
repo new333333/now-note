@@ -12,7 +12,9 @@ export default async function getNoteWithDescription(
   key: string,
   withoutDescription?: boolean
 ): Promise<NoteDTO | undefined> {
-  getNoteWithDescriptionLog.debug(`key=${key}`);
+  getNoteWithDescriptionLog.debug(
+    `key=${key}, withoutDescription=${withoutDescription}`
+  );
 
   if (key === undefined) {
     return undefined;
@@ -24,7 +26,11 @@ export default async function getNoteWithDescription(
   }
   getNoteWithDescriptionLog.debug(`has NoteModel.findByPk`);
 
-  if (withoutDescription) {
+  if (
+    withoutDescription === undefined ||
+    withoutDescription === null ||
+    !withoutDescription
+  ) {
     noteModel.description = await prepareDescriptionToRead(
       repository,
       noteModel.description || ''

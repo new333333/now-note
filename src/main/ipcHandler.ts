@@ -12,6 +12,7 @@ import {
   AssetDTO,
   SettingsDTO,
   MoveToDTO,
+  CreatedLinkInDTO,
 } from '../types';
 import { AssetModel } from './modules/DataModels';
 
@@ -334,6 +335,27 @@ export default class IpcHandler {
       'getMoveToList',
       async (_event): Promise<MoveToDTO[] | undefined> => {
         return this.nowNote.getMoveToList();
+      }
+    );
+
+    this.ipcMain.handle(
+      'addCreatedLinkIn',
+      async (_event, key: string | null): Promise<void | undefined> => {
+        return this.nowNote.addCreatedLinkIn(key);
+      }
+    );
+
+    this.ipcMain.handle(
+      'removeCreatedLinkIn',
+      async (_event, id: number): Promise<void | undefined> => {
+        return this.nowNote.removeCreatedLinkIn(id);
+      }
+    );
+
+    this.ipcMain.handle(
+      'getCreatedLinkInList',
+      async (_event): Promise<CreatedLinkInDTO[] | undefined> => {
+        return this.nowNote.getCreatedLinkInList();
       }
     );
   }

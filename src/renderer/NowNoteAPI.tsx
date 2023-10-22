@@ -201,6 +201,18 @@ export class NowNoteAPIImpl implements NowNoteAPI {
     return this.îpcRenderer.getMoveToList();
   }
 
+  async addCreatedLinkIn(key: string | null): Promise<void> {
+    return this.îpcRenderer.addCreatedLinkIn(key);
+  }
+
+  async removeCreatedLinkIn(id: number): Promise<void> {
+    return this.îpcRenderer.removeCreatedLinkIn(id);
+  }
+
+  async getCreatedLinkInList(): Promise<MoveToDTO[]> {
+    return this.îpcRenderer.getCreatedLinkInList();
+  }
+
   async closeRepository(): Promise<void> {
     return this.îpcRenderer.closeRepository();
   }

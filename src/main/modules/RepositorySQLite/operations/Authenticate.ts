@@ -2,6 +2,7 @@ import log from 'electron-log';
 import { DataTypes } from 'sequelize';
 import {
   AssetModel,
+  CreatedLinkInModel,
   DescriptionModel,
   LinkModel,
   MoveToModel,
@@ -259,6 +260,24 @@ export default async function authenticate(
     {
       sequelize: repository.getSequelize(),
       tableName: 'MoveTo',
+      timestamps: false,
+    }
+  );
+
+  CreatedLinkInModel.init(
+    {
+      id: {
+        type: DataTypes.BIGINT,
+        primaryKey: true,
+        autoIncrement: true,
+      },
+      key: {
+        type: DataTypes.UUID,
+      },
+    },
+    {
+      sequelize: repository.getSequelize(),
+      tableName: 'CreatedLinkIn',
       timestamps: false,
     }
   );

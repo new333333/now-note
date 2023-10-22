@@ -23,7 +23,13 @@ export interface Error {
   message: string;
 }
 
-export type HitMode = 'firstChild' | 'over' | 'after' | 'before';
+export type HitMode =
+  | 'firstChild'
+  | 'over'
+  | 'after'
+  | 'before'
+  | 'up'
+  | 'down';
 
 export interface PriorityStatistics {
   minimum: number;
@@ -67,6 +73,11 @@ export interface SettingsDTO {
 }
 
 export interface MoveToDTO {
+  id?: number;
+  key?: string | null;
+}
+
+export interface CreatedLinkInDTO {
   id?: number;
   key?: string | null;
 }
@@ -159,6 +170,10 @@ export interface Repository {
   addMoveTo(key: string | null): Promise<void | undefined>;
   removeMoveTo(id: number): Promise<void | undefined>;
   getMoveToList(): Promise<MoveToDTO[] | undefined>;
+
+  addCreatedLinkIn(key: string | null): Promise<void | undefined>;
+  removeCreatedLinkIn(id: number): Promise<void | undefined>;
+  getCreatedLinkInList(): Promise<CreatedLinkInDTO[] | undefined>;
 }
 
 // ***************************************************************************
@@ -234,4 +249,30 @@ export interface NowNoteAPI {
   addMoveTo(key: string | null): Promise<void | undefined>;
   removeMoveTo(id: number): Promise<void | undefined>;
   getMoveToList(): Promise<MoveToDTO[] | undefined>;
+
+  addCreatedLinkIn(key: string | null): Promise<void | undefined>;
+  removeCreatedLinkIn(id: number): Promise<void | undefined>;
+  getCreatedLinkInList(): Promise<CreatedLinkInDTO[] | undefined>;
+}
+
+export interface TreeComponentAPI {
+  getActiveNodeKey(): string | undefined;
+  addNode(newNote: NoteDTO): Promise<NoteDTO | undefined>;
+  removeNode(key: string): Promise<NoteDTO | undefined>;
+  updateNode(note: NoteDTO): Promise<void>;
+  focusNode(key: string): Promise<void>;
+  reloadNode(key: string): Promise<boolean>;
+  move(key: string, to: string | undefined, hitMode: HitMode): Promise<boolean>;
+}
+
+export interface DetailsNoteComponentAPI {
+  setFocus(): Promise<void>;
+}
+
+export interface MoveToModalComponentAPI {
+  open(key: string): Promise<void>;
+}
+
+export interface CreateLinkModalComponentAPI {
+  open(key: string): Promise<void>;
 }

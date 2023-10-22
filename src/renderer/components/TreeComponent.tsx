@@ -596,28 +596,28 @@ const TreeComponent = React.memo(
                 name: 'Move...',
                 items: {
                   moveTo: {
-                    name: "Find..."
+                    name: 'Find...',
                   },
-                  sep1: "---------",
+                  sep1: '---------',
                   moveToTop: {
-                    name: "to Top"
+                    name: 'to Top',
                   },
                   moveOneUp: {
-                    name: "One Up"
+                    name: 'One Up',
                   },
                   moveOneDown: {
-                    name: "One Down"
+                    name: 'One Down',
                   },
                   moveToBottom: {
-                    name: "to Bottom"
+                    name: 'to Bottom',
                   },
-                  sep2: "---------",
+                  sep2: '---------',
                   moveToParent: {
-                    name: "to Parent"
+                    name: 'to Parent',
                   },
-                  sep3: "---------",
+                  sep3: '---------',
                   moveToRoot: {
-                    name: "to Root"
+                    name: 'to Root',
                   },
                 },
               };
@@ -638,6 +638,7 @@ const TreeComponent = React.memo(
               deleteNote,
               addNote,
               openMoveToDialog,
+              openCreateLinkDialog,
               restoreNote,
               moveNote,
             } = uiApi;
@@ -681,6 +682,8 @@ const TreeComponent = React.memo(
               await moveNote(node.key, undefined, 'up');
             } else if (action === 'moveOneDown') {
               await moveNote(node.key, undefined, 'down');
+            } else if (action === 'createLink') {
+              await openCreateLinkDialog(node.key);
             }
           },
         },

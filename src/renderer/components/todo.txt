@@ -1,6 +1,9 @@
 - Statt link or query: copy note with link to orginal
 - next / back button
 - editor: color/backgorund color doesn't work
+- https://tiptap.dev/examples/default ?
+---------------------------------------------------------
+
 - query note!
   - query / synchronize extrernal sources?
    - e.g. emails, github issues, external storage, rss, etc.
@@ -11,8 +14,6 @@
   - with expressions:
     - tag, priority, type
 
-
-- link note?
 
 - move open trash to menu ... neben Add
 - move reposiotpory select to menu, or

@@ -2,7 +2,6 @@ import log from 'electron-log';
 import { QueryTypes } from 'sequelize';
 import { HitMode, NoteDTO } from 'types';
 import {
-  LinkModel,
   NoteModel,
   NoteNotFoundByKeyError,
   RepositoryIntern,
@@ -17,9 +16,11 @@ export default async function addNote(
   hitMode: HitMode,
   relativeToKey?: string
 ): Promise<NoteDTO | undefined> {
-  let parent: string | null = parentNoteKey.startsWith('root_')
-    ? null
-    : parentNoteKey;
+  let parent: string | null =
+    parentNoteKey !== undefined ? parentNoteKey : null;
+  if (parent !== undefined && parent !== null) {
+    parent = parentNoteKey.startsWith('root_') ? null : parentNoteKey;
+  }
   let { position } = note;
 
   if (hitMode === 'firstChild') {
