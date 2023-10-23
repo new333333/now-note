@@ -1,5 +1,3 @@
-- Statt link or query: copy note with link to orginal
-- next / back button
 - editor: color/backgorund color doesn't work
 - https://tiptap.dev/examples/default ?
 ---------------------------------------------------------
@@ -8,11 +6,15 @@
   - query / synchronize extrernal sources?
    - e.g. emails, github issues, external storage, rss, etc.
     - extension point? note TYPE
+  - damit auch ist autoinatisch
+    - aktivitäten log
+---------------------------------------------------------
 
 - styling tree nodes
   - with quill js - no
   - with expressions:
     - tag, priority, type
+---------------------------------------------------------
 
 
 - move open trash to menu ... neben Add
