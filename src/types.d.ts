@@ -99,8 +99,8 @@ export interface SearchResult {
 
 export interface SearchResultOptions {
   parentNotesKey: string[];
-  excludeParentNotesKey: string[];
-  excludeNotesKey: string[];
+  excludeParentNotesKey?: string[];
+  excludeNotesKey?: string[];
   types: string[];
   dones: number[];
   sortBy: string;

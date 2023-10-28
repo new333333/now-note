@@ -103,7 +103,7 @@
     "@types/jquery.contextmenu": "^1.7.36",
     "@types/jquery.fancytree": "^0.0.7",
     "@types/node": "^20.2.0",
-    "antd": "^5.4.4",
+    "antd": "^5.10.2",
     "babel-plugin-macros": "^3.1.0",
     "cheerio": "^1.0.0-rc.12",
     "date-fns": "^2.29.3",
