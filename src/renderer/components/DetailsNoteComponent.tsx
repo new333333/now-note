@@ -46,32 +46,40 @@ const DetailsNoteComponent = forwardRef(function DetailsNoteComponent(
   return (
     <div
       style={{
-        paddingLeft: 5,
-        paddingRight: 5,
         display: 'flex',
         flexDirection: 'column',
         height: '100%',
       }}
     >
-      <div style={{ paddingBottom: 5 }}>
-        <DetailsNoteBreadCrumbComponent />
-      </div>
-      <div style={{ display: 'flex', alignItems: 'center' }}>
-        <DetailsNoteDoneComponent />
-        <div style={{ flexBasis: '100%' }}>
-          <DetailsNoteTitleComponent ref={detailsNoteTitleComponentRef} />
+      <div
+        className="scroll-block"
+        style={{
+          paddingLeft: 5,
+          paddingRight: 5,
+          flex: 1,
+          overflow: 'auto',
+        }}
+      >
+        <div style={{ paddingBottom: 5 }}>
+          <DetailsNoteBreadCrumbComponent />
         </div>
-        <div>
-          <DetailsNoteMenuComponent />
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          <DetailsNoteDoneComponent />
+          <div style={{ flexBasis: '100%' }}>
+            <DetailsNoteTitleComponent ref={detailsNoteTitleComponentRef} />
+          </div>
+          <div>
+            <DetailsNoteMenuComponent />
+          </div>
         </div>
-      </div>
-      <div style={{ padding: '5px 0' }}>
-        <DetailsNoteTypeComponent />
-        <DetailsNotePriorityComponent />
-        <DetailsNoteTagsComponent />
-      </div>
-      <div style={{ flex: 1 }}>
-        <DetailsNoteDescriptionComponent />
+        <div style={{ padding: '5px 0' }}>
+          <DetailsNoteTypeComponent />
+          <DetailsNotePriorityComponent />
+          <DetailsNoteTagsComponent />
+        </div>
+        <div style={{ flex: 1 }}>
+          <DetailsNoteDescriptionComponent />
+        </div>
       </div>
       <div>
         <DetailsNoteBacklinksComponent />
