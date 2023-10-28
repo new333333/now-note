@@ -55,6 +55,7 @@ const DetailsNoteComponent = forwardRef(function DetailsNoteComponent(
         style={{
           padding: 5,
           backgroundColor: 'rgba(0, 0, 0, 0.02)',
+          marginBottom: 3,
         }}
       >
         <DetailsNoteBreadCrumbComponent />
