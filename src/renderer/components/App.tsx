@@ -1,6 +1,6 @@
 import log from 'electron-log';
 import { useEffect, useRef, useCallback, useMemo } from 'react';
-import { ConfigProvider, Space } from 'antd';
+import { ConfigProvider, Modal, Space } from 'antd';
 import '../css/App.scss';
 import useNoteStore from 'renderer/GlobalStore';
 import { ReflexContainer, ReflexSplitter, ReflexElement } from 'react-reflex';
@@ -41,6 +41,7 @@ export default function App() {
     reindexingProgressComponent,
   ] = useReindexingRepository();
 
+  const [modalDeleteConfirm, contextHolderDeleteConfirm] = Modal.useModal();
   const treeComponentRef = useRef<TreeComponentAPI>(null);
   const detailsNoteComponentRef = useRef<DetailsNoteComponentAPI>(null);
   const moveToModalComponentRef = useRef<MoveToModalComponentAPI>(null);
@@ -160,6 +161,15 @@ export default function App() {
         if (note === undefined) {
           return false;
         }
+        console.log('Confirmed delete modalDeleteConfirm');
+        const confirmed = await modalDeleteConfirm.confirm({
+          title: 'Delete?',
+        });
+        if (!confirmed) {
+          return false;
+        }
+        console.log('Confirmed delete: ', confirmed);
+
         if (note.trash) {
           await nowNoteAPI.deletePermanently(key);
         } else {
@@ -454,6 +464,7 @@ export default function App() {
           trash={trash}
           handleOn={uiApi.createLinkNote}
         />
+        {contextHolderDeleteConfirm}
       </UIApiDispatch.Provider>
     </ConfigProvider>
   );
