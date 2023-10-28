@@ -52,6 +52,14 @@ const DetailsNoteComponent = forwardRef(function DetailsNoteComponent(
       }}
     >
       <div
+        style={{
+          padding: 5,
+          backgroundColor: 'rgba(0, 0, 0, 0.02)',
+        }}
+      >
+        <DetailsNoteBreadCrumbComponent />
+      </div>
+      <div
         className="scroll-block"
         style={{
           paddingLeft: 5,
@@ -60,9 +68,6 @@ const DetailsNoteComponent = forwardRef(function DetailsNoteComponent(
           overflow: 'auto',
         }}
       >
-        <div style={{ paddingBottom: 5 }}>
-          <DetailsNoteBreadCrumbComponent />
-        </div>
         <div style={{ display: 'flex', alignItems: 'center' }}>
           <DetailsNoteDoneComponent />
           <div style={{ flexBasis: '100%' }}>
