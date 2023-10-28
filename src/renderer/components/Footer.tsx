@@ -37,11 +37,11 @@ export default function Footer({ reindexRepository }: Props) {
       }}
     >
       <Tooltip title="Choose other Repository">
-        <Text onClick={changeRepository}>
+        <Button size="small" type="link" onClick={changeRepository}>
           <strong style={{ paddingRight: 3 }}>Repository:</strong>
           {currentRepository && currentRepository.path}
           {!currentRepository && <>No repository initialized</>}
-        </Text>
+        </Button>
       </Tooltip>&nbsp;
       <Button size="small" onClick={reindexHandler} loading={loading}>
         Reindex Repository
