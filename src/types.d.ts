@@ -114,7 +114,7 @@ export interface Repository {
   authenticate(): Promise<void>;
   close(): Promise<void>;
   getChildren(
-    key: string,
+    key: string | null,
     trash?: boolean,
     limit?: number
   ): Promise<Array<NoteDTO> | undefined>;

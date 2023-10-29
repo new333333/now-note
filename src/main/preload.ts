@@ -33,7 +33,7 @@ const electronHandler: ElectronIPCRenderer = {
       ipcRenderer.invoke('getCurrentRepository'),
 
     getChildren: (
-      key: string,
+      key: string | null,
       trash?: boolean,
       limit?: number
     ): Promise<Array<NoteDTO> | undefined> =>

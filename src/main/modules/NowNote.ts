@@ -158,7 +158,7 @@ export default class NowNote {
   }
 
   async getChildren(
-    key: string,
+    key: string | null,
     trash?: boolean,
     limit?: number
   ): Promise<Array<NoteDTO> | undefined> {

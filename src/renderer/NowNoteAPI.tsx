@@ -39,7 +39,7 @@ export class NowNoteAPIImpl implements NowNoteAPI {
   }
 
   async getChildren(
-    key: string,
+    key: string | null,
     trash?: boolean,
     limit?: number
   ): Promise<NoteDTO[] | undefined> {
