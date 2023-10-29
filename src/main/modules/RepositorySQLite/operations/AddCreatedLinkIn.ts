@@ -8,6 +8,9 @@ export default async function addCreatedLinkIn(
   key: string | null
 ): Promise<void | undefined> {
   addCreatedLinkInLog.debug(`key=${key}`);
+  if (key === undefined || key === null) {
+    return;
+  }
   const createdLinkInModels = await CreatedLinkInModel.findAll({
     where: {
       key,
