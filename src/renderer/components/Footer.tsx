@@ -34,6 +34,8 @@ export default function Footer({ reindexRepository }: Props) {
         padding: 5,
         backgroundColor: '#eeeeee',
         borderTop: '1px solid #dddddd',
+        whiteSpace: 'nowrap',
+        overflow: 'hidden',
       }}
     >
       <Tooltip title="Choose other Repository">
