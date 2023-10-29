@@ -389,7 +389,12 @@ export default function App() {
   if (currentRepository !== undefined && reindexingProgress === 100) {
     mainComponent = (
       <ReflexContainer orientation="horizontal" windowResizeAware>
-        <ReflexElement size={35}>
+        <ReflexElement
+          size={35}
+          style={{
+            overflow: 'hidden',
+          }}
+        >
           <div
             style={{
               padding: 5,
@@ -400,7 +405,11 @@ export default function App() {
               justifyContent: 'center',
             }}
           >
-            <Space>
+            <Space
+              style={{
+                whiteSpace: 'nowrap',
+              }}
+            >
               <NextPrevButtonsComponent
                 handlePrev={uiApi.openDetailsPrevious}
                 handleNext={uiApi.openDetailsNext}
