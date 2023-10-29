@@ -17,7 +17,14 @@ import 'jquery-contextmenu/dist/jquery.contextMenu.min.css';
 import 'jquery-contextmenu/dist/jquery.contextMenu.min.js';
 import '../js/jquery.fancytree.contextMenu';
 import $ from 'jquery';
-import { Fancytree, FancytreeNode } from 'jquery.fancytree';
+import {
+  Fancytree,
+  FancytreeNode,
+  NodeData,
+  FancytreeOptions,
+  EventData,
+  JQueryEventObject,
+} from 'jquery.fancytree';
 //import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 //import { solid, regular, brands, icon } from '@fortawesome/fontawesome-svg-core/import.macro' // <-- import styles to be used
 import ReactDOMServer from 'react-dom/server';
@@ -28,7 +35,6 @@ import useNoteStore from 'renderer/GlobalStore';
 import { nowNoteAPI } from 'renderer/NowNoteAPI';
 import { HitMode, NoteDTO } from 'types';
 import UIApiDispatch from 'renderer/UIApiDispatch';
-import { NoteModel } from 'main/modules/DataModels';
 
 function Sleep(milliseconds: number) {
   return new Promise((resolve) => setTimeout(resolve, milliseconds));
@@ -46,78 +52,49 @@ const TreeComponent = React.memo(
     // is trash view? reload tree -> in useEffect(() => initTree, trash
     const trash = useNoteStore((state) => state.trash);
 
-    const noteToNode = useCallback((note: NoteModel, treeNode?: FancytreeNode) => {
-        // console.log('noteToNode note=, treeNode=', note, treeNode);
-        let node = treeNode;
-        if (node === undefined || node === null) {
-          node = {};
+    const noteToNode = useCallback((note: NoteDTO) => {
+      const node: NodeData = {
+        title:
+          note.title !== undefined && note.title !== null ? note.title : '',
+        lazy: true,
+      };
+
+      if (note.key !== undefined && note.key !== null) {
+        node.key = note.key;
+      }
+
+      if (note.expanded !== undefined && note.expanded !== null) {
+        node.expanded = note.expanded;
+      }
+
+      node.data = node.data || {};
+      [
+        'description',
+        'modifiedBy',
+        'modifiedOn',
+        'createdBy',
+        'createdOn',
+        'done',
+        'priority',
+        'type',
+        'trash',
+      ].forEach((attr) => {
+        if (attr in note) {
+          node.data[attr] = note[attr];
         }
+      });
 
-        ['title'].forEach((attr) => {
-          if (attr in note) {
-            node[attr] = note[attr];
-          }
-        });
+      if (note.childrenCount === 0 || note.childrenCount === null) {
+        node.children = [];
+      } else {
+        node.children = undefined;
+      }
 
-        node.data = node.data || {};
-
-        [
-          'description',
-          'modifiedBy',
-          'modifiedOn',
-          'createdBy',
-          'createdOn',
-          'done',
-          'priority',
-          'type',
-          'trash',
-        ].forEach((attr) => {
-          if (attr in note) {
-            node.data[attr] = note[attr];
-          }
-        });
-
-
-        // if ('title' in note) {
-        //   node.title = note.title;
-        // }
-        // node.data = note.data || {};
-        // if ('description' in note) {
-        //   node.data.description = note.description;
-        // }
-        // if ('modifiedBy' in note) {
-        //   node.data.modifiedBy = note.modifiedBy;
-        // }
-        // node.data.modifiedOn = note.modifiedOn;
-        // node.data.createdBy = note.createdBy;
-        // node.data.createdOn = note.createdOn;
-        // node.data.done = note.done;
-        // node.data.priority = note.priority;
-        // node.data.type = note.type;
-        // node.data.trash = note.trash;
-
-        // node.data.tags = note.tags;
-        // node.lazy = true;
-        // if (!note.hasChildren) {
-        //  node.children = [];
-        // }
-
-        if (
-          note.childrenCount === 0 ||
-          note.childrenCount === null ||
-          node.childrenCount === '0'
-        ) {
-          node.children = [];
-        }
-
-        node.unselectable = note.trash;
-
-        node.checkbox = node.data.type !== undefined && node.data.type === 'task';
-        node.selected = node.data.done !== undefined && node.data.done;
-        return node;
-      },
-      []
-    );
+      node.unselectable = note.trash === true;
+      node.checkbox = note.type === 'task';
+      node.selected = note.done !== undefined && note.done === true;
+      return node;
+    }, []);
 
     const getActiveNodeKey = useCallback((): string | undefined => {
       if (fancyTreeRef === null || fancyTreeRef.current === null) {
@@ -157,10 +134,7 @@ const TreeComponent = React.memo(
         }
         await parentNode.setExpanded(true);
 
-        const newNode = await parentNode.addNode(
-          noteToNode(newNote),
-          'firstChild'
-        );
+        const newNode = parentNode.addNode(noteToNode(newNote), 'firstChild');
 
         console.log('addNode newNote=', newNote);
 
@@ -392,91 +366,27 @@ const TreeComponent = React.memo(
       [uiApi]
     );
 
-    const mapToTreeData = useCallback((tree) => {
-
-      function mapNotesToTreeNodes(tree) {
-        if (!tree) {
-          return tree;
-        }
-
-        tree.forEach((node) => {
-          node.data = node.data || {};
-          node.data.description = node.description;
-          node.data.modifiedBy = node.modifiedBy;
-          node.data.modifiedOn = node.modifiedOn;
-          node.data.createdBy = node.createdBy;
-          node.data.createdOn = node.createdOn;
-          node.data.done = node.done;
-          node.data.priority = node.priority;
-          node.data.type = node.type;
-          node.data.tags = node.tags;
-          node.data.trash = node.trash;
-
-          delete node.parent;
-          delete node.modifiedOn;
-          delete node.modifiedBy;
-          delete node.description;
-          delete node.createdOn;
-          delete node.createdBy;
-          delete node.done;
-          delete node.priority;
-          delete node.type;
-          delete node.tags;
-
-          node.lazy = true;
-
-          if (
-            node.childrenCount === 0 ||
-            node.childrenCount === '0' ||
-            node.childrenCount === null
-          ) {
-            node.children = [];
-          }
-          // console.log('>>>> node=', node);
-          setCheckBoxFromTyp(node);
-        });
-        return tree;
-      }
-
-      function setCheckBoxFromTyp(node) {
-        if (!node) {
-          return node;
-        }
-
-        node.data = node.data || {};
-        node.unselectable = node.trash;
-
-        node.checkbox = node.data.type !== undefined && node.data.type === "task";
-        node.selected = node.data.done !== undefined && node.data.done;
-
-        return node;
-      }
-
-      tree = mapNotesToTreeNodes(tree);
-      return tree;
-    }, []);
-
-    const loadTree = useCallback(
-      async (event: string | undefined, data) => {
-        log.debug(`Tree.loadTree() trash=${trash}`);
-        if (!trash) {
-          // console.trace();
-        }
-        if (event !== undefined && event.type === 'source') {
-          log.debug(`Tree.loadTree() root trash=${trash}`);
-          const rootNodes = await nowNoteAPI.getChildren(null, trash);
-          return mapToTreeData(rootNodes);
-        }
-        if (data !== undefined && data.node) {
-          data.result = async () => {
-            log.debug(`Tree.loadTree() key=${data.node.key} trash=${trash}`);
-            const children = await nowNoteAPI.getChildren(data.node.key);
-            return mapToTreeData(children);
-          };
-        }
+    const loadTreeRoot = useCallback(async (): Promise<NodeData[]> => {
+      log.debug(`Tree.loadTree() trash=${trash}`);
+      const rootNodes = await nowNoteAPI.getChildren(null, trash);
+      if (rootNodes === undefined) {
         return [];
+      }
+      return rootNodes.map((note) => noteToNode(note));
+    }, [noteToNode, trash]);
+
+    const lazyLoad = useCallback(
+      async (event: JQueryEventObject, data: EventData): Promise<void> => {
+        data.result = async () => {
+          log.debug(`Tree.loadTree() key=${data.node.key} trash=${trash}`);
+          const children = await nowNoteAPI.getChildren(data.node.key);
+          if (children === undefined) {
+            return [];
+          }
+          return children.map((note) => noteToNode(note));
+        };
       },
-      [mapToTreeData, trash]
+      [noteToNode, trash]
     );
 
     const initTree = useCallback(async () => {
@@ -493,9 +403,9 @@ const TreeComponent = React.memo(
         }
       }
 
-      $domNode.fancytree({
-        source: loadTree,
-        lazyLoad: loadTree,
+      const options: FancytreeOptions = {
+        source: loadTreeRoot,
+        lazyLoad,
 
         extensions: ['dnd5', 'contextMenu', 'edit'],
         checkbox: true,
@@ -570,7 +480,7 @@ const TreeComponent = React.memo(
           handleChangeExpanded(data.node.key, false);
         },
 
-        click: async (event, data) => {
+        click: (event: JQueryEventObject, data: EventData): boolean => {
           console.log("tree click event=, data=", event, data, data.targetType);
           // 'title' | 'prefix' | 'expander' | 'checkbox' | 'icon'
           // we could return false to prevent default handling, i.e. generating
@@ -581,24 +491,24 @@ const TreeComponent = React.memo(
           if (data.targetType === 'title') {
             treeLog.debug('Click title');
             const { openDetailNote } = uiApi;
-            await openDetailNote(data.node.key);
+            openDetailNote(data.node.key);
           }
-
+          return true;
         },
 
         select: (event, data) => {
-          handleChangeDone(data.node.key, data.node.selected);
+          handleChangeDone(data.node.key, data.node.isSelected());
         },
 
         contextMenu: {
           zIndex: 100,
           menu: (node: FancytreeNode) => {
             console.log('Tree contextMenu node=', node);
-            const menu = {};
+            const menu: any = {};
             if (!node.data.trash) {
-              menu['add'] = { name: 'Add' };
-              menu['createLink'] = { name: 'Create link to this in...' };
-              menu['moveToMenus'] = {
+              menu.add = { name: 'Add' };
+              menu.createLink = { name: 'Create link to this in...' };
+              menu.moveToMenus = {
                 name: 'Move...',
                 items: {
                   moveTo: {
@@ -628,16 +538,20 @@ const TreeComponent = React.memo(
                 },
               };
             }
-            menu['open'] = { name: 'Show Note' };
-            menu['delete'] = {
+            menu.open = { name: 'Show Note' };
+            menu.delete = {
               name: node.data.trash ? 'Delete Permanently' : 'Move To Trash',
             };
             if (node.data.trash) {
-              menu['restore'] = { name: 'Restore' };
+              menu.restore = { name: 'Restore' };
             }
             return menu;
           },
-          actions: async (node: FancytreeNode, action: string, options) => {
+          actions: async (
+            node: FancytreeNode,
+            action: string,
+            options: any
+          ) => {
             console.log(`actions action=`, action);
             const {
               openDetailNote,
@@ -875,12 +789,15 @@ const TreeComponent = React.memo(
             node.setExpanded();
           },
         },
-      });
+      };
+
+      $domNode.fancytree(options);
       $('.fancytree-container', $domNode).addClass('fancytree-connectors');
       fancyTreeRef.current = $.ui.fancytree.getTree($domNode);
     }, [
       trash,
-      loadTree,
+      loadTreeRoot,
+      lazyLoad,
       handleChangeTitle,
       handleChangeExpanded,
       uiApi,
@@ -891,72 +808,6 @@ const TreeComponent = React.memo(
       log.debug(`Tree->useEffect on initTree trash=${trash}`);
       initTree();
     }, [initTree, trash]);
-
-    // async delete(key) {
-    //       console.log("delete, key=", key);
-    //       this.props.delete(key);
-    //   }
-
-    // async restore(key) {
-    //       console.log("restore, key=", key);
-    //       this.props.restore(key);
-    //   }
-
-    // async openNoteInList(key) {
-    // 	console.log("openNoteInList, key=", key);
-    //       this.props.openNoteInList(key);
-    // }
-
-    // async openNotes(parents, editableTitle) {
-    // 	let noteToOpen = parents.shift();
-
-    // 	let node = fancyTreeRef.current.getNodeByKey(noteToOpen.key);
-    // 	if (node) {
-    // 		await node.load();
-    // 	}
-    // 	if (parents.length > 0) {
-    // 		await this.openNotes(parents, editableTitle)
-    // 	} else if (node) {
-    // 		await node.makeVisible();
-    // 		if (parents.length == 0) {
-    // 			node.setActive();
-    // 			node.setFocus();
-    // 			if (editableTitle) {
-    // 				node.editStart();
-    // 			}
-    // 		}
-    // 	}
-
-    // }
-
-    // async remove(key) {
-    // 	let node = fancyTreeRef.current.getNodeByKey(key);
-    // 	node.remove();
-    // }
-
-    // async reload(key) {
-    // 	if (!key) {
-    // 		await fancyTreeRef.current.reload();
-    // 	} else {
-    // 		let self = this;
-
-    // 		return new Promise(function(resolve) {
-
-    // 			let node = fancyTreeRef.current.getNodeByKey(key);
-    // 			if (!node) {
-    // 				resolve();
-    // 			}
-
-    // 			let resetLazyResult = node.resetLazy();
-    // 			console.log("reload, resetLazyResult=", resetLazyResult);
-    // 			node.setExpanded(true).then(function() {
-    // 				resolve();
-    // 			});
-    // 		});
-    // 	}
-    // }
-
-    treeLog.debug(`render`);
 
     return <div className="n3-tree" ref={domRef} />;
   })
