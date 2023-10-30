@@ -13,6 +13,7 @@ import {
   MoveToModalComponentAPI,
   NoteDTO,
   OpenHistoryDTO,
+  SearchModalComponentAPI,
   SettingsDTO,
   TreeComponentAPI,
   UserSettingsRepository,
@@ -22,7 +23,7 @@ import useDetailsNoteStore from 'renderer/DetailsNoteStore';
 import useReindexingRepository from 'renderer/useReindexingRepository';
 import SelectRepository from './SelectRepository';
 import Footer from './Footer';
-import SearchNotes from './SearchNotes';
+import AdvancedSearchButtonComponent from './AdvancedSearchButtonComponent';
 import TreeComponent from './TreeComponent';
 import AddNoteButtonComponent from './AddNoteButtonComponent';
 import TrashButton from './TrashButton';
@@ -30,6 +31,7 @@ import DetailsNoteComponent from './DetailsNoteComponent';
 import MoveToModalComponent from './MoveToModalComponent';
 import CreateLinkModalComponent from './CreateLinkModalComponent';
 import NextPrevButtonsComponent from './NextPrevButtonsComponent';
+import SearchModalComponent from './SearchModalComponent';
 
 const appLog = log.scope('App');
 
@@ -46,6 +48,7 @@ export default function App() {
   const detailsNoteComponentRef = useRef<DetailsNoteComponentAPI>(null);
   const moveToModalComponentRef = useRef<MoveToModalComponentAPI>(null);
   const createLinkModalComponentRef = useRef<CreateLinkModalComponentAPI>(null);
+  const searchModalComponentRef = useRef<SearchModalComponentAPI>(null);
 
   const [currentRepository, setCurrentRepository, trash] = useNoteStore(
     (state) => [
@@ -262,6 +265,19 @@ export default function App() {
         }
         createLinkModalComponentRef.current.open(key);
       },
+      openSearchDialog: async (key: string | undefined) => {
+        if (searchModalComponentRef.current === null) {
+          return;
+        }
+        if (treeComponentRef.current === null) {
+          return;
+        }
+        let activeNodeKey: string | undefined = key;
+        if (activeNodeKey === undefined) {
+          activeNodeKey = treeComponentRef.current.getActiveNodeKey();
+        }
+        searchModalComponentRef.current.open(activeNodeKey);
+      },
       moveNote: async (
         key: string,
         moveToKeyParam: string,
@@ -360,6 +376,7 @@ export default function App() {
     detailsNoteUpdateBacklinks,
     detailsNoteUpdateNote,
     detailsNoteUpdateNoteProperties,
+    modalDeleteConfirm,
     reindexIfNeeded,
     setCurrentRepository,
   ]);
@@ -377,6 +394,20 @@ export default function App() {
     fetchCurrentRepository();
   }, [fetchCurrentRepository]);
 
+  useEffect(() => {
+    const handelKeyDown = (event: KeyboardEvent) => {
+      console.log(`Key: ${event.code} with ctrlKey ${event.ctrlKey} has been pressed`);
+      if (event.code === 'KeyK' && event.ctrlKey) {
+        console.log(`Key: ${event.code} with ctrlKey ${event.ctrlKey} has been pressed`);
+        uiApi.openSearchDialog(undefined);
+      }
+    };
+    document.addEventListener('keydown', handelKeyDown);
+    return function cleanupListener() {
+      window.removeEventListener('keydown', handelKeyDown);
+    };
+  }, [uiApi]);
+
   appLog.debug(`currentRepository=${currentRepository} trash=${trash}`);
 
   const selectRepositoryComponent =
@@ -390,7 +421,7 @@ export default function App() {
     mainComponent = (
       <ReflexContainer orientation="horizontal" windowResizeAware>
         <ReflexElement
-          size={35}
+          size={40}
           style={{
             overflow: 'hidden',
           }}
@@ -414,17 +445,10 @@ export default function App() {
                 handlePrev={uiApi.openDetailsPrevious}
                 handleNext={uiApi.openDetailsNext}
               />
-              <SearchNotes
-                trash={trash}
-                onSelect={async (key: string) => {
-                  const note = await nowNoteAPI.getNoteWithDescription(key);
-                  if (note === undefined) {
-                    return;
-                  }
-                  uiApi.openDetailNote(note);
+              <AdvancedSearchButtonComponent
+                onClick={() => {
+                  uiApi.openSearchDialog(undefined);
                 }}
-                excludeParentNotesKeyProp={[]}
-                excludeNotesKeyProp={[]}
               />
             </Space>
           </div>
@@ -472,6 +496,10 @@ export default function App() {
           ref={createLinkModalComponentRef}
           trash={trash}
           handleOn={uiApi.createLinkNote}
+        />
+        <SearchModalComponent
+          ref={searchModalComponentRef}
+          trash={trash}
         />
         {contextHolderDeleteConfirm}
       </UIApiDispatch.Provider>

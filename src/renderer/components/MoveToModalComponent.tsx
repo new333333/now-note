@@ -13,7 +13,7 @@ import { Button, Divider, List, Modal } from 'antd';
 import { nowNoteAPI } from 'renderer/NowNoteAPI';
 import { MoveToDTO, MoveToModalComponentAPI, NoteDTO } from 'types';
 import { DeleteOutlined } from '@ant-design/icons';
-import SearchNotes from './SearchNotes';
+import SimpleSearchNotesComponent from './SimpleSearchNotesComponent';
 import NoteBreadCrumbComponent from './NoteBreadCrumbComponent';
 
 interface Props {
@@ -168,7 +168,7 @@ const MoveToModalComponent: React.FC<Props> = memo(
         onCancel={handleCancel}
         footer={null}
       >
-        <SearchNotes
+        <SimpleSearchNotesComponent
           trash={trash}
           onSelect={handleOk}
           excludeParentNotesKeyProp={key !== undefined ? [key] : []}

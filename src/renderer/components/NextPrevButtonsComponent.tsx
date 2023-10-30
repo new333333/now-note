@@ -28,11 +28,7 @@ export default function NextPrevButtonsComponent({
   };
 
   return (
-    <div
-      style={{
-        marginTop: -8,
-      }}
-    >
+    <div>
       <Button
         shape="default"
         icon={<ArrowLeftOutlined />}

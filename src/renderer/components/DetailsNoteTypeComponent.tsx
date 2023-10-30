@@ -27,6 +27,10 @@ export default function DetailsNoteTypeComponent() {
       key: 'task',
       label: `Task`,
     },
+    {
+      key: 'query',
+      label: `Query`,
+    },
   ];
 
   function getNoteTypeLabel(t: string | null | undefined) {

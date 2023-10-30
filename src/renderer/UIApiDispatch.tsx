@@ -20,6 +20,7 @@ export type UIApi = {
   focusNodeInTree(key: string): Promise<void>;
   openMoveToDialog(key: string): Promise<void>;
   openCreateLinkDialog(key: string): Promise<void>;
+  openSearchDialog(key: string | undefined): Promise<void>;
   moveNote(key: string, moveToKey?: string, hitMode?: HitMode): Promise<void>;
   createLinkNote(key: string, parentKey: string): Promise<void>;
 };

@@ -83,16 +83,22 @@ const TreeComponent = React.memo(
           node.data[attr] = note[attr];
         }
       });
-
-      if (note.childrenCount === 0 || note.childrenCount === null) {
+      console.log(
+        `noteToNode note.childrenCount=`,
+        note.childrenCount,
+        typeof note.childrenCount
+      );
+      if (note.childrenCount === 0) {
         node.children = [];
-      } else {
-        node.children = undefined;
+        console.log(`noteToNode set children[]`);
       }
 
       node.unselectable = note.trash === true;
       node.checkbox = note.type === 'task';
       node.selected = note.done !== undefined && note.done === true;
+
+      console.log(`noteToNode node=`, node);
+
       return node;
     }, []);
 

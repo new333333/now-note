@@ -1,0 +1,477 @@
+
+
+
+// Less
+$gray-1: #ffffff;
+$gray-2: #fafafa;
+$gray-3: #f5f5f5;
+$gray-4: #f0f0f0;
+$gray-5: #d9d9d9;
+$gray-6: #bfbfbf;
+$gray-7: #8c8c8c;
+$gray-8: #595959;
+$gray-9: #434343;
+$gray-10: #262626;
+$gray-11: #1f1f1f;
+$gray-12: #141414;
+$gray-13: #000000;
+
+$blue-6: blue;
+
+$nnColor-1: #e6ffee;
+$nnColor-2: #aaf2c4;
+$nnColor-3: #7ce6a6;
+$nnColor-4: #52d98d;
+$nnColor-5: #2dcc77;
+$nnColor-6: #0bbe64;
+$nnColor-7: #029952;
+$nnColor-8: #007341;
+$nnColor-9: #004d2e;
+$nnColor-10: #002618;
+
+
+html {
+	height: 100%;
+	width: 100%;
+	font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,'Noto Sans',sans-serif,'Apple Color Emoji','Segoe UI Emoji','Segoe UI Symbol','Noto Color Emoji';
+    font-size: 14px;
+}
+
+html, ul.fancytree-container {
+	font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,'Noto Sans',sans-serif,'Apple Color Emoji','Segoe UI Emoji','Segoe UI Symbol','Noto Color Emoji';
+    font-size: 14px;
+}
+
+body {
+	height: 100%;
+	width: 100%;
+	display: flex;
+	flex-direction: column;
+	margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+}
+
+#root {
+	display: block;
+	height: 100%;
+	width: 100%;
+}
+
+#nn-top-menu {
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+}
+
+.n3-tree .n3-node-add,
+.n3-layout_sidebar, .n3-tree ul.fancytree-container, .n3-filter, .n3-search .input,
+.n3-tree,
+.nn-nodes-list,
+#nn-top-menu, #nn-top-menu ul,
+#nn-note {
+	background-color: $gray-2;
+}
+
+#nn-trash {
+	background-color: $gray-5;
+  height: 45px;
+}
+
+.nn-footer {
+	position: fixed;
+  bottom: 0;
+  left: 0;
+  background-color: $blue-6;
+  right: 0;
+  height: 20px;
+  z-index: 100;
+	padding: 0 9px;
+	white-space: nowrap;
+}
+
+#nn-note {
+	padding: 5px;
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+}
+
+.nn-footer, .nn-footer a {
+	color: white;
+}
+
+.nn-spin-full-screen,
+.nn-spin-full-screen .ant-spin-container {
+	display: block;
+	height: 100%;
+	width: 100%;
+	padding-bottom: 10px;
+}
+
+.nn-center-screen {
+	display: flex;
+	justify-content: center;
+	text-align: center;
+	min-height: 100vh;
+	flex-direction: column;
+}
+
+.nn-flex-break {
+	flex-basis: 100%;
+	height: 0;
+}
+
+.n3-bar-vertical {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+}
+
+.n3-bar-grow {
+	flex-grow: 1;
+}
+
+.nn-site-tag-plus {
+	background: #fff;
+	border-style: dashed;
+}
+.nn-edit-tag {
+	user-select: none;
+}
+.nn-tag-input {
+	width: 78px;
+	margin-right: 8px;
+	vertical-align: top;
+}
+
+
+.nn-nodes-list {
+	padding: 5px;
+	overflow: auto;
+	height: 100%;
+}
+
+
+
+.nn-search-breadCrumb,
+.nn-breadCrumb-collapsed {
+	color: $gray-6;
+}
+
+.nn-search-path {
+	font-size: 12px;
+}
+
+
+.nn-note-metadata {
+	color: #000;
+	white-space: nowrap;
+}
+
+/* ************************************************* */
+
+
+
+
+
+/* ************************************************* */
+/* ************************************************* */
+/* ************************************************* */
+/* ************************************************* */
+
+
+
+.n3-layout {
+	display: flex;
+	min-height: 100vh;
+}
+
+.n3-layout_sidebar {
+	flex-shrink: 0;
+	height: 100vh;
+	overflow: hidden;
+	position: sticky;
+	top: 0;
+	display: flex;
+    flex-direction: column;
+	min-width: 200px;
+	flex: auto
+}
+
+.n3-layout_content {
+	display: block;
+	flex-grow: 1;
+	z-index: 4;
+	min-width: 200px;
+}
+
+
+
+
+/* ************************************************* */
+
+
+
+.n3-note-title-row {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 10px;
+}
+
+.n3-note-title-input, .n3-note-title-input .input, .n3-note-title-input .input input {
+	width: 100%;
+}
+
+.n3-note-title-input .input input {
+	border: 0;
+	font-size: 3rem;
+    line-height: 3rem;
+	padding: 0;
+}
+
+.n3 .ui.menu .ui.button {
+    margin-right: 0.5em;
+}
+
+
+.n3-node-header {
+	display: flex;
+	align-items: center;
+}
+
+.n3-breadcrumb {
+	display: inline;
+	margin-left: 5px;
+}
+
+.tabulator-cell .breadcrumb {
+	font-size: 10px;
+	font-weight: 400;
+}
+
+
+.ui-fancytree {
+	height: 100%;
+}
+
+.modal {
+    z-index: 120; /* splitter has 100*/
+}
+
+.n3-node-desciption {
+	height: 400px;
+	padding: 10px;
+	overflow: auto;
+}
+
+.n3-task-details-modal > .modal-content {
+    width: 900px;
+}
+
+.n3-task-details-modal > .modal-content > .box {
+	width: 880px;
+}
+
+
+.n3-task-details-modal .n3-attributes input, .n3-task-details-modal .n3-attributes select {
+	width: 100px;
+	max-width: 100px;
+}
+
+.tabulator [data-internstatus="DONE"] .n3title {
+	color: #ccc;
+	text-decoration: line-through !important;
+}
+
+.tabulator [data-internstatus="TOBEDONE"] .n3title {
+	color: #333;
+}
+
+.tabulator [data-priority="1"] .n3priority, [data-priority="1"] .n3title {
+	font-weight: 100;
+}
+.tabulator [data-priority="2"] .n3priority, [data-priority="2"] .n3title {
+	font-weight: 400;
+}
+.tabulator [data-priority="3"] .n3priority, [data-priority="3"] .n3title  {
+	font-weight: 1000;
+}
+/* fix for tagify and bulma*/
+.input.is-static:hover {
+    border-color: transparent;
+}
+
+.n3-notification {
+	background-color: transparent;
+}
+
+.n3-title-info {
+	color: blue;
+	font-size: 11px;
+}
+
+
+.n3-tabInfo {
+	font-weight: 700;
+	font-size: 10px;
+}
+
+
+
+.task-list .task {
+	background-color: #f8f8f8;
+	padding: 9px !important;
+	margin: 3px 0 3px 0;
+}
+
+.tox .n3backlinks-sidebar {
+	width: 300px;
+	border-left: 5px solid #eee;
+}
+.tox .n3backlinks-sidebar ul {
+	margin-left: 20px;
+}
+
+.tox .n3backlinks-sidebar a {
+	color: #4183c4;
+	cursor: pointer;
+}
+
+
+
+.n3-search .input {
+	width: 100%;
+}
+
+.n3-filter {
+    width: 100%;
+	border-bottom: 2px solid #aFaFaF;
+}
+
+.nn-header {
+	padding: 5px;
+	background-color: $nnColor-10;
+}
+
+.n3-tree {
+	overflow: auto;
+	flex: 1;
+}
+
+.fancytree-node {
+	white-space: nowrap;
+}
+
+table.fancytree-ext-table {
+	/*background-color: #333;*/
+	width: 100%;
+}
+
+span.fancytree-title {
+	/*color:#eee;*/
+}
+
+.n3-tree ul.fancytree-container {
+    border: none;
+}
+
+
+.n3-tree .n3-node-add {
+	display: none;
+	position: absolute;
+	right: 19px;
+}
+
+.n3-tree .n3-mouseover .n3-node-add {
+	display: inline-block;
+}
+
+.n3-tree .ui.compact.icon.button,
+.n3-tree .fancytree-checkbox,
+.n3-tree .fancytree-node {
+	z-index: 20;
+}
+
+.n3-node-background {
+	display: none;
+	position: absolute;
+	left: 0;
+	right: 0;
+	background: rgba(104, 104, 104, 0.1);
+	margin-left: 0;
+	margin-right: 0;
+	height: 21px;
+	z-index: 1;
+}
+.n3-tree .n3-mouseover .n3-node-background, .n3-tree .fancytree-active .n3-node-background {
+	display: inline;
+}
+
+.ui.transparent {
+	background: transparent;
+}
+
+.nn-trash-background-color {
+	background-color: red;
+}
+
+.fancytree-edit-input, .fancytree-edit-input:focus  {
+    background-color: transparent;
+    border: none;
+	outline: none;
+	margin: 0;
+	padding: 0;
+}
+
+.ui-fancytree {
+  outline: none;
+}
+
+.context-menu-list {
+  -webkit-box-shadow: none !important;
+  box-shadow: none !important;
+  font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,'Noto Sans',sans-serif,'Apple Color Emoji','Segoe UI Emoji','Segoe UI Symbol','Noto Color Emoji' !important;
+  font-size: 14px !important;
+}
+
+.context-menu-item.context-menu-hover {
+  color: rgba(0, 0, 0, 0.88) !important;
+  cursor: pointer;
+  background-color: rgba(0, 0, 0, 0.04) !important;
+}
+
+
+.ql-snow .ql-stroke {
+  stroke: #ccc !important;
+}
+
+.ql-snow.focused .ql-stroke {
+  stroke: #666 !important;
+}
+
+.ql-snow .ql-fill {
+  fill: #ccc !important;
+}
+
+.ql-snow.focused .ql-fill {
+  fill: #666 !important;
+}
+
+.ql-snow button {
+  color: #ccc !important;
+}
+
+.ql-snow.focused button {
+  color: #666 !important;
+}
+
+.ql-snow .ql-picker {
+  color: #ccc !important;
+}
+
+.ql-snow.focused .ql-picker {
+  color: #666 !important;
+}

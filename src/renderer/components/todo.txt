@@ -1,7 +1,7 @@
-- editor: color/backgorund color doesn't work
-- https://tiptap.dev/examples/default ?
----------------------------------------------------------
 
+DER:
+- 'create links for all XXX in YYY'
+--
 - query note!
   - query / synchronize extrernal sources?
    - e.g. emails, github issues, external storage, rss, etc.
@@ -33,3 +33,4 @@
  - task -> quest
  - priority - > points
  - count points and go to next level
+ - online https://supabase.com/database

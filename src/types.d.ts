@@ -297,5 +297,9 @@ export interface MoveToModalComponentAPI {
 }
 
 export interface CreateLinkModalComponentAPI {
+  open(key: string | undefined): Promise<void>;
+}
+
+export interface SearchModalComponentAPI {
   open(key: string): Promise<void>;
 }
