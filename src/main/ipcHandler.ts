@@ -55,7 +55,7 @@ export default class IpcHandler {
             message: 'No folder selected.',
           };
         }
-        await this.nowNote.setDefaultRepository(repositoryFolder);
+
         const repository: UserSettingsRepository =
           await this.nowNote.connectRepository(userSettingsRepository);
 

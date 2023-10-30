@@ -101,11 +101,8 @@ export default class NowNote {
         sequelize,
         this.userName
       );
-      try {
-        await this.currentRepository?.authenticate();
-      } catch (error) {
-        nowNoteLog.error('connectRepository error', error);
-      }
+      await this.currentRepository?.authenticate();
+      await this.setDefaultRepository(repository.path);
       return this.currentUserSettingsRepository;
     }
     throw Error(`"${repository.repositoryType}" is unknown repository type.`);
