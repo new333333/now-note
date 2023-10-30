@@ -205,8 +205,8 @@
     "webpack-merge": "^5.8.0"
   },
   "build": {
-    "productName": "ElectronReact",
-    "appId": "org.erb.ElectronReact",
+    "productName": "NOW Note",
+    "appId": "new333333.NowNote",
     "asar": true,
     "asarUnpack": "**\\*.{node,dll}",
     "files": [
@@ -245,7 +245,7 @@
     },
     "win": {
       "target": [
-        "nsis"
+        "nsis", "portable"
       ]
     },
     "linux": {
