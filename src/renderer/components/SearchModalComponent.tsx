@@ -9,233 +9,464 @@ import React, {
   RefObject,
 } from 'react';
 import PropTypes from 'prop-types';
-import { Button, Divider, List, Modal } from 'antd';
+import {
+  Checkbox,
+  Form,
+  InputNumber,
+  Input,
+  List,
+  Modal,
+  Select,
+  Space,
+  Spin,
+  Divider,
+  Skeleton,
+  Collapse,
+  Flex,
+  Row,
+  Col,
+} from 'antd';
+import InfiniteScroll from 'react-infinite-scroll-component';
+import { CheckboxValueType } from 'antd/es/checkbox/Group';
+import { CheckboxChangeEvent } from 'antd/es/checkbox';
 import { nowNoteAPI } from 'renderer/NowNoteAPI';
-import { MoveToDTO, MoveToModalComponentAPI, NoteDTO } from 'types';
-import { DeleteOutlined } from '@ant-design/icons';
-import SimpleSearchNotesComponent from './SimpleSearchNotesComponent';
+import { MoveToModalComponentAPI, NoteDTO, SearchResultOptions } from 'types';
+import noteTypes from 'renderer/NoteTypes';
 import NoteBreadCrumbComponent from './NoteBreadCrumbComponent';
+import SearchTagsComponent from './search/SearchTagsComponent';
+
+const { Search } = Input;
 
 interface Props {
-  // eslint-disable-next-line react/no-unused-prop-types
-  trash: boolean;
   // eslint-disable-next-line react/no-unused-prop-types
   handleOn: Function;
   // eslint-disable-next-line react/no-unused-prop-types
   ref: RefObject<MoveToModalComponentAPI>;
 }
 
-interface MoveToListElement {
-  moveTo: MoveToDTO;
-  note: NoteDTO;
-}
+const noteTypesCheckboxInfo = noteTypes.map((noteType) => {
+  return {
+    value: noteType.key,
+    label: noteType.label,
+  };
+});
 
 const SearchModalComponent: React.FC<Props> = memo(
-  forwardRef(({ trash, handleOn }: Props, ref) => {
+  forwardRef(({ handleOn }: Props, ref) => {
     const [isModalMoveToOpen, setIsModalMoveToOpen] = useState(false);
+
+    const [trash, setTrash] = useState<boolean>(false);
     const [searchInNote, setSearchInNote] = useState<NoteDTO | undefined>(
       undefined
     );
+    const [term, setTerm] = useState<string>('');
+    const [selectedNoteTypes, setSelectedNoteTypes] = useState<string[]>(
+      noteTypes.map((noteType) => noteType.key)
+    );
+    const [prioritySign, setPrioritySign] = useState<string>('none');
+    const [priority, setPriority] = useState<number>(0);
+    const [tags, setTags] = useState<string[]>([]);
 
-    const [key, setKey] = useState<string | undefined>(undefined);
-    const [parent, setParent] = useState<string | undefined>(undefined);
-    const [moveToList, setMoveToList] = useState<MoveToListElement[]>([]);
+    const [resultList, setResultList] = useState<NoteDTO[]>([]);
+    const [hasMore, setHasMore] = useState<boolean>(false);
+    const [offset, setOffset] = useState<number>(0);
 
-    const showModal = async (noteKey: string) => {
-      console.log(`SearchModalComponent.showModal noteKey=`, noteKey);
-      if (noteKey !== undefined && noteKey !== null) {
-        const note = await nowNoteAPI.getNoteWithDescription(noteKey, true);
-        if (note !== undefined) {
-          setSearchInNote(note);
-          setParent(note.parent !== null ? note.parent : undefined);
-        }
+    const fetchResultList = useCallback(async () => {
+      console.log('start fetchResultList');
+
+      const parentNotesKey: string[] = [];
+      if (
+        searchInNote !== undefined &&
+        searchInNote.key !== undefined &&
+        searchInNote.key !== null
+      ) {
+        parentNotesKey.push(searchInNote.key);
       }
-      setKey(noteKey);
-      setIsModalMoveToOpen(true);
-    };
+
+      console.log(`parentNotesKey=`, parentNotesKey);
+
+      const searchResultOptions: SearchResultOptions = {
+        parentNotesKey,
+        types: selectedNoteTypes,
+        dones: [],
+        sortBy: '',
+        offset,
+        prioritySign,
+        priority,
+        tags,
+      };
+
+      const searchResult = await nowNoteAPI.search(
+        term,
+        20,
+        trash,
+        searchResultOptions
+      );
+
+      console.log(`searchResult=`, searchResult);
+
+      setOffset(offset + 20);
+      setHasMore(searchResult.maxResults > searchResult.results.length);
+      setResultList([...resultList, ...searchResult.results]);
+    }, [
+      offset,
+      priority,
+      prioritySign,
+      resultList,
+      searchInNote,
+      selectedNoteTypes,
+      tags,
+      term,
+      trash,
+    ]);
+
+    const handleChangeSearchInNote = useCallback(
+      async (noteKey: string | undefined) => {
+        console.log(`SearchModalComponent.handleChangeSearchInNote noteKey=`, noteKey);
+
+        setOffset(0);
+        setHasMore(false);
+        setResultList([]);
+
+        if (noteKey !== undefined && noteKey !== null && noteKey !== 'ROOT') {
+          const note = await nowNoteAPI.getNoteWithDescription(noteKey, true);
+          if (note !== undefined) {
+            setSearchInNote(note);
+            fetchResultList();
+          }
+        } else if (
+          noteKey !== undefined ||
+          noteKey !== null ||
+          noteKey === 'ROOT'
+        ) {
+          setSearchInNote(undefined);
+          fetchResultList();
+        }
+      },
+      [fetchResultList]
+    );
+
+    const showModal = useCallback(
+      async (noteKey: string | undefined) => {
+        await handleChangeSearchInNote(noteKey);
+        setIsModalMoveToOpen(true);
+      },
+      [handleChangeSearchInNote]
+    );
 
     const handleOk = (moveToKey: string) => {
       setIsModalMoveToOpen(false);
-      handleOn(key, moveToKey === 'ROOT' ? undefined : moveToKey);
-      setKey(undefined);
-      setParent(undefined);
+      handleOn(searchInNote?.key, moveToKey === 'ROOT' ? undefined : moveToKey);
+      setSearchInNote(undefined);
     };
 
     const handleCancel = () => {
       setIsModalMoveToOpen(false);
+      setResultList([]);
+      setHasMore(false);
+      setOffset(0);
     };
 
     useImperativeHandle(
       ref,
       () => {
         return {
-          open: async (noteKey: string) => {
+          open: async (noteKey: string | undefined, newTrash: boolean) => {
             showModal(noteKey);
+            setTrash(newTrash);
           },
         };
       },
-      []
+      [showModal]
     );
 
-    const fetchMoveToList = useCallback(async () => {
-      const moveToDTOs: MoveToDTO[] = await nowNoteAPI.getMoveToList();
-      if (moveToDTOs === undefined) {
-        return;
-      }
-      const moveToNotes: MoveToListElement[] = [];
+    const handleOnSearch = useCallback(
+      async (event: ChangeEvent<HTMLInputElement>) => {
+        if (event.target !== undefined) {
+          console.log(`handleOnSearch event.target.value=`, event.target.value);
+          setTerm(event.target.value);
+        }
 
-      for (let i = 0; i < moveToDTOs.length; i += 1) {
-        // eliminate moving note
-        if (moveToDTOs[i].key === key) {
-          // eslint-disable-next-line no-continue
-          continue;
-        }
-        if (moveToDTOs[i].key === null || moveToDTOs[i].key === undefined) {
-          // eslint-disable-next-line no-continue
-          continue;
-        }
-        // eslint-disable-next-line no-await-in-loop
-        const note = await nowNoteAPI.getNoteWithDescription(
-          moveToDTOs[i].key,
-          true
-        );
-        if (note === undefined) {
-          // eslint-disable-next-line no-continue
-          continue;
-        }
-        // eliminate children of moved note
-        if (
-          note.keyPath !== undefined &&
-          key !== undefined &&
-          note.keyPath?.indexOf(`/${key}/`) > -1
-        ) {
-          // eslint-disable-next-line no-continue
-          continue;
-        }
-        // eliminate current parent
-        if (note.key === parent) {
-          // eslint-disable-next-line no-continue
-          continue;
-        }
-        if (note.trash) {
-          // eslint-disable-next-line no-continue
-          continue;
-        }
-        moveToNotes.push({
-          note,
-          moveTo: moveToDTOs[i],
-        });
-      }
+        setOffset(0);
+        setHasMore(false);
+        setResultList([]);
 
-      // add ROOT
-      if (parent !== null) {
-        moveToNotes.unshift({
-          note: {
-            keyPath: '$/ROOT/^',
-            titlePath: '$/Root/^',
-          },
-          moveTo: {
-            id: -1,
-            key: '-1',
-          },
-        });
-      }
+        fetchResultList();
+      },
+      [fetchResultList]
+    );
 
-      setMoveToList(moveToNotes);
-    }, [key, parent]);
+    const handleOnChangeType = useCallback(
+      async (newSelectedNoteType: CheckboxValueType[]) => {
+        setSelectedNoteTypes(newSelectedNoteType);
+
+        setOffset(0);
+        setHasMore(false);
+        setResultList([]);
+
+        fetchResultList();
+      },
+      [fetchResultList]
+    );
+
+    const handleOnChangePrioritySign = useCallback(
+      async (newPrioritySign: string) => {
+        setPrioritySign(newPrioritySign);
+
+        setOffset(0);
+        setHasMore(false);
+        setResultList([]);
+
+        fetchResultList();
+      },
+      [fetchResultList]
+    );
+
+    const handleOnChangePriority = useCallback(
+      (newPriority: number | null) => {
+        setPriority(newPriority);
+
+        setOffset(0);
+        setHasMore(false);
+        setResultList([]);
+
+        fetchResultList();
+      },
+      [fetchResultList]
+    );
+
+    const handleOnChangeTags = useCallback(
+      (newTags: string[]) => {
+        setTags(newTags);
+
+        setOffset(0);
+        setHasMore(false);
+        setResultList([]);
+
+        fetchResultList();
+      },
+      [fetchResultList]
+    );
+
+    const handleOnChangeTrash = useCallback(
+      (newTrash: CheckboxChangeEvent) => {
+        setTrash(newTrash.target.checked);
+
+        setOffset(0);
+        setHasMore(false);
+        setResultList([]);
+
+        fetchResultList();
+      },
+      [fetchResultList]
+    );
 
     useEffect(() => {
-      fetchMoveToList();
-    }, [fetchMoveToList]);
+      if (isModalMoveToOpen && offset === 0) {
+        fetchResultList();
+      }
+    }, [fetchResultList, isModalMoveToOpen, offset]);
 
-    const removeMoveTo = useCallback(
-      async (id: number) => {
-        await nowNoteAPI.removeMoveTo(id);
-        await fetchMoveToList();
-      },
-      [fetchMoveToList]
-    );
+    const searchInKeyPath =
+      searchInNote !== undefined &&
+      searchInNote.keyPath !== undefined &&
+      searchInNote.titlePath !== undefined
+        ? `$/ROOT/${searchInNote.keyPath.substring(
+            2,
+            searchInNote.keyPath.length
+          )}`
+        : `$/ROOT/^`;
+
+    const searchInTitlePath =
+      searchInNote !== undefined &&
+      searchInNote.keyPath !== undefined &&
+      searchInNote.titlePath !== undefined
+        ? `$/All/${searchInNote.titlePath.substring(
+            2,
+            searchInNote.titlePath.length
+          )}`
+        : `$/All/^`;
+
+    const heightScroll: number = 300;
 
     return (
       <Modal
-        title={
-          <>
-            {searchInNote !== undefined && (
-              <>
-                Search in
-                <NoteBreadCrumbComponent
-                  keyPath={searchInNote.keyPath}
-                  titlePath={searchInNote.titlePath}
-                  handleOnClick={() => {}}
-                />
-              </>
-            )}
-            &nbsp;
-            <i>
-              {searchInNote !== undefined &&
-                searchInNote.titlePath !== undefined &&
-                searchInNote.titlePath
-                  .substring(2, searchInNote.titlePath.length - 2)
-                  .replaceAll('/', ' / ')}
-            </i>
-            &nbsp;:
-          </>
-        }
+        width="90%"
+        style={{ top: 5 }}
         open={isModalMoveToOpen}
         onCancel={handleCancel}
         footer={null}
       >
-        <SimpleSearchNotesComponent
-          trash={trash}
-          onSelect={handleOk}
-          excludeParentNotesKeyProp={key !== undefined ? [key] : []}
-          excludeNotesKeyProp={parent !== undefined ? [parent] : []}
-        />
+        <div  style={{ height: 400, width: '100%', border: '1px solid blue' }}>
+          <Row gutter={[8, 8]}>
+            <Space direction="horizontal">
+              <span>Search in:</span>
+              <NoteBreadCrumbComponent
+                keyPath={searchInKeyPath}
+                titlePath={searchInTitlePath}
+                handleOnClick={handleChangeSearchInNote}
+              />
+            </Space>
+          </Row>
+          <Row gutter={[8, 8]} style={{
+                border: '1px solid green',
+                height: '100%',
+              }}
+              heig>
+            <Col span={16}
+              style={{
+                border: '1px solid red',
+                height: '100%',
+              }}>
+              <Space
+                direction="vertical"
+                size="small"
+                style={{ width: '100%' }}
+              >
+                <Search
+                  placeholder="input search text"
+                  onChange={handleOnSearch}
+                  onSearch={handleOnSearch}
+                  enterButton
+                />
+                <div
+                  id="scrollableDiv"
+                  className="scrollableDiv"
+                  style={{
+                    height: heightScroll,
+                    overflow: 'auto',
+                    border: '1px solid rgba(140, 140, 140, 0.35)',
+                  }}
+                >
+                  <InfiniteScroll
+                    dataLength={resultList.length}
+                    next={fetchResultList}
+                    hasMore={hasMore}
+                    scrollableTarget="scrollableDiv"
+                    height={heightScroll}
+                    loader={<></>}
+                  >
+                    <List
+                      size="small"
+                      bordered={false}
+                      dataSource={resultList}
+                      renderItem={(note: NoteDTO) => (
+                        <List.Item>
+                          <List.Item.Meta
+                            description={
+                              <NoteBreadCrumbComponent
+                                keyPath={note.keyPath}
+                                titlePath={note.titlePath}
+                                handleOnClick={handleOn}
+                              />
+                            }
 
-        {moveToList && moveToList.length > 0 && (
-          <>
-            <Divider />
-            <List
-              size="small"
-              bordered
-              header="Recent used:"
-              dataSource={moveToList}
-              renderItem={(item) => (
-                <List.Item>
-                  <List.Item.Meta
-                    avatar={
-                      item.moveTo.id !== null &&
-                      item.moveTo.id !== undefined &&
-                      item.moveTo.id !== -1 && (
-                        <Button
-                          size="small"
-                          type="dashed"
-                          icon={<DeleteOutlined />}
-                          onClick={() => removeMoveTo(item.moveTo.id)}
-                        />
-                      )
-                    }
-                    title={
-                      <NoteBreadCrumbComponent
-                        keyPath={item.note.keyPath}
-                        titlePath={item.note.titlePath}
-                        handleOnClick={handleOk}
-                      />
-                    }
+                          />
+                        </List.Item>
+                      )}
+                    />
+                  </InfiniteScroll>
+                </div>
+              </Space>
+            </Col>
+            <Col span={8}>
+              <Form
+                size="small"
+                labelCol={{ span: 8 }}
+                wrapperCol={{ span: 10 }}
+              >
+                <Form.Item
+                  label="Types"
+                  style={{
+                    marginBottom: 8,
+                  }}
+                >
+                  <Checkbox.Group
+                    options={noteTypesCheckboxInfo}
+                    defaultValue={selectedNoteTypes}
+                    onChange={handleOnChangeType}
                   />
-                </List.Item>
-              )}
-            />
-          </>
-        )}
+                </Form.Item>
+                <Form.Item
+                  label="Priority"
+                  style={{
+                    marginBottom: 8,
+                  }}
+                >
+                  <Space size="small">
+                    <Select
+                      size="small"
+                      value={prioritySign}
+                      onChange={handleOnChangePrioritySign}
+                      options={[
+                        { value: 'none', label: 'ignore' },
+                        { value: 'equal', label: '=' },
+                        { value: 'lt', label: '<' },
+                        { value: 'ltequal', label: '<=' },
+                        { value: 'gt', label: '>' },
+                        { value: 'gtequal', label: '>=' },
+                      ]}
+                    />
+                    {prioritySign !== 'none' && (
+                      <InputNumber
+                        min={0}
+                        size="small"
+                        value={priority}
+                        onChange={handleOnChangePriority}
+                        width={20}
+                      />
+                    )}
+                  </Space>
+                </Form.Item>
+                <Form.Item
+                  label="Tags"
+                  style={{
+                    marginBottom: 8,
+                  }}
+                >
+                  <SearchTagsComponent
+                    tags={tags}
+                    handleAddTag={(tag: string) => {
+                      handleOnChangeTags([...tags, tag]);
+                    }}
+                    handleRemoveTag={(tag: string) => {
+                      handleOnChangeTags(tags.filter((a) => a !== tag));
+                    }}
+                  />
+                </Form.Item>
+                <Form.Item
+                  style={{
+                    marginBottom: 8,
+                  }}
+                >
+                  <Checkbox
+                    checked={trash}
+                    onChange={handleOnChangeTrash}
+                  >
+                    Trash
+                  </Checkbox>
+                </Form.Item>
+                <Form.Item
+                  style={{
+                    marginBottom: 8,
+                  }}
+                >
+                  <Checkbox onChange={() => {
+
+                  }}>History</Checkbox>
+                </Form.Item>
+              </Form>
+              order by FIELD asc/desc
+          </Col>
+          </Row>
+        </div>
       </Modal>
     );
   })
 );
 
 SearchModalComponent.propTypes = {
-  // trash: PropTypes.bool.isRequired,
-  // handleOn: PropTypes.func.isRequired,
+  handleOn: PropTypes.func.isRequired,
 };
 
 export default SearchModalComponent;

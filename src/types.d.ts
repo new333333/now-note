@@ -1,6 +1,7 @@
 /* eslint-disable no-unused-vars */
 /* eslint max-classes-per-file: ["error", 99] */
 import fs from 'fs';
+import { FancytreeNode, NodeData } from 'jquery.fancytree';
 
 // ***************************************************************************
 // ***************************************************************************
@@ -105,6 +106,9 @@ export interface SearchResultOptions {
   dones: number[];
   sortBy: string;
   offset: number;
+  prioritySign: string;
+  priority: number;
+  tags: string[];
 }
 
 // ***************************************************************************
@@ -288,6 +292,10 @@ export interface TreeComponentAPI {
   move(key: string, to: string | undefined, hitMode: HitMode): Promise<boolean>;
 }
 
+export interface FancyTreeComponentAPI {
+  updateNode(node: NodeData): Promise<void>;
+}
+
 export interface DetailsNoteComponentAPI {
   setFocus(): Promise<void>;
 }
@@ -301,5 +309,6 @@ export interface CreateLinkModalComponentAPI {
 }
 
 export interface SearchModalComponentAPI {
-  open(key: string): Promise<void>;
+  open(key: string | undefined, trash: boolean): Promise<void>;
 }
+

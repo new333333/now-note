@@ -43,7 +43,7 @@ export class NowNoteAPIImpl implements NowNoteAPI {
     trash?: boolean,
     limit?: number
   ): Promise<NoteDTO[] | undefined> {
-    console.log(
+    nowNoteAPILog.debug(
       `NowNoteAPI.getChildren() key=, trash=, limit=`,
       key,
       trash,
@@ -58,13 +58,13 @@ export class NowNoteAPIImpl implements NowNoteAPI {
   }
 
   async getNext(key: string): Promise<NoteDTO | undefined> {
-    console.log(`NowNoteAPI.getNext() key=`, key);
+    nowNoteAPILog.debug(`NowNoteAPI.getNext() key=`, key);
     const next: NoteDTO | undefined = await this.îpcRenderer.getNext(key);
     return next;
   }
 
   async getPrevious(key: string): Promise<NoteDTO | undefined> {
-    console.log(`NowNoteAPI.getPrevious() key=, trash=, limit=`, key);
+    nowNoteAPILog.debug(`NowNoteAPI.getPrevious() key=, trash=, limit=`, key);
     const previous: NoteDTO | undefined = await this.îpcRenderer.getPrevious(
       key
     );

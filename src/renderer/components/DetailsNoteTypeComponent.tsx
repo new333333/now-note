@@ -5,6 +5,7 @@ import type { MenuProps } from 'antd';
 import useDetailsNoteStore from 'renderer/DetailsNoteStore';
 import { nowNoteAPI } from 'renderer/NowNoteAPI';
 import UIApiDispatch from 'renderer/UIApiDispatch';
+import noteTypes from 'renderer/NoteTypes';
 
 const { Text, Link } = Typography;
 
@@ -18,20 +19,7 @@ export default function DetailsNoteTypeComponent() {
 
   const uiApi = useContext(UIApiDispatch);
 
-  const menuItems: MenuProps['items'] = [
-    {
-      key: 'note',
-      label: `Note`,
-    },
-    {
-      key: 'task',
-      label: `Task`,
-    },
-    {
-      key: 'query',
-      label: `Query`,
-    },
-  ];
+  const menuItems: MenuProps['items'] = noteTypes;
 
   function getNoteTypeLabel(t: string | null | undefined) {
     const foundType = menuItems?.find((menuItem) => {

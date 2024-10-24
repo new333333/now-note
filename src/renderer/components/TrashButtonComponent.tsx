@@ -5,53 +5,45 @@ import { DeleteFilled } from '@ant-design/icons';
 import useNoteStore from 'renderer/GlobalStore';
 
 export default function TrashButton() {
-  const [trash, setTrash] = useNoteStore((state) => [
+  const [trash, setTrash, search, setSearch] = useNoteStore((state) => [
     state.trash,
     state.setTrash,
+    state.search,
+    state.setSearch,
   ]);
 
   const openTrash = useCallback(() => {
     setTrash(true);
-  }, [setTrash]);
+    setSearch(false);
+  }, [setTrash, setSearch]);
 
   const closeTrash = useCallback(() => {
     setTrash(false);
-  }, [setTrash]);
+    setSearch(false);
+  }, [setTrash, setSearch]);
 
   let trashButton = (
     <Button
       size="small"
-      type="text"
       icon={<DeleteFilled />}
       onClick={openTrash}
-    >
-      Open Trash
-    </Button>
+    />
   );
 
   if (trash) {
     trashButton = (
       <Button
         size="small"
-        type="text"
         danger
         icon={<DeleteFilled />}
         onClick={closeTrash}
-      >
-        Close Trash
-      </Button>
+      />
     );
   }
 
   return (
-    <div
-      style={{
-        padding: 5,
-        backgroundColor: '#fafafa',
-        borderTop: '1px solid #dddddd',
-      }}
-    >
+    <>
       {trashButton}
-    </div>
+    </>
   );
 }

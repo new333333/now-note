@@ -71,30 +71,27 @@ export default function DetailsNoteTagsComponent() {
     [detailsNoteKey, detailsNoteUpdateTags]
   );
 
-  const onSearchAutoComplete = useCallback(
-    async (searchText: string) => {
-      const matchingTags: string[] = await nowNoteAPI.findTag(searchText);
-      let found = false;
-      const options: AutoCompleteOption[] = matchingTags.map((nextTag) => {
-        if (nextTag === searchText) {
-          found = true;
-        }
-        return {
-          label: nextTag,
-          value: nextTag,
-        };
-      });
-
-      if (!found && searchText) {
-        options.unshift({
-          label: `New tag: ${searchText}`,
-          value: searchText,
-        });
+  const onSearchAutoComplete = useCallback(async (searchText: string) => {
+    const matchingTags: string[] = await nowNoteAPI.findTag(searchText);
+    let found = false;
+    const options: AutoCompleteOption[] = matchingTags.map((nextTag) => {
+      if (nextTag === searchText) {
+        found = true;
       }
-      setOptionsAutoComplete(options);
-    },
-    []
-  );
+      return {
+        label: nextTag,
+        value: nextTag,
+      };
+    });
+
+    if (!found && searchText) {
+      options.unshift({
+        label: `New tag: ${searchText}`,
+        value: searchText,
+      });
+    }
+    setOptionsAutoComplete(options);
+  }, []);
 
   const onChangeAutoComplete = useCallback(async (data: string) => {
     setValueAutoComplete(data);
@@ -126,10 +123,6 @@ export default function DetailsNoteTagsComponent() {
     detailsNoteTags.length > 0
       ? detailsNoteTags.substring(2, detailsNoteTags.length - 2).split('|')
       : [];
-
-  if (detailsNoteTags === null) {
-    return null;
-  }
 
   return (
     <>

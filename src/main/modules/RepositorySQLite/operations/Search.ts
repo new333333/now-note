@@ -3,14 +3,20 @@ import { QueryTypes } from 'sequelize';
 import { NoteDTO, SearchResult, SearchResultOptions } from 'types';
 import { NoteModel, RepositoryIntern } from '../../DataModels';
 
+const searchLog = log.scope('RepositorySQLite.search');
+
 export default async function search(
   repository: RepositoryIntern,
-  searchText: string,
+  searchTextParam: string,
   limit: number,
   trash: boolean,
   options: SearchResultOptions
 ): Promise<SearchResult> {
+  let searchText = searchTextParam;
   let whereNotesIndex = ` `;
+  if (searchText === null || searchText === undefined) {
+    searchText = '';
+  }
   if (searchText && searchText.length > 0 && searchText.trim().length > 0) {
     whereNotesIndex = `${whereNotesIndex} text MATCH :searchText and `;
   }
@@ -37,24 +43,73 @@ export default async function search(
     whereNotes = `${whereNotes} ${excludeParentNotesKeyJoined} and`;
   }
 
-  if (options.types && options.types.length > 0) {
-    whereNotes = `${whereNotes} type in (${options.types.join(', ')}) and`;
+  if (options.types !== undefined) {
+    whereNotes = `${whereNotes} type in ('${options.types.join("', '")}') and`;
   }
   if (options.dones && options.dones.length > 0) {
     whereNotes = `${whereNotes} done in (${options.dones.join(', ')}) and`;
   }
+
+  if (options.tags && options.tags.length > 0) {
+    const whereTags = options.tags.reduce(
+      (accumulator: string, tag: string) =>
+        `${accumulator} tags like '%|${tag}|%' or`,
+      ''
+    );
+
+    if (whereTags.length > 0) {
+      whereNotes = `${whereNotes} (${whereTags.substring(0, whereTags.length - 2)}) and`;
+    }
+  }
+
+  if (
+    (options.prioritySign === 'equal' ||
+      options.prioritySign === 'lt' ||
+      options.prioritySign === 'ltequal' ||
+      options.prioritySign === 'gt' ||
+      options.prioritySign === 'gtequal') &&
+    options.priority !== undefined
+  ) {
+    let prioritySignSQL;
+    if (options.prioritySign === 'equal') {
+      prioritySignSQL = '=';
+    } else if (options.prioritySign === 'lt') {
+      prioritySignSQL = '<';
+    } else if (options.prioritySign === 'ltequal') {
+      prioritySignSQL = '<=';
+    } else if (options.prioritySign === 'gt') {
+      prioritySignSQL = '>';
+    } else if (options.prioritySign === 'gtequal') {
+      prioritySignSQL = '>=';
+    }
+    whereNotes = `${whereNotes} priority ${prioritySignSQL} ${options.priority} and`;
+  }
+
   whereNotes = `${whereNotes} trash=${trash ? 1 : 0}`;
 
-  // on Notes_index
-  const orderByNotesIndex = ` ORDER BY ${
-    options.sortBy ? options.sortBy : 'rank'
-  } `;
+  let sortBy = 'rank';
+  if (options.sortBy) {
+    sortBy = options.sortBy;
+  } else if (searchText === null || searchText === undefined) {
+    sortBy = 'position';
+  }
+
+  let orderByNotes = ` `;
+  if (sortBy !== 'rank') {
+    if (sortBy === 'az') {
+      sortBy = 'title asc';
+    } else if (sortBy === 'za') {
+      sortBy = 'title desc';
+    }
+    orderByNotes = ` ORDER BY ${sortBy} `;
+  }
+  const orderByNotesIndex = ` ORDER BY rank `;
   let limitNotesIndex = ' ';
   if (limit > -1) {
     limitNotesIndex = ' LIMIT :limit OFFSET :offset ';
   }
 
-  const selectFromNotesIndex = `select * from notes where key in (SELECT key FROM Notes_index where ${whereNotesIndex} key in (SELECT key FROM Notes where ${whereNotes}) ${orderByNotesIndex}) `;
+  const selectFromNotesIndex = `select * from notes where key in (SELECT key FROM Notes_index where ${whereNotesIndex} key in (SELECT key FROM Notes where ${whereNotes}) ${orderByNotesIndex}) ${orderByNotes}`;
   const selectFromNotesIndexCount = `SELECT count(*) FROM Notes_index where ${whereNotesIndex} key in (SELECT key FROM Notes where ${whereNotes}) `;
 
   const selectResults: NoteDTO[] = await repository
@@ -68,6 +123,9 @@ export default async function search(
       raw: true,
       type: QueryTypes.SELECT,
     });
+
+  searchLog.debug("selectResults=");
+  searchLog.debug(selectResults);
 
   const countResults: any = await repository
     .getSequelize()!

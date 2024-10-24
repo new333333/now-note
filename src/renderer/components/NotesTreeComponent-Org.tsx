@@ -42,8 +42,8 @@ function Sleep(milliseconds: number) {
 
 const treeLog = log.scope('Tree');
 
-const TreeComponent = React.memo(
-  forwardRef(function TreeComponent(props, ref) {
+const NotesTreeComponent = React.memo(
+  forwardRef(function NotesTreeComponent(props, ref) {
     const domRef = useRef(null);
     const fancyTreeRef = useRef<Fancytree>(null);
 
@@ -182,6 +182,7 @@ const TreeComponent = React.memo(
         return;
       }
       node.selected = note.done;
+      node.data.type = note.type;
       node.title = note.title;
       node.checkbox =
         note.type !== undefined && note.type !== null && note.type === 'task';
@@ -343,6 +344,33 @@ const TreeComponent = React.memo(
       [uiApi]
     );
 
+    const handleChangeType = useCallback(
+      async (key: string, type: string) => {
+        treeLog.debug(`handleChangeType key=${key}, type=${type}`);
+        if (uiApi === null) {
+          return;
+        }
+        treeLog.debug(`handleChangeType key=${key}, type=${type}`);
+        const modifiedNote = await nowNoteAPI.modifyNote({
+          key,
+          type,
+        });
+        uiApi.updateDetailNote(modifiedNote);
+        uiApi.updateNodeInTree(modifiedNote);
+      },
+      [uiApi]
+    );
+
+    const handleSearch = useCallback(
+      async (key: string) => {
+        if (uiApi === null) {
+          return;
+        }
+        uiApi.search(key);
+      },
+      [uiApi]
+    );
+
     const handleChangeExpanded = useCallback(
       async (key: string, expanded: boolean) => {
         const modifiedNote = await nowNoteAPI.modifyNote({
@@ -422,39 +450,41 @@ const TreeComponent = React.memo(
           adjustWidthOfs: 4, // null: don't adjust input size to content
           inputCss: { minWidth: '3em' },
           triggerStart: [
-            'clickActive',
+            // 'clickActive',
             'f2',
             'dblclick',
             'shift+click',
             'mac+enter',
           ],
-          beforeEdit: () => {
+          beforeEdit: (event: JQueryEventObject, data: EventData) => {
             // Return false to prevent edit mode
             // console.log("beforeEdit");
           },
-          edit: () => {
+          edit: (event: JQueryEventObject, data: EventData) => {
             // Editor was opened (available as data.input)
-            // console.log("edit");
+            // console.log("edit - event, data", event, data.input);
+            // select input text on edit
+            $(data.input).select();
           },
-          beforeClose: () => {
+          beforeClose: (event: JQueryEventObject, data: EventData) => {
             // Return false to prevent cancel/save (data.input is available)
             // console.log('beforeClose event=, data=, data.input.val()=', event, data, data.input.val());
           },
-          save: (event, data) => {
+          save: (event: JQueryEventObject, data: EventData) => {
             // console.log('save event=, data=, data.input.val()=', event, data, data.input.val());
             if (event && event.type === 'save' && data.dirty) {
               handleChangeTitle(data.node.key, data.input.val());
             }
             return true;
           }, // Save data.input.val() or return false to keep editor open
-          close: () => {
+          close: (event: JQueryEventObject, data: EventData) => {
             // Editor was removed
             // console.log("close");
           },
         },
 
         // TODO: icons in tree
-        icon: (event, data) => {
+        icon: (event: JQueryEventObject, data: EventData) => {
           if (data.node.statusNodeType === 'loading') {
             return false;
           }
@@ -462,7 +492,7 @@ const TreeComponent = React.memo(
           return false;
         },
 
-        loadChildren: (event, data) => {
+        loadChildren: (event: JQueryEventObject, data: EventData) => {
           // Load all lazy/unloaded child nodes
           // (which will trigger `loadChildren` recursively)
           data.node.visit((subNode) => {
@@ -472,17 +502,17 @@ const TreeComponent = React.memo(
           });
         },
 
-        init: (event, data) => {
+        init: (event: JQueryEventObject, data: EventData) => {
         },
 
-        activate: (event, data) => {
+        activate: (event: JQueryEventObject, data: EventData) => {
         },
 
-        expand: (event, data) => {
+        expand: (event: JQueryEventObject, data: EventData) => {
           handleChangeExpanded(data.node.key, true);
         },
 
-        collapse: (event, data) => {
+        collapse: (event: JQueryEventObject, data: EventData) => {
           handleChangeExpanded(data.node.key, false);
         },
 
@@ -502,7 +532,7 @@ const TreeComponent = React.memo(
           return true;
         },
 
-        select: (event, data) => {
+        select: (event: JQueryEventObject, data: EventData) => {
           handleChangeDone(data.node.key, data.node.isSelected());
         },
 
@@ -512,7 +542,11 @@ const TreeComponent = React.memo(
             console.log('Tree contextMenu node=', node);
             const menu: any = {};
             if (!node.data.trash) {
-              menu.add = { name: 'Add' };
+              menu.add = { name: 'Add note' };
+              menu.editTitle = { name: 'Rename' };
+              menu.changeType = {
+                name: `Change to ${node.data.type === 'note' ? 'Task' : 'Note'}`,
+              };
               menu.createLink = { name: 'Create link to this in...' };
               menu.moveToMenus = {
                 name: 'Move...',
@@ -543,8 +577,9 @@ const TreeComponent = React.memo(
                   },
                 },
               };
+              menu.search = { name: 'Search in...' };
             }
-            menu.open = { name: 'Show Note' };
+            menu.open = { name: 'Open' };
             menu.delete = {
               name: node.data.trash ? 'Delete Permanently' : 'Move To Trash',
             };
@@ -586,11 +621,11 @@ const TreeComponent = React.memo(
                 return;
               }
               let parentNodeKey: string | undefined = node.parent.parent.key;
-              console.log(`TreeComponent parentNodeKey=`, parentNodeKey);
+              console.log(`NotesTreeComponent parentNodeKey=`, parentNodeKey);
               if (parentNodeKey.startsWith('root_')) {
                 parentNodeKey = undefined;
               }
-              console.log(`TreeComponent node.key=, parentNodeKey=`, node.key, parentNodeKey);
+              console.log(`NotesTreeComponent node.key=, parentNodeKey=`, node.key, parentNodeKey);
               await moveNote(node.key, parentNodeKey);
             } else if (action === 'moveToTop') {
               let to: string | undefined = node.parent.key;
@@ -610,6 +645,12 @@ const TreeComponent = React.memo(
               await moveNote(node.key, undefined, 'down');
             } else if (action === 'createLink') {
               await openCreateLinkDialog(node.key);
+            } else if (action === 'editTitle') {
+              node.editStart();
+            } else if (action === 'changeType') {
+              await handleChangeType(node.key, node.data.type === 'note' ? 'task' : 'note');
+            } else if (action === 'search') {
+              await handleSearch(node.key);
             }
           },
         },
@@ -808,6 +849,8 @@ const TreeComponent = React.memo(
       handleChangeExpanded,
       uiApi,
       handleChangeDone,
+      handleChangeType,
+      handleSearch,
     ]);
 
     useEffect(() => {
@@ -819,4 +862,4 @@ const TreeComponent = React.memo(
   })
 );
 
-export default TreeComponent;
+export default NotesTreeComponent;

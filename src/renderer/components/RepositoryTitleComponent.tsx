@@ -1,8 +1,9 @@
 import log from 'electron-log';
 import { useState, useCallback } from 'react';
-import { Typography, Tooltip, Button } from 'antd';
+import { Typography, Tooltip, Button, Dropdown, MenuProps } from 'antd';
 import useNoteStore from 'renderer/GlobalStore';
 import { nowNoteAPI } from 'renderer/NowNoteAPI';
+import { DownOutlined } from '@ant-design/icons';
 
 const { Text } = Typography;
 
@@ -27,6 +28,25 @@ export default function Footer({ reindexRepository }: Props) {
     reindexRepository();
   }, [reindexRepository]);
 
+  const onClick: MenuProps['onClick'] = ({ key }) => {
+    if (key === 'reindex') {
+      reindexHandler();
+    } else if (key === 'change') {
+      changeRepository();
+    }
+  };
+
+  const items: MenuProps['items'] = [
+    {
+      key: 'change',
+      label: 'Change Repository',
+    },
+    {
+      key: 'reindex',
+      label: 'Reindex Repository',
+    },
+  ];
+//  onClick={changeRepository}
   return (
     <div
       style={{
@@ -38,16 +58,14 @@ export default function Footer({ reindexRepository }: Props) {
         overflow: 'hidden',
       }}
     >
-      <Tooltip title="Choose other Repository">
-        <Button size="small" type="link" onClick={changeRepository}>
-          <strong style={{ paddingRight: 3 }}>Repository:</strong>
-          {currentRepository && currentRepository.path}
-          {!currentRepository && <>No repository initialized</>}
-        </Button>
-      </Tooltip>&nbsp;
-      <Button size="small" onClick={reindexHandler} loading={loading}>
-        Reindex Repository
-      </Button>
+      <Tooltip title={currentRepository.path} placement="left">
+        <Dropdown menu={{ items, onClick }} trigger={['contextMenu']}>
+          <Button size="small" type="text">
+            {currentRepository && currentRepository.name}
+            {!currentRepository && <>No repository initialized</>}
+          </Button>
+        </Dropdown>
+      </Tooltip>
     </div>
   );
 }

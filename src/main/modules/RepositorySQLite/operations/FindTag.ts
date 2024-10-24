@@ -29,11 +29,14 @@ export default async function findTag(
     }
     const noteTagsList = noteTags.split('|');
     noteTagsList.forEach((nextTag) => {
-      if (nextTag.startsWith(tag) && tags.indexOf(tag) === -1) {
-        tags.push(nextTag);
+      const nextTagTrimmed = nextTag.trim();
+      if (
+        nextTagTrimmed.toLowerCase().startsWith(tag.toLowerCase()) &&
+        tags.indexOf(nextTagTrimmed) === -1
+      ) {
+        tags.push(nextTagTrimmed);
       }
     });
   });
-
   return tags;
 }

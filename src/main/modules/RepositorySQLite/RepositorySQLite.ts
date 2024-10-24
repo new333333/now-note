@@ -248,7 +248,6 @@ export default class RepositorySQLite implements RepositoryIntern {
       createdBy: this.userName,
     });
 
-    // eslint-disable-next-line no-unused-vars
     const assetFile = await this.assetFilesService.saveLocalFile(
       assetModel,
       fileName,

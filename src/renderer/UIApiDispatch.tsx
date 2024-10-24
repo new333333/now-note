@@ -23,6 +23,7 @@ export type UIApi = {
   openSearchDialog(key: string | undefined): Promise<void>;
   moveNote(key: string, moveToKey?: string, hitMode?: HitMode): Promise<void>;
   createLinkNote(key: string, parentKey: string): Promise<void>;
+  search(key: string | undefined): Promise<undefined>;
 };
 
 const UIApiDispatch = createContext<UIApi>(null);

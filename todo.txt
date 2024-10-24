@@ -1,6 +1,21 @@
+- notes/search/trash - aktuelle markietren
+- do not open note after drop
+- allow / in title!!!!!!!
+- move on closed, not yet opened note
+- links to tasks in editor sollen auch checkbox haben für done/not done
+- editor option - text to note/task/ -> wo (sub, root, parent)
+- open note in tabs
+- paste on note in tree -> always put note to top
+- 'move to' pro source merken und vorschlagen als erstes
+- tree options: copy/cut/paste
+- Order by search
+- lock move, lock move in parent, lock delete, lock add children
+- calender note
+- Up for new repo - simpler und faster
+- note tree option: alle darunter aus/zu klappen
+- note option: can have children yes/no
+- Time tracking for notes
 
-DER:
-- 'create links for all XXX in YYY'
 --
 - query note!
   - query / synchronize extrernal sources?
@@ -8,6 +23,7 @@ DER:
     - extension point? note TYPE
   - damit auch ist autoinatisch
     - aktivitäten log
+  Query Tags Strukturen- as plugin?
 ---------------------------------------------------------
 
 - styling tree nodes
@@ -16,7 +32,7 @@ DER:
     - tag, priority, type
 ---------------------------------------------------------
 
-
+Pdf index and view
 - move open trash to menu ... neben Add
 - move reposiotpory select to menu, or
 

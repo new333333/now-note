@@ -166,7 +166,9 @@ export default class IpcHandler {
         trash: boolean,
         options: SearchResultOptions
       ): Promise<SearchResult | undefined> => {
-        return this.nowNote.search(searchText, limit, trash, options);
+        const searchResult = await this.nowNote.search(searchText, limit, trash, options);
+        log.debug('search -> searchResult', searchResult);
+        return searchResult;
       }
     );
 

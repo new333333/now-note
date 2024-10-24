@@ -17,6 +17,9 @@ import {
   Repository,
   SettingsDTO,
 } from 'types';
+import log from 'electron-log';
+
+const dataModelsLog = log.scope('DataModels');
 
 export const SQLITE3_TYPE: string = 'sqlite3';
 
@@ -61,6 +64,7 @@ export class NoteModel extends Model<
   declare tags: string;
 
   toDTO(): NoteDTO {
+    dataModelsLog.debug(">>> toDTO this.dataValues", this.dataValues);
     return this.dataValues;
   }
 }

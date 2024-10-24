@@ -1,6 +1,6 @@
 import log from 'electron-log';
 import { useContext, useState } from 'react';
-import { PlusOutlined } from '@ant-design/icons';
+import { EditOutlined, PlusOutlined } from '@ant-design/icons';
 import { Button, Space, Typography } from 'antd';
 import useNoteStore from 'renderer/GlobalStore';
 import UIApiDispatch from 'renderer/UIApiDispatch';
@@ -26,7 +26,7 @@ export default function AddNoteButtonComponent() {
 
   let button = (
     <Button size="small" loading={loading} onClick={handleClick}>
-      <PlusOutlined /> Add
+      <EditOutlined />
     </Button>
   );
 

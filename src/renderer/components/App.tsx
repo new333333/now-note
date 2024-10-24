@@ -1,6 +1,6 @@
 import log from 'electron-log';
-import { useEffect, useRef, useCallback, useMemo } from 'react';
-import { ConfigProvider, Modal, Space } from 'antd';
+import { useEffect, useRef, useCallback, useMemo, useState } from 'react';
+import { Button, ConfigProvider, Modal, Space, Tabs } from 'antd';
 import '../css/App.scss';
 import useNoteStore from 'renderer/GlobalStore';
 import { ReflexContainer, ReflexSplitter, ReflexElement } from 'react-reflex';
@@ -22,16 +22,19 @@ import UIApiDispatch, { UIApi } from 'renderer/UIApiDispatch';
 import useDetailsNoteStore from 'renderer/DetailsNoteStore';
 import useReindexingRepository from 'renderer/useReindexingRepository';
 import SelectRepository from './SelectRepository';
-import Footer from './Footer';
+import RepositoryTitleComponent from './RepositoryTitleComponent';
 import AdvancedSearchButtonComponent from './AdvancedSearchButtonComponent';
-import TreeComponent from './TreeComponent';
+import TreeReactComponent from './TreeReactComponent';
 import AddNoteButtonComponent from './AddNoteButtonComponent';
-import TrashButton from './TrashButton';
+import TrashButtonComponent from './TrashButtonComponent';
 import DetailsNoteComponent from './DetailsNoteComponent';
 import MoveToModalComponent from './MoveToModalComponent';
 import CreateLinkModalComponent from './CreateLinkModalComponent';
 import NextPrevButtonsComponent from './NextPrevButtonsComponent';
 import SearchModalComponent from './SearchModalComponent';
+import SearchPanelComponent from './SearchPanelComponent';
+import NotesTreeComponent from './NotesTreeComponent';
+import { FolderOutlined } from '@ant-design/icons';
 
 const appLog = log.scope('App');
 
@@ -43,20 +46,31 @@ export default function App() {
     reindexingProgressComponent,
   ] = useReindexingRepository();
 
+  const [searchInNoteKey, setSearchInNoteKey] = useState<string | undefined>(
+    undefined
+  );
+
   const [modalDeleteConfirm, contextHolderDeleteConfirm] = Modal.useModal();
   const treeComponentRef = useRef<TreeComponentAPI>(null);
   const detailsNoteComponentRef = useRef<DetailsNoteComponentAPI>(null);
   const moveToModalComponentRef = useRef<MoveToModalComponentAPI>(null);
   const createLinkModalComponentRef = useRef<CreateLinkModalComponentAPI>(null);
-  const searchModalComponentRef = useRef<SearchModalComponentAPI>(null);
 
-  const [currentRepository, setCurrentRepository, trash] = useNoteStore(
-    (state) => [
-      state.currentRepository,
-      state.setCurrentRepository,
-      state.trash,
-    ]
-  );
+  const [
+    currentRepository,
+    setCurrentRepository,
+    trash,
+    setTrash,
+    search,
+    setSearch,
+  ] = useNoteStore((state) => [
+    state.currentRepository,
+    state.setCurrentRepository,
+    state.trash,
+    state.setTrash,
+    state.search,
+    state.setSearch,
+  ]);
 
   // const detailsNoteKey = useDetailsNoteStore((state) => state.noteKey);
   const detailsNoteUpdateNote = useDetailsNoteStore(
@@ -178,7 +192,7 @@ export default function App() {
         } else {
           await nowNoteAPI.moveNoteToTrash(key);
         }
-        await treeComponentRef.current.removeNode(key);
+        treeComponentRef.current.removeNode(key);
         note = await nowNoteAPI.getNoteWithDescription(key);
         await uiApi.openDetailNote(note);
         return true;
@@ -188,7 +202,7 @@ export default function App() {
           return false;
         }
         await nowNoteAPI.restore(key);
-        await treeComponentRef.current.removeNode(key);
+        treeComponentRef.current.removeNode(key);
         const note = await nowNoteAPI.getNoteWithDescription(key);
         if (note !== undefined) {
           await uiApi.openDetailNote(note);
@@ -244,6 +258,8 @@ export default function App() {
         if (treeComponentRef.current === null) {
           return;
         }
+        console.log(`treeComponentRef.current`, treeComponentRef.current);
+        console.log(`updateNodeInTree call treeComponentRef.current.updateNode`);
         await treeComponentRef.current.updateNode(note);
       },
       focusNodeInTree: async (key: string) => {
@@ -264,19 +280,6 @@ export default function App() {
           return;
         }
         createLinkModalComponentRef.current.open(key);
-      },
-      openSearchDialog: async (key: string | undefined) => {
-        if (searchModalComponentRef.current === null) {
-          return;
-        }
-        if (treeComponentRef.current === null) {
-          return;
-        }
-        let activeNodeKey: string | undefined = key;
-        if (activeNodeKey === undefined) {
-          activeNodeKey = treeComponentRef.current.getActiveNodeKey();
-        }
-        searchModalComponentRef.current.open(activeNodeKey);
       },
       moveNote: async (
         key: string,
@@ -371,6 +374,11 @@ export default function App() {
         await uiApi.openDetailNote(nextNote.key, true);
         return nextNote.id;
       },
+      search: async (key: string | undefined): Promise<undefined> => {
+        setSearchInNoteKey(key);
+        setSearch(true);
+        setTrash(false);
+      },
     };
   }, [
     detailsNoteUpdateBacklinks,
@@ -379,6 +387,9 @@ export default function App() {
     modalDeleteConfirm,
     reindexIfNeeded,
     setCurrentRepository,
+    setSearch,
+    setTrash,
+    trash,
   ]);
 
   // **********************************************************************************
@@ -396,10 +407,15 @@ export default function App() {
 
   useEffect(() => {
     const handelKeyDown = (event: KeyboardEvent) => {
-      console.log(`Key: ${event.code} with ctrlKey ${event.ctrlKey} has been pressed`);
       if (event.code === 'KeyK' && event.ctrlKey) {
-        console.log(`Key: ${event.code} with ctrlKey ${event.ctrlKey} has been pressed`);
-        uiApi.openSearchDialog(undefined);
+        let activeNodeKey: string | undefined;
+        if (
+          treeComponentRef !== undefined &&
+          treeComponentRef.current !== null
+        ) {
+          activeNodeKey = treeComponentRef.current.getActiveNodeKey();
+        }
+        uiApi.search(activeNodeKey);
       }
     };
     document.addEventListener('keydown', handelKeyDown);
@@ -417,10 +433,15 @@ export default function App() {
 
   let mainComponent = null;
 
+  const openTree = useCallback(() => {
+    setSearch(false);
+    setTrash(false);
+  }, [setSearch, setTrash]);
+
   if (currentRepository !== undefined && reindexingProgress === 100) {
     mainComponent = (
       <ReflexContainer orientation="horizontal" windowResizeAware>
-        <ReflexElement
+        {/**<ReflexElement
           size={40}
           style={{
             overflow: 'hidden',
@@ -434,6 +455,7 @@ export default function App() {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
+
             }}
           >
             <Space
@@ -447,30 +469,121 @@ export default function App() {
               />
               <AdvancedSearchButtonComponent
                 onClick={() => {
-                  uiApi.openSearchDialog(undefined);
+                  // uiApi.openSearchDialog(undefined);
+                  openSearch();
                 }}
               />
             </Space>
           </div>
-        </ReflexElement>
+              </ReflexElement>**/}
         <ReflexElement>
           <ReflexContainer orientation="vertical">
             <ReflexElement className="left-bar" minSize={200} flex={0.25}>
-              <div className="n3-bar-vertical">
-                <AddNoteButtonComponent />
-                <TreeComponent ref={treeComponentRef} />
-                <TrashButton />
+              <div
+                style={{
+                  height: '100%',
+                  display: 'flex',
+                  flexDirection: 'column'
+                }}
+              >
+                <div
+                  style={{
+                    padding: 3,
+                    backgroundColor: '#eeeeee',
+                    borderBottom: '1px solid #dddddd',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <Space
+                    style={{
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    <Button
+                      size="small"
+                      icon={<FolderOutlined />}
+                      onClick={openTree}
+                    />
+                    <AdvancedSearchButtonComponent
+                      onClick={() => {
+                        let activeNodeKey: string | undefined;
+                        if (
+                          treeComponentRef !== undefined &&
+                          treeComponentRef.current !== null
+                        ) {
+                          activeNodeKey =
+                            treeComponentRef.current.getActiveNodeKey();
+                        }
+                        uiApi.search(activeNodeKey);
+                      }}
+                    />
+                    <TrashButtonComponent />
+                  </Space>
+                </div>
+                {!search && !trash && <AddNoteButtonComponent />}
+                {!search && (
+                  <>
+                    <RepositoryTitleComponent
+                      reindexRepository={reindexRepository}
+                    />
+                    <NotesTreeComponent ref={treeComponentRef} />
+                  </>
+                )}
+                {search && (
+                  <SearchPanelComponent
+                    handleOn={(key: string) => {
+                      uiApi.openDetailNote(key);
+                    }}
+                    searchInNoteKey={searchInNoteKey}
+                  />
+                )}
               </div>
             </ReflexElement>
             <ReflexSplitter />
             <ReflexElement className="right-bar" minSize={200} flex={0.75}>
-              <DetailsNoteComponent ref={detailsNoteComponentRef} />
+              <div
+                style={{
+                  padding: 5,
+                  backgroundColor: '#eeeeee',
+                  borderBottom: '1px solid #dddddd',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+
+                }}
+              >
+                <Space
+                  style={{
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  <NextPrevButtonsComponent
+                    handlePrev={uiApi.openDetailsPrevious}
+                    handleNext={uiApi.openDetailsNext}
+                  />
+                </Space>
+              </div>
+              <Tabs
+                defaultActiveKey="1"
+                type="card"
+                size="small"
+                items={new Array(1).fill(null).map((_, i) => {
+                  const id = String(i + 1);
+                  return {
+                    label: `Card Tab ${id}`,
+                    key: id,
+                    children: <DetailsNoteComponent ref={detailsNoteComponentRef} />,
+                  };
+                })}
+              />
             </ReflexElement>
           </ReflexContainer>
         </ReflexElement>
-        <ReflexElement size={35}>
+        {/**<ReflexElement size={35}>
           <Footer reindexRepository={reindexRepository} />
-        </ReflexElement>
+                </ReflexElement>**/}
       </ReflexContainer>
     );
   }
@@ -496,10 +609,6 @@ export default function App() {
           ref={createLinkModalComponentRef}
           trash={trash}
           handleOn={uiApi.createLinkNote}
-        />
-        <SearchModalComponent
-          ref={searchModalComponentRef}
-          trash={trash}
         />
         {contextHolderDeleteConfirm}
       </UIApiDispatch.Provider>

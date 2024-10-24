@@ -450,3 +450,22 @@ span.fancytree-title {
 .ql-mention-denotation-char {
   display: none;
 }
+
+////////////////////////////////////////////////////////////////////
+
+.n3-searchPanel {
+  padding: 3px;
+}
+
+.n3-tree-node-isSearchResult {
+  border: 1px solid $gray-6 !important;
+  border-radius: 4px !important;
+  background-color: $nnColor-2 !important;
+}
+
+.n3-tree-node-filter {
+  background-color: yellow;
+  border-radius: 4px;
+  border-top: 1px solid #000;
+  border-bottom: 1px solid #000;
+}

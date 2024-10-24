@@ -5,6 +5,9 @@ type State = {
   // trash open
   trash: boolean;
 
+  // search open
+  search: boolean;
+
   // currnetly connecter repository
   currentRepository: UserSettingsRepository | undefined;
 };
@@ -12,20 +15,29 @@ type State = {
 type Action = {
   setTrash: (value: boolean) => void;
 
+  setSearch: (value: boolean) => void;
+
   setCurrentRepository: (
     repository: UserSettingsRepository | undefined
   ) => void;
 };
 
 const useNoteStore = create<State & Action>((set) => ({
-  // default values
   trash: false,
+
+  search: false,
 
   currentRepository: undefined,
 
   setTrash: (value: boolean) => {
     set({
       trash: value,
+    });
+  },
+
+  setSearch: (value: boolean) => {
+    set({
+      search: value,
     });
   },
 
