@@ -6,6 +6,7 @@ import 'jquery.fancytree/dist/modules/jquery.fancytree.dnd5';
 import 'jquery.fancytree/dist/modules/jquery.fancytree.glyph';
 import 'jquery.fancytree/dist/modules/jquery.fancytree.edit';
 import 'jquery.fancytree/dist/modules/jquery.fancytree.clones';
+import 'jquery.fancytree/dist/modules/jquery.fancytree.table';
 import 'jquery-contextmenu/dist/jquery.contextMenu.min.css';
 import 'jquery-contextmenu/dist/jquery.contextMenu.min.js';
 import '../js/jquery.fancytree.contextMenu';
@@ -272,7 +273,7 @@ export abstract class FancyTreeDataProvider {
   }
 
   mapNoteToNode(note: NoteDTO): NodeData {
-    console.log(`>>>>>>>>>>>>>>>>>>>>> mapNoteToNode note=`, note);
+    // console.log(`>>>>>>>>>>>>>>>>>>>>> mapNoteToNode note=`, note);
 
     const node: NodeData = {
       title: note.title !== undefined && note.title !== null ? note.title : '',
@@ -317,7 +318,7 @@ export abstract class FancyTreeDataProvider {
     (node as any).checkbox = note.type === 'task';
     node.selected = note.done !== undefined && (note.done === true || note.done === 1);
 
-    console.log(`>>>>>>>>>>>>>>>>>>>>> mapNoteToNode node=`, node);
+    // console.log(`>>>>>>>>>>>>>>>>>>>>> mapNoteToNode node=`, node);
 
     return node;
   }
@@ -366,7 +367,7 @@ const FancyTreeComponent = React.memo(
           /* empty */
         }
       }
-
+      console.log(`$domNode`, $domNode);
       const options: FancytreeOptions = {
         source: () => {
           return dataProvider.getRootNodes();
@@ -376,7 +377,7 @@ const FancyTreeComponent = React.memo(
           return dataProvider.getChildrenNodes(event, data);
         },
 
-        extensions: ['dnd5', 'contextMenu', 'edit'],
+        extensions: ['dnd5', 'contextMenu', 'edit', 'table'],
         checkbox: true,
         escapeTitles: true,
         nodata: false,
@@ -797,7 +798,25 @@ const FancyTreeComponent = React.memo(
       initTree();
     }, [initTree]);
 
-    return <div className="n3-tree" ref={domRef} />;
+    return (
+      <div className="n3-tree">
+        <table ref={domRef}>
+          <colgroup>
+            <col width="*"></col>
+          </colgroup>
+          <thead>
+            <tr>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    );
   })
 );
 
